@@ -119,51 +119,81 @@ class PaymentService:
         
         return response
 
-    @staticmethod
-    def _checkout_url(preference: dict[str, Any]) -> str | None:
-        checkout_url = preference.get("init_point")
-        return checkout_url if isinstance(checkout_url, str) and checkout_url else None
+@staticmethod
+def _checkout_url(preference: dict[str, Any]) -> str | None:
+    checkout_url = preference.get("init_point")
+    return checkout_url if isinstance(checkout_url, str) and checkout_url else None
 
-    @staticmethod
-    def process_mercadopago_webhook(db: Session, notification: dict[str, Any]) -> None:
-        """Verify a Mercado Pago notification and grant access only if approved."""
-        notification_payment_id = PaymentService._notification_payment_id(notification)
-        if notification_payment_id is None:
+@staticmethod
+def process_mercadopago_webhook(db: Session, notification: dict[str, Any]) -> None:
+    logger.info("========== WEBHOOK RECIBIDO ==========")
+    logger.info("Payload: %s", notification)
+
+    notification_payment_id = PaymentService._notification_payment_id(notification)
+
+    logger.info("Notification payment id: %s", notification_payment_id)
+
+    if notification_payment_id is None:
+        logger.warning("Webhook recibido sin payment_id.")
+        return
+
+    verified_payment = PaymentService._get_mercadopago_payment(notification_payment_id)
+
+    logger.info("Mercado Pago payment:")
+    logger.info("%s", verified_payment)
+
+    payment_status = verified_payment.get("status")
+    provider_payment_id = str(verified_payment.get("id", notification_payment_id))
+    preference_id = verified_payment.get("preference_id")
+
+    logger.info("Status.............: %s", payment_status)
+    logger.info("Provider payment...: %s", provider_payment_id)
+    logger.info("Preference ID......: %s", preference_id)
+
+    if payment_status != "approved":
+        logger.warning("Pago todavía NO aprobado.")
+        return
+
+    with db.begin():
+
+        payment = db.execute(
+            select(Payment)
+            .where(
+                Payment.provider == PaymentService._PROVIDER,
+                (Payment.provider_payment_id == provider_payment_id)
+                | (Payment.provider_preference_id == preference_id),
+            )
+            .with_for_update()
+        ).scalar_one_or_none()
+
+        logger.info("Payment encontrado: %s", payment)
+
+        if payment is None:
+            logger.error("NO SE ENCONTRÓ EL PAYMENT LOCAL")
             return
 
-        verified_payment = PaymentService._get_mercadopago_payment(notification_payment_id)
-        if verified_payment.get("status") != "approved":
+        purchase = db.execute(
+            select(Purchase)
+            .options(joinedload(Purchase.plan))
+            .where(Purchase.id == payment.purchase_id)
+            .with_for_update()
+        ).scalar_one()
+
+        logger.info("Purchase encontrada: %s", purchase.id)
+        logger.info("Estado actual: %s", purchase.status)
+
+        if purchase.status == PurchaseStatus.PAID:
+            logger.info("La compra ya estaba pagada.")
             return
 
-        provider_payment_id = str(verified_payment.get("id", notification_payment_id))
-        preference_id = verified_payment.get("preference_id")
+        payment.provider_payment_id = provider_payment_id
+        payment.status = "approved"
 
-        with db.begin():
-            payment = db.execute(
-                select(Payment)
-                .where(
-                    Payment.provider == PaymentService._PROVIDER,
-                    (Payment.provider_payment_id == provider_payment_id)
-                    | (Payment.provider_preference_id == preference_id),
-                )
-                .with_for_update()
-            ).scalar_one_or_none()
-            if payment is None:
-                # A verified payment without a local payment record grants nothing.
-                return
+        logger.info("Generando PIN...")
 
-            purchase = db.execute(
-                select(Purchase)
-                .options(joinedload(Purchase.plan))
-                .where(Purchase.id == payment.purchase_id)
-                .with_for_update()
-            ).scalar_one()
-            if purchase.status == PurchaseStatus.PAID:
-                return
+        PurchaseService.mark_guest_purchase_paid(db, purchase)
 
-            payment.provider_payment_id = provider_payment_id
-            payment.status = "approved"
-            PurchaseService.mark_guest_purchase_paid(db, purchase)
+        logger.info("PIN generado correctamente.")
 
     @staticmethod
     def _notification_payment_id(notification: dict[str, Any]) -> str | None:
