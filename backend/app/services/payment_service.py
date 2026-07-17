@@ -70,7 +70,7 @@ class PaymentService:
     @staticmethod
     def _create_preference(purchase: Purchase) -> dict[str, Any]:
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
-        print("FRONTEND_URL =", settings.FRONTEND_URL)
+        
         preference_data: dict[str, Any] = {
             "items": [
                 {
@@ -83,6 +83,7 @@ class PaymentService:
                 }
             ],
             "external_reference": str(purchase.id),
+            "notification_url": f"{settings.FRONTEND_URL.rstrip('/')}/api/payments/webhook",
         }
         frontend_url = settings.FRONTEND_URL.rstrip("/")
         frontend_host = urlparse(frontend_url).hostname
@@ -115,18 +116,11 @@ class PaymentService:
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Mercado Pago returned an invalid preference",
             )
-        print("Preference ID:", response.get("id"))
-        print("init_point:", response.get("init_point"))
-        print("sandbox_init_point:", response.get("sandbox_init_point"))
+        
         return response
 
     @staticmethod
     def _checkout_url(preference: dict[str, Any]) -> str | None:
-        if settings.DEBUG:
-            sandbox_url = preference.get("sandbox_init_point")
-            if isinstance(sandbox_url, str) and sandbox_url:
-                return sandbox_url
-
         checkout_url = preference.get("init_point")
         return checkout_url if isinstance(checkout_url, str) and checkout_url else None
 

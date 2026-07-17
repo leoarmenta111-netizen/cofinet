@@ -4,7 +4,7 @@
 
 1. Sign in to the [Mercado Pago Developers credentials panel](https://www.mercadopago.com/developers/panel/app).
 2. Create or select an application and open its test credentials.
-3. Copy the sandbox Access Token and Public Key. Do not use production credentials for local testing.
+3. Copy the production Access Token and Public Key for the deployed environment.
 
 ## Local configuration
 
@@ -12,9 +12,10 @@
 2. Set the database values and these variables:
 
    ```env
-   MERCADOPAGO_ACCESS_TOKEN=TEST-your_sandbox_access_token
-    MERCADOPAGO_PUBLIC_KEY=TEST-your_sandbox_public_key
-    FRONTEND_URL=http://localhost:5500
+   DEBUG=false
+   MERCADOPAGO_ACCESS_TOKEN=APP_USR-your_production_access_token
+   MERCADOPAGO_PUBLIC_KEY=APP_USR-your_production_public_key
+   FRONTEND_URL=https://YOUR_PUBLIC_DOMAIN
    ```
 
    The access token is server-only. Never expose it to the browser or commit `.env`.
@@ -32,14 +33,14 @@
    uvicorn app.main:app --reload
    ```
 
-With `DEBUG=true`, the API prefers Mercado Pago's sandbox checkout URL when available. `POST /guest-purchases` creates a pending purchase, a Checkout Pro preference, and a pending payment record.
+`POST /guest-purchases` creates a pending purchase, a Checkout Pro preference, and a pending payment record. The API always returns Mercado Pago's `init_point`; it never returns `sandbox_init_point`.
 
 ## Webhook (Phase 2)
 
 In the Mercado Pago application, configure the payment webhook URL as:
 
 ```text
-https://YOUR-PUBLIC-API-DOMAIN/payments/webhook
+https://YOUR_PUBLIC_DOMAIN/api/payments/webhook
 ```
 
-Mercado Pago must be able to reach this URL; a localhost URL will not receive production or sandbox notifications. Set `FRONTEND_URL` to the public URL that serves `index.html`, so Checkout Pro can redirect the guest back to the polling screen after payment. The webhook verifies each notification against Mercado Pago's Payments API before issuing a PIN.
+Mercado Pago must be able to reach this HTTPS URL. Set `FRONTEND_URL` to the public URL that serves `index.html`; each Checkout Pro preference then receives this payment notification URL automatically. The webhook verifies each notification against Mercado Pago's Payments API before issuing a PIN.

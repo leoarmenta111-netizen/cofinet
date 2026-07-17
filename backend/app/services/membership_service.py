@@ -79,12 +79,12 @@ class MembershipService:
             "auto_recurring": {"frequency": 1, "frequency_type": "months", "transaction_amount": float(membership.monthly_amount), "currency_id": "MXN"},
             "back_url": f"{settings.FRONTEND_URL.rstrip('/')}/index.html?membership=success",
         }
-        if settings.MEMBERSHIP_WEBHOOK_URL:
-            payload["notification_url"] = settings.MEMBERSHIP_WEBHOOK_URL
+        payload["notification_url"] = (
+    settings.MEMBERSHIP_WEBHOOK_URL
+    or f"{settings.FRONTEND_URL.rstrip('/')}/api/memberships/webhook"
+)
         token_prefix = (settings.MERCADOPAGO_ACCESS_TOKEN or "")[:10]
-        print("FRONTEND_URL =", settings.FRONTEND_URL)
-        print("MEMBERSHIP_WEBHOOK_URL =", settings.MEMBERSHIP_WEBHOOK_URL)
-        print("MERCADOPAGO_ACCESS_TOKEN prefix =", token_prefix)
+       
         logger.info("Mercado Pago membership preapproval payload: %r", payload)
         try:
             result = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN).preapproval().create(payload)
