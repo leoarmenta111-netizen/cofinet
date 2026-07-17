@@ -12,4 +12,8 @@ backend/.env
 .vscode/
 
 # Logs
+<<<<<<< HEAD
 *.log
+=======
+*.log
+>>>>>>> 16bb972 (Remove enviroment file repository)
