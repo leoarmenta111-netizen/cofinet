@@ -1,4 +1,4 @@
-const ADMIN_API_BASE = `http://${window.location.hostname}:8000`;
+const ADMIN_API_BASE = "/api";
 const ADMIN_TOKEN_KEY = "cofinet_admin_token";
 
 function adminToken() {

@@ -1,5 +1,7 @@
 # Python
 venv/
+.venv/
+backend/venv/
 __pycache__/
 *.pyc
 
@@ -7,13 +9,18 @@ __pycache__/
 backend/.env
 .env
 .env.*
+!.env.example
 
 # VS Code
 .vscode/
 
 # Logs
 <<<<<<< HEAD
+<<<<<<< HEAD
 *.log
 =======
 *.log
 >>>>>>> 16bb972 (Remove enviroment file repository)
+=======
+*.log
+>>>>>>> 800593e (Finish frontend reorganization)

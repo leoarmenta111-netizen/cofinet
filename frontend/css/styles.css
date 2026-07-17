@@ -1,0 +1,699 @@
+/* ==========================================================
+   COFINET+
+   Smart WiFi Portal
+   Design System v0.2
+========================================================== */
+
+
+/* ==========================================================
+   VARIABLES
+========================================================== */
+
+:root{
+
+    --background:#0F0F10;
+
+    --card:#161616;
+
+    --card-hover:#1E1E1E;
+
+    --olive:#A3A375;
+
+    --olive-hover:#BBB68D;
+
+    --text:#FFFFFF;
+
+    --text-secondary:#A1A1AA;
+
+    --border:#2A2A2A;
+
+    --success:#22C55E;
+
+    --danger:#EF4444;
+
+    --radius:24px;
+
+}
+
+
+/* ==========================================================
+   GLOBAL
+========================================================== */
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    background:var(--background);
+
+    color:var(--text);
+
+}
+
+
+/* ==========================================================
+   ACCORDION
+========================================================== */
+
+.accordion-content{
+
+    max-height:0;
+
+    overflow:hidden;
+
+    opacity:0;
+
+    transition:
+        max-height .40s ease,
+        opacity .30s ease;
+
+}
+
+.accordion-content.expanded{
+
+    max-height:500px;
+
+    opacity:1;
+
+}
+
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+.scrollbar-hide{
+
+    -ms-overflow-style:none;
+
+    scrollbar-width:none;
+
+}
+
+.scrollbar-hide::-webkit-scrollbar{
+
+    display:none;
+
+}
+
+
+/* ==========================================================
+   EFFECTS
+========================================================== */
+
+.glow-hover{
+
+    transition:
+        transform .30s ease,
+        box-shadow .30s ease;
+
+}
+
+.glow-hover:hover{
+
+    box-shadow:0 0 18px rgba(163,163,117,.18);
+
+}
+
+
+/* ==========================================================
+   ANIMATIONS
+========================================================== */
+
+.fade-in{
+
+    animation:fadeIn .45s ease;
+
+}
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(15px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ==========================================================
+   COMPONENTS
+========================================================== */
+
+/* ---------- Card ---------- */
+
+.cofi-card{
+
+    background:var(--card);
+
+    border:1px solid var(--border);
+
+    border-radius:28px;
+
+    padding:2rem;
+
+    min-height:320px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:space-between;
+
+    cursor:pointer;
+
+    transition:
+        transform .30s ease,
+        border-color .30s ease,
+        box-shadow .30s ease;
+
+}
+
+.cofi-card:hover{
+
+    transform:translateY(-8px);
+
+    border-color:var(--olive);
+
+    box-shadow:0 12px 30px rgba(163,163,117,.15);
+
+}
+
+
+/* ---------- Badge ---------- */
+
+.cofi-badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    padding:.35rem .8rem;
+
+    border-radius:999px;
+
+    background:rgba(163,163,117,.08);
+
+    color:var(--olive);
+
+    font-size:.70rem;
+
+    font-weight:700;
+
+    letter-spacing:.08em;
+
+    text-transform:uppercase;
+
+}
+
+
+/* ---------- Title ---------- */
+
+.cofi-title{
+
+    font-size:2rem;
+
+    line-height:1.2;
+
+    font-weight:700;
+
+    color:var(--text);
+
+}
+
+
+/* ---------- Description ---------- */
+
+.cofi-description{
+
+    color:var(--text-secondary);
+
+    line-height:1.8;
+
+    font-size:.92rem;
+
+}
+
+
+/* ---------- Link ---------- */
+
+.cofi-link{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:.5rem;
+
+    color:var(--olive);
+
+    font-weight:600;
+
+    transition:.30s;
+
+}
+
+.cofi-link:hover{
+
+    gap:.8rem;
+
+}
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+
+.cofi-button{
+
+    width:100%;
+
+    background:var(--olive);
+
+    color:#000;
+
+    border:none;
+
+    border-radius:20px;
+
+    padding:1rem 1.5rem;
+
+    font-weight:700;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:.75rem;
+
+    cursor:pointer;
+
+    transition:
+        transform .30s ease,
+        background .30s ease,
+        box-shadow .30s ease;
+
+}
+
+.cofi-button:hover{
+
+    background:var(--olive-hover);
+
+    transform:translateY(-2px);
+
+    box-shadow:0 10px 25px rgba(163,163,117,.25);
+
+}
+
+
+/* ==========================================================
+   COFICENTER HERO
+========================================================== */
+
+.cofi-hero{
+    position:relative;
+    isolation:isolate;
+    display:grid;
+    grid-template-columns:minmax(20rem, .8fr) minmax(23rem, 1.07fr) 12.75rem;
+    grid-template-areas:"copy image menu";
+    gap:1.5rem;
+    height:350px;
+    padding:1.35rem 1.9rem;
+    align-items:stretch;
+    border:1px solid rgba(163,163,117,.24);
+    border-radius:30px;
+    background:
+        linear-gradient(115deg, rgba(163,163,117,.10), transparent 31%),
+        #0d0d0d;
+    box-shadow:0 22px 50px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.04);
+    animation:cofiHeroEnter .7s cubic-bezier(.22,1,.36,1) both;
+
+}
+
+.cofi-hero::before,
+.cofi-hero::after{
+
+    position:absolute;
+    z-index:-1;
+    content:"";
+    border:1px solid rgba(163,163,117,.096);
+    border-radius:50%;
+    pointer-events:none;
+
+}
+
+.cofi-hero::before{
+
+    width:34rem;
+    height:34rem;
+    top:-23rem;
+    right:-12rem;
+
+}
+
+.cofi-hero::after{
+
+    width:24rem;
+    height:24rem;
+    bottom:-18rem;
+    left:15%;
+
+}
+
+.cofi-hero__glow{
+
+    position:absolute;
+    z-index:-1;
+    border-radius:999px;
+    filter:blur(10px);
+    pointer-events:none;
+
+}
+
+.cofi-hero__glow--top{
+
+    width:14rem;
+    height:9rem;
+    top:-4rem;
+    left:22%;
+    background:rgba(163,163,117,.13);
+
+}
+
+.cofi-hero__glow--bottom{
+
+    width:18rem;
+    height:9rem;
+    right:-5rem;
+    bottom:-5rem;
+    background:rgba(163,163,117,.10);
+
+}
+
+.cofi-hero__brand{
+    display:flex;
+    align-items:center;
+    margin-bottom:.85rem;
+}
+
+.cofi-hero__logo{
+
+    width:230px;
+    height:auto;
+    display:block;
+
+}
+
+.cofi-hero__copy{
+    grid-area:copy;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-width:0;
+}
+
+.cofi-menu-card__label{
+    margin:0;
+    color:var(--olive);
+    font-family:"Space Grotesk", sans-serif;
+    font-size:.68rem;
+    font-weight:700;
+    letter-spacing:.16em;
+    line-height:1;
+    text-transform:uppercase;
+}
+
+.cofi-hero__title{
+    margin:0;
+    color:#fff;
+    font-family:"Outfit", sans-serif;
+    font-size:clamp(1.7rem, 2.35vw, 2.3rem);
+    font-weight:800;
+    letter-spacing:-.06em;
+    line-height:.92;
+    text-transform:uppercase;
+}
+
+.cofi-hero__title span{
+
+    display:block;
+
+}
+
+.cofi-hero__title-accent{
+
+    color:var(--olive);
+
+}
+
+.cofi-hero__note{
+    max-width:21rem;
+    margin:.28rem 0 0 3.1rem;
+    color:rgba(255,255,255,.58);
+    font-size:.72rem;
+    line-height:1.35;
+
+}
+
+.cofi-hero__combo{
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    margin-top:.85rem;
+    color:#fff;
+    font-family:"Space Grotesk", sans-serif;
+    font-size:.8rem;
+    font-weight:500;
+}
+
+.cofi-hero__combo-icon{
+    display:grid;
+    width:2.5rem;
+    height:2.5rem;
+    place-items:center;
+    border:1px solid rgba(163,163,117,.55);
+    border-radius:50%;
+    color:var(--olive);
+}
+
+.cofi-hero__combo-icon svg{
+    width:1.25rem;
+    height:1.25rem;
+
+}
+
+.cofi-hero__image-wrap{
+
+    grid-area:image;
+    position:relative;
+    min-width:0;
+    overflow:hidden;
+    align-self:stretch;
+    background:transparent;
+}
+
+.cofi-hero__image{
+
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center 40%;
+    mix-blend-mode:screen;
+    transform:translateY(-20px) scale(.94);
+    transition:transform .3s ease;
+}
+
+.cofi-hero:hover .cofi-hero__image{
+
+    transform:translateY(-20px) scale(.96);
+}
+
+.cofi-menu-card{
+
+    grid-area:menu;
+    width:auto;
+    min-height:0;
+    padding:1rem 1.15rem 1.05rem;
+    border:1px solid rgba(163,163,117,.36);
+    border-radius:1.4rem;
+    background:linear-gradient(145deg, rgba(35,35,24,.98), rgba(25,25,19,.98));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.03), 0 12px 24px rgba(0,0,0,.18);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
+
+.cofi-menu-card__text{
+
+    margin:.65rem 0 0;
+    color:#fff;
+    font-family:"Outfit", sans-serif;
+    font-size:1.25rem;
+    font-weight:800;
+    line-height:.95;
+    text-transform:uppercase;
+}
+
+.cofi-menu-card__qr{
+
+    width:6.6rem;
+    padding:.4rem;
+    border-radius:.6rem;
+    background:#fff;
+    box-shadow:0 8px 18px rgba(0,0,0,.20);
+
+}
+
+.cofi-menu-card__qr svg{
+
+    display:block;
+    width:100%;
+    height:auto;
+
+}
+
+.cofi-menu-card__button{
+
+    width:100%;
+    height:2.75rem;
+    padding:0 .85rem;
+    border:0;
+    border-radius:999px;
+    background:var(--olive);
+    color:#101010;
+    font-family:"Space Grotesk", sans-serif;
+    font-size:.75rem;
+    font-weight:700;
+    letter-spacing:.02em;
+    text-transform:uppercase;
+    cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,.16);
+    transition:transform .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.cofi-menu-card__button:hover{
+
+    transform:translateY(-2px);
+    background:var(--olive-hover);
+    box-shadow:0 8px 16px rgba(0,0,0,.2);
+
+}
+
+@keyframes cofiHeroEnter{
+
+    from{
+
+        opacity:0;
+        transform:translateY(12px);
+
+    }
+
+    to{
+
+        opacity:1;
+        transform:translateY(0);
+
+    }
+
+}
+
+@media (max-width:1023px){
+
+    .cofi-hero{
+
+        grid-template-columns:minmax(0,1fr) minmax(17rem,.9fr);
+        grid-template-areas:
+            "copy image"
+            "menu image";
+        height:auto;
+        min-height:31rem;
+        gap:1.25rem;
+    }
+
+    .cofi-menu-card{
+
+        min-height:14rem;
+    }
+
+}
+
+@media (max-width:520px){
+
+    .cofi-hero{
+
+        grid-template-columns:minmax(0,1fr);
+        grid-template-areas:
+            "copy"
+            "image"
+            "menu";
+        height:auto;
+        min-height:0;
+        gap:1rem;
+        padding:1.25rem;
+        border-radius:26px;
+
+    }
+
+    .cofi-hero__image-wrap{
+        height:14rem;
+    }
+
+    .cofi-menu-card{
+        min-height:0;
+        align-items:center;
+        text-align:center;
+        gap:1rem;
+    }
+
+    .cofi-hero__brand,
+    .cofi-hero__copy{
+        align-items:center;
+        text-align:center;
+    }
+
+    .cofi-hero__title{
+        font-size:2rem;
+    }
+
+    .cofi-hero__note{
+        margin-left:0;
+    }
+
+    .cofi-hero__combo{
+        margin-top:.7rem;
+    }
+
+}
+
+@media (prefers-reduced-motion:reduce){
+
+    .cofi-hero{
+
+        animation:none;
+
+    }
+
+    .cofi-hero__image,
+    .cofi-menu-card__button{
+
+        transition:none;
+
+    }
+
+}

@@ -33,7 +33,7 @@
 </button>
 
             <!-- Fila media: Logo (izq en PC, centrado en móvil) y Banner (der en PC, centrado en móvil) -->
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
+            <div class="legacy-portal-header hidden flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
                 <!-- Logotipo Principal -->
                 <div class="flex justify-center md:justify-start">
                     <img
@@ -135,6 +135,51 @@
             </div>
 
             <!-- Fila inferior: Píldora de estado de red (justo abajo) -->
+            <section class="cofi-hero" aria-labelledby="cofi-hero-title">
+                <div class="cofi-hero__glow cofi-hero__glow--top" aria-hidden="true"></div>
+                <div class="cofi-hero__glow cofi-hero__glow--bottom" aria-hidden="true"></div>
+
+                <div class="cofi-hero__copy">
+                    <div class="cofi-hero__brand">
+                        <img src="logo.jpeg" alt="CofiCenter" class="cofi-hero__logo">
+                    </div>
+                    <h1 id="cofi-hero-title" class="cofi-hero__title">
+                        <span>Un duro trabajo</span>
+                        <span>merece los</span>
+                        <span class="cofi-hero__title-accent">mejores combos.</span>
+                    </h1>
+                    <div class="cofi-hero__combo">
+                        <span class="cofi-hero__combo-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5 8h12l-1 10H7L5 8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                <path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                <path d="M8 5c0 .8.5 1.1.5 2M12 5c0 .8.5 1.1.5 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span>Combos Mañaneros</span>
+                    </div>
+                    <p class="cofi-hero__note">Una pausa bien merecida, lista para acompañarte.</p>
+                </div>
+
+                <div class="cofi-hero__image-wrap">
+                    <img src="assets/coficenter-hero-combo.png" alt="Café y panini CofiCenter" class="cofi-hero__image">
+                </div>
+
+                <aside class="cofi-menu-card" aria-label="Menú CofiCenter">
+                    <div>
+                        <p class="cofi-menu-card__label">Menú</p>
+                        <p class="cofi-menu-card__text">Ordena desde<br>tu celular</p>
+                    </div>
+                    <div class="cofi-menu-card__qr" aria-label="Código QR del menú">
+                        <svg viewBox="0 0 84 84" role="img" aria-label="Código QR decorativo">
+                            <rect width="84" height="84" rx="7" fill="#fff"/>
+                            <g fill="#0d0d0d"><path d="M8 8h22v22H8zM12 12v14h14V12zM54 8h22v22H54zM58 12v14h14V12zM8 54h22v22H8zM12 58v14h14V58zM36 8h6v6h-6zM42 14h6v12h-6zM34 26h8v8h-8zM48 30h8v6h-8zM36 38h8v8h-8zM46 40h6v12h-6zM54 38h8v6h-8zM64 34h12v8H64zM34 52h8v8h-8zM44 56h8v8h-8zM54 52h6v12h-6zM64 48h12v6H64zM64 58h6v8h-6zM72 68h4v8h-4zM36 68h18v8H36z"/></g>
+                        </svg>
+                    </div>
+                    <button type="button" class="cofi-menu-card__button" aria-label="Ver menú">Ver menú <span aria-hidden="true">→</span></button>
+                </aside>
+            </section>
+
             <div class="w-full flex justify-center md:justify-start mt-4">
 
     <div class="flex items-center gap-4 bg-[#161616] border border-zinc-800 rounded-2xl px-5 py-4 shadow-lg hover:border-cofiOlive transition-all duration-300">

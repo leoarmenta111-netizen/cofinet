@@ -5,7 +5,7 @@
     const planLabel = document.getElementById("membership-plan-label");
     const submit = document.getElementById("membership-submit");
     const error = document.getElementById("membership-error");
-    const API_BASE_URL = `http://${window.location.hostname}:8000`;
+    const API_BASE_URL = "/api";
 
     document.querySelectorAll("[data-membership-plan]").forEach(button => button.addEventListener("click", () => {
         planInput.value = button.dataset.membershipPlan;

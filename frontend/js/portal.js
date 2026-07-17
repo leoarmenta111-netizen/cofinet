@@ -1,5 +1,5 @@
 (() => {
-    const API_BASE_URL = `http://${window.location.hostname}:8000`;
+    const API_BASE_URL = "/api";
     const form = document.getElementById("pin-form");
     const pinBoxes = Array.from(document.querySelectorAll(".pin-box"));
     const button = document.getElementById("connect-button");
