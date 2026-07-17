@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Panel Admin | CofiNet+</title>
+    <style>body{font-family:Arial,sans-serif;background:#f4f4ef;margin:0;color:#202820}header,main{max-width:960px;margin:auto;padding:1rem}header{display:flex;justify-content:space-between;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}.card{background:#fff;padding:1rem;border-radius:10px;box-shadow:0 2px 10px #0001}.metric{font-size:1.6rem;font-weight:bold}a,button{color:#fff;background:#33452d;border:0;border-radius:5px;padding:.55rem .8rem;text-decoration:none;cursor:pointer}</style>
+</head>
+<body>
+    <header><div><strong>CofiNet+ Admin</strong><span id="admin-name"></span></div><div><a href="pins.html">PINs de efectivo</a> <button onclick="logoutAdmin()">Salir</button></div></header>
+    <main><h1>Dashboard</h1><div class="grid" id="metrics"></div></main>
+    <script src="admin.js"></script>
+    <script>
+        requireAdmin();
+        const labels = { total_sales_today: "Ventas de hoy", active_purchases: "Compras activas", expired_purchases: "Compras expiradas", active_pins: "PINs activos", pending_mercadopago_payments: "Pagos Mercado Pago pendientes" };
+        Promise.all([adminRequest("/admin/me"), adminRequest("/admin/dashboard")]).then(([admin, dashboard]) => {
+            document.getElementById("admin-name").textContent = ` · ${admin.full_name}`;
+            const metrics = document.getElementById("metrics");
+            Object.entries(labels).forEach(([key, label]) => {
+                const card = document.createElement("section"); card.className = "card";
+                const title = document.createElement("div"); title.textContent = label;
+                const value = document.createElement("div"); value.className = "metric";
+                value.textContent = key === "total_sales_today" ? `$${Number(dashboard[key]).toFixed(2)} MXN` : dashboard[key];
+                card.append(title, value); metrics.append(card);
+            });
+        }).catch(error => { alert(error.message); if (!adminToken()) window.location.replace("login.html"); });
+    </script>
+</body>
+</html>

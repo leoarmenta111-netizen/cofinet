@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CofiNet+ Admin</title>
+    <style>body{font-family:Arial,sans-serif;background:#f4f4ef;margin:0;display:grid;place-items:center;min-height:100vh}.card{background:#fff;padding:2rem;border-radius:12px;width:min(360px,90vw);box-shadow:0 4px 20px #0002}input,button{box-sizing:border-box;width:100%;padding:.75rem;margin:.5rem 0}button{background:#33452d;color:#fff;border:0;border-radius:6px;cursor:pointer}.error{color:#a00;min-height:1.2rem}</style>
+</head>
+<body>
+    <main class="card">
+        <h1>CofiNet+ Admin</h1>
+        <p>Acceso administrativo</p>
+        <form id="login-form">
+            <input id="email" type="email" placeholder="Correo" required autocomplete="email">
+            <input id="password" type="password" placeholder="Contraseña" required autocomplete="current-password">
+            <button>Iniciar sesión</button>
+        </form>
+        <p id="error" class="error"></p>
+    </main>
+    <script src="admin.js"></script>
+    <script>
+        if (adminToken()) window.location.replace("dashboard.html");
+        document.getElementById("login-form").addEventListener("submit", async event => {
+            event.preventDefault();
+            const error = document.getElementById("error");
+            error.textContent = "";
+            try {
+                const response = await adminRequest("/admin/login", { method: "POST", body: JSON.stringify({ email: email.value, password: password.value }) });
+                localStorage.setItem(ADMIN_TOKEN_KEY, response.access_token);
+                window.location.replace("dashboard.html");
+            } catch (requestError) { error.textContent = requestError.message; }
+        });
+    </script>
+</body>
+</html>

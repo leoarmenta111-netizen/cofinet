@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PINs de efectivo | CofiNet+</title>
+    <style>body{font-family:Arial,sans-serif;background:#f4f4ef;margin:0;color:#202820}header,main{max-width:960px;margin:auto;padding:1rem}header{display:flex;justify-content:space-between;align-items:center}.panel{background:#fff;padding:1rem;border-radius:10px;box-shadow:0 2px 10px #0001}select,button{padding:.6rem;margin:.25rem}button,a{color:#fff;background:#33452d;border:0;border-radius:5px;text-decoration:none;cursor:pointer}table{width:100%;border-collapse:collapse;margin-top:1rem}td,th{text-align:left;padding:.6rem;border-bottom:1px solid #ddd}.result{font-weight:bold;min-height:1.5rem}</style>
+</head>
+<body>
+    <header><strong>CofiNet+ Admin</strong><div><a href="dashboard.html">Dashboard</a> <button onclick="logoutAdmin()">Salir</button></div></header>
+    <main><h1>PINs de efectivo</h1><section class="panel"><form id="pin-form"><label for="plan">Plan</label> <select id="plan" required></select><button>Generar PIN</button></form><p class="result" id="result"></p></section><section class="panel"><table><thead><tr><th>PIN</th><th>Plan</th><th>Monto</th><th>Emitido</th><th>Expira</th></tr></thead><tbody id="pin-list"></tbody></table></section></main>
+    <script src="admin.js"></script>
+    <script>
+        requireAdmin();
+        const planSelect = document.getElementById("plan");
+        function showPins(pins) {
+            const list = document.getElementById("pin-list"); list.replaceChildren();
+            pins.forEach(pin => { const row = document.createElement("tr"); [pin.pin, pin.plan_name, `$${Number(pin.amount).toFixed(2)} MXN`, new Date(pin.issued_at).toLocaleString("es-MX"), new Date(pin.expires_at).toLocaleString("es-MX")].forEach(value => { const cell = document.createElement("td"); cell.textContent = value; row.append(cell); }); list.append(row); });
+        }
+        async function load() {
+            const [plans, pins] = await Promise.all([adminRequest("/plans"), adminRequest("/admin/pins")]);
+            planSelect.replaceChildren(); plans.forEach(plan => { const option = document.createElement("option"); option.value = plan.id; option.textContent = `${plan.name} — $${Number(plan.price).toFixed(2)} MXN`; planSelect.append(option); });
+            showPins(pins.pins);
+        }
+        document.getElementById("pin-form").addEventListener("submit", async event => { event.preventDefault(); try { const pin = await adminRequest("/admin/pins", { method: "POST", body: JSON.stringify({ plan_id: Number(planSelect.value) }) }); document.getElementById("result").textContent = `PIN generado: ${pin.pin}`; load(); } catch (error) { document.getElementById("result").textContent = error.message; } });
+        load().catch(error => { alert(error.message); if (!adminToken()) window.location.replace("login.html"); });
+    </script>
+</body>
+</html>

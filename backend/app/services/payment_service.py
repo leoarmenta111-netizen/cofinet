@@ -1,0 +1,203 @@
+from dataclasses import dataclass
+from decimal import Decimal
+import logging
+from typing import Any
+from urllib.parse import urlparse
+
+import mercadopago
+from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, joinedload
+
+from app.core.config import settings
+from app.models.payment import Payment
+from app.models.purchase import Purchase, PurchaseStatus
+from app.services.purchase_service import PurchaseService
+
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class CheckoutSession:
+    checkout_url: str
+    payment_status: str
+
+
+class PaymentService:
+    _PROVIDER = "mercadopago"
+    _CURRENCY = "MXN"
+
+    @staticmethod
+    def create_mercadopago_checkout(db: Session, purchase: Purchase) -> CheckoutSession:
+        """Create a Checkout Pro preference and persist its pending payment record."""
+        if not settings.MERCADOPAGO_ACCESS_TOKEN:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Mercado Pago is not configured",
+            )
+
+        preference = PaymentService._create_preference(purchase)
+        preference_id = preference.get("id")
+        checkout_url = PaymentService._checkout_url(preference)
+        if not isinstance(preference_id, str) or not checkout_url:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Mercado Pago returned an invalid preference",
+            )
+
+        payment = Payment(
+            purchase_id=purchase.id,
+            provider=PaymentService._PROVIDER,
+            provider_preference_id=preference_id,
+            amount=purchase.amount,
+            currency=PaymentService._CURRENCY,
+            status="pending",
+        )
+        try:
+            db.add(payment)
+            db.commit()
+        except SQLAlchemyError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Could not create payment record",
+            ) from exc
+
+        return CheckoutSession(checkout_url=checkout_url, payment_status=payment.status)
+
+    @staticmethod
+    def _create_preference(purchase: Purchase) -> dict[str, Any]:
+        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+        print("FRONTEND_URL =", settings.FRONTEND_URL)
+        preference_data: dict[str, Any] = {
+            "items": [
+                {
+                    "id": str(purchase.plan_id),
+                    "title": purchase.plan.name,
+                    "description": purchase.plan.description or purchase.plan.name,
+                    "quantity": 1,
+                    "currency_id": PaymentService._CURRENCY,
+                    "unit_price": float(Decimal(purchase.amount)),
+                }
+            ],
+            "external_reference": str(purchase.id),
+        }
+        frontend_url = settings.FRONTEND_URL.rstrip("/")
+        frontend_host = urlparse(frontend_url).hostname
+        if frontend_host not in {"localhost", "127.0.0.1", "::1"}:
+            preference_data["back_urls"] = {
+                "success": f"{frontend_url}/?purchase_id={purchase.id}",
+                "pending": f"{frontend_url}/?purchase_id={purchase.id}",
+                "failure": f"{frontend_url}/?purchase_id={purchase.id}",
+            }
+            preference_data["auto_return"] = "approved"
+        logger.info("Mercado Pago preference payload: %r", preference_data)
+        try:
+            result = sdk.preference().create(preference_data)
+        except Exception as exc:
+            logger.exception("Mercado Pago preference creation failed")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Could not create Mercado Pago preference",
+            ) from exc
+
+        logger.info("Mercado Pago preference SDK response: %r", result)
+        print("Mercado Pago preference SDK response:", result)
+        response = (
+            result.get("response", result.get("body"))
+            if isinstance(result, dict)
+            else None
+        )
+        if not isinstance(response, dict):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Mercado Pago returned an invalid preference",
+            )
+        print("Preference ID:", response.get("id"))
+        print("init_point:", response.get("init_point"))
+        print("sandbox_init_point:", response.get("sandbox_init_point"))
+        return response
+
+    @staticmethod
+    def _checkout_url(preference: dict[str, Any]) -> str | None:
+        if settings.DEBUG:
+            sandbox_url = preference.get("sandbox_init_point")
+            if isinstance(sandbox_url, str) and sandbox_url:
+                return sandbox_url
+
+        checkout_url = preference.get("init_point")
+        return checkout_url if isinstance(checkout_url, str) and checkout_url else None
+
+    @staticmethod
+    def process_mercadopago_webhook(db: Session, notification: dict[str, Any]) -> None:
+        """Verify a Mercado Pago notification and grant access only if approved."""
+        notification_payment_id = PaymentService._notification_payment_id(notification)
+        if notification_payment_id is None:
+            return
+
+        verified_payment = PaymentService._get_mercadopago_payment(notification_payment_id)
+        if verified_payment.get("status") != "approved":
+            return
+
+        provider_payment_id = str(verified_payment.get("id", notification_payment_id))
+        preference_id = verified_payment.get("preference_id")
+
+        with db.begin():
+            payment = db.execute(
+                select(Payment)
+                .where(
+                    Payment.provider == PaymentService._PROVIDER,
+                    (Payment.provider_payment_id == provider_payment_id)
+                    | (Payment.provider_preference_id == preference_id),
+                )
+                .with_for_update()
+            ).scalar_one_or_none()
+            if payment is None:
+                # A verified payment without a local payment record grants nothing.
+                return
+
+            purchase = db.execute(
+                select(Purchase)
+                .options(joinedload(Purchase.plan))
+                .where(Purchase.id == payment.purchase_id)
+                .with_for_update()
+            ).scalar_one()
+            if purchase.status == PurchaseStatus.PAID:
+                return
+
+            payment.provider_payment_id = provider_payment_id
+            payment.status = "approved"
+            PurchaseService.mark_guest_purchase_paid(db, purchase)
+
+    @staticmethod
+    def _notification_payment_id(notification: dict[str, Any]) -> str | None:
+        data = notification.get("data")
+        if isinstance(data, dict) and data.get("id") is not None:
+            return str(data["id"])
+        if notification.get("id") is not None:
+            return str(notification["id"])
+        return None
+
+    @staticmethod
+    def _get_mercadopago_payment(payment_id: str) -> dict[str, Any]:
+        if not settings.MERCADOPAGO_ACCESS_TOKEN:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Mercado Pago is not configured",
+            )
+        try:
+            result = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN).payment().get(payment_id)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Could not verify Mercado Pago payment",
+            ) from exc
+        response = result.get("response") if isinstance(result, dict) else None
+        if not isinstance(response, dict):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Mercado Pago returned an invalid payment",
+            )
+        return response

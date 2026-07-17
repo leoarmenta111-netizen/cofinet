@@ -1,0 +1,321 @@
+/* ==========================================================
+   COFINET+
+   Smart WiFi Portal
+   Design System v0.2
+========================================================== */
+
+
+/* ==========================================================
+   VARIABLES
+========================================================== */
+
+:root{
+
+    --background:#0F0F10;
+
+    --card:#161616;
+
+    --card-hover:#1E1E1E;
+
+    --olive:#A3A375;
+
+    --olive-hover:#BBB68D;
+
+    --text:#FFFFFF;
+
+    --text-secondary:#A1A1AA;
+
+    --border:#2A2A2A;
+
+    --success:#22C55E;
+
+    --danger:#EF4444;
+
+    --radius:24px;
+
+}
+
+
+/* ==========================================================
+   GLOBAL
+========================================================== */
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    background:var(--background);
+
+    color:var(--text);
+
+}
+
+
+/* ==========================================================
+   ACCORDION
+========================================================== */
+
+.accordion-content{
+
+    max-height:0;
+
+    overflow:hidden;
+
+    opacity:0;
+
+    transition:
+        max-height .40s ease,
+        opacity .30s ease;
+
+}
+
+.accordion-content.expanded{
+
+    max-height:500px;
+
+    opacity:1;
+
+}
+
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+.scrollbar-hide{
+
+    -ms-overflow-style:none;
+
+    scrollbar-width:none;
+
+}
+
+.scrollbar-hide::-webkit-scrollbar{
+
+    display:none;
+
+}
+
+
+/* ==========================================================
+   EFFECTS
+========================================================== */
+
+.glow-hover{
+
+    transition:
+        transform .30s ease,
+        box-shadow .30s ease;
+
+}
+
+.glow-hover:hover{
+
+    box-shadow:0 0 18px rgba(163,163,117,.18);
+
+}
+
+
+/* ==========================================================
+   ANIMATIONS
+========================================================== */
+
+.fade-in{
+
+    animation:fadeIn .45s ease;
+
+}
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(15px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ==========================================================
+   COMPONENTS
+========================================================== */
+
+/* ---------- Card ---------- */
+
+.cofi-card{
+
+    background:var(--card);
+
+    border:1px solid var(--border);
+
+    border-radius:28px;
+
+    padding:2rem;
+
+    min-height:320px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:space-between;
+
+    cursor:pointer;
+
+    transition:
+        transform .30s ease,
+        border-color .30s ease,
+        box-shadow .30s ease;
+
+}
+
+.cofi-card:hover{
+
+    transform:translateY(-8px);
+
+    border-color:var(--olive);
+
+    box-shadow:0 12px 30px rgba(163,163,117,.15);
+
+}
+
+
+/* ---------- Badge ---------- */
+
+.cofi-badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    padding:.35rem .8rem;
+
+    border-radius:999px;
+
+    background:rgba(163,163,117,.08);
+
+    color:var(--olive);
+
+    font-size:.70rem;
+
+    font-weight:700;
+
+    letter-spacing:.08em;
+
+    text-transform:uppercase;
+
+}
+
+
+/* ---------- Title ---------- */
+
+.cofi-title{
+
+    font-size:2rem;
+
+    line-height:1.2;
+
+    font-weight:700;
+
+    color:var(--text);
+
+}
+
+
+/* ---------- Description ---------- */
+
+.cofi-description{
+
+    color:var(--text-secondary);
+
+    line-height:1.8;
+
+    font-size:.92rem;
+
+}
+
+
+/* ---------- Link ---------- */
+
+.cofi-link{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:.5rem;
+
+    color:var(--olive);
+
+    font-weight:600;
+
+    transition:.30s;
+
+}
+
+.cofi-link:hover{
+
+    gap:.8rem;
+
+}
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+
+.cofi-button{
+
+    width:100%;
+
+    background:var(--olive);
+
+    color:#000;
+
+    border:none;
+
+    border-radius:20px;
+
+    padding:1rem 1.5rem;
+
+    font-weight:700;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:.75rem;
+
+    cursor:pointer;
+
+    transition:
+        transform .30s ease,
+        background .30s ease,
+        box-shadow .30s ease;
+
+}
+
+.cofi-button:hover{
+
+    background:var(--olive-hover);
+
+    transform:translateY(-2px);
+
+    box-shadow:0 10px 25px rgba(163,163,117,.25);
+
+}
