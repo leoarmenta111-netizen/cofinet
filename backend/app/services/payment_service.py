@@ -40,7 +40,7 @@ class PaymentService:
 
         preference = PaymentService._create_preference(purchase)
         preference_id = preference.get("id")
-        checkout_url = PaymentService._checkout_url(preference)
+        checkout_url = preference.get("init_point")
         if not isinstance(preference_id, str) or not checkout_url:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
@@ -119,81 +119,92 @@ class PaymentService:
         
         return response
 
-@staticmethod
-def _checkout_url(preference: dict[str, Any]) -> str | None:
-    checkout_url = preference.get("init_point")
-    return checkout_url if isinstance(checkout_url, str) and checkout_url else None
+    @staticmethod
+    def _checkout_url(preference: dict[str, Any]) -> str | None:
+        checkout_url = preference.get("init_point")
+        return checkout_url if isinstance(checkout_url, str) and checkout_url else None
 
-@staticmethod
-def process_mercadopago_webhook(db: Session, notification: dict[str, Any]) -> None:
-    logger.info("========== WEBHOOK RECIBIDO ==========")
-    logger.info("Payload: %s", notification)
+    @staticmethod
+    def process_mercadopago_webhook(db: Session, notification: dict[str, Any]) -> None:
+        logger.info("========== WEBHOOK RECIBIDO ==========")
+        logger.info("Payload: %s", notification)
 
-    notification_payment_id = PaymentService._notification_payment_id(notification)
+        notification_payment_id = PaymentService._notification_payment_id(notification)
 
-    logger.info("Notification payment id: %s", notification_payment_id)
+        logger.info("Notification payment id: %s", notification_payment_id)
 
-    if notification_payment_id is None:
-        logger.warning("Webhook recibido sin payment_id.")
-        return
-
-    verified_payment = PaymentService._get_mercadopago_payment(notification_payment_id)
-
-    logger.info("Mercado Pago payment:")
-    logger.info("%s", verified_payment)
-
-    payment_status = verified_payment.get("status")
-    provider_payment_id = str(verified_payment.get("id", notification_payment_id))
-    preference_id = verified_payment.get("preference_id")
-
-    logger.info("Status.............: %s", payment_status)
-    logger.info("Provider payment...: %s", provider_payment_id)
-    logger.info("Preference ID......: %s", preference_id)
-
-    if payment_status != "approved":
-        logger.warning("Pago todavía NO aprobado.")
-        return
-
-    with db.begin():
-
-        payment = db.execute(
-            select(Payment)
-            .where(
-                Payment.provider == PaymentService._PROVIDER,
-                (Payment.provider_payment_id == provider_payment_id)
-                | (Payment.provider_preference_id == preference_id),
-            )
-            .with_for_update()
-        ).scalar_one_or_none()
-
-        logger.info("Payment encontrado: %s", payment)
-
-        if payment is None:
-            logger.error("NO SE ENCONTRÓ EL PAYMENT LOCAL")
+        if notification_payment_id is None:
+            logger.warning("Webhook recibido sin payment_id.")
             return
 
-        purchase = db.execute(
-            select(Purchase)
-            .options(joinedload(Purchase.plan))
-            .where(Purchase.id == payment.purchase_id)
-            .with_for_update()
-        ).scalar_one()
+        verified_payment = PaymentService._get_mercadopago_payment(notification_payment_id)
 
-        logger.info("Purchase encontrada: %s", purchase.id)
-        logger.info("Estado actual: %s", purchase.status)
+        logger.info("Mercado Pago payment:")
+        logger.info("%s", verified_payment)
 
-        if purchase.status == PurchaseStatus.PAID:
-            logger.info("La compra ya estaba pagada.")
+        payment_status = verified_payment.get("status")
+        provider_payment_id = str(verified_payment.get("id", notification_payment_id))
+        external_reference = verified_payment.get("external_reference")
+
+        logger.info("Status.............: %s", payment_status)
+        logger.info("Provider payment...: %s", provider_payment_id)
+        logger.info("External Reference.: %s", external_reference)
+
+        if payment_status != "approved":
+            logger.warning("Pago todavía NO aprobado.")
             return
 
-        payment.provider_payment_id = provider_payment_id
-        payment.status = "approved"
+        if not external_reference or not external_reference.isdigit():
+            logger.error("El pago no tiene un external_reference válido (purchase_id).")
+            return
 
-        logger.info("Generando PIN...")
+        purchase_id = int(external_reference)
 
-        PurchaseService.mark_guest_purchase_paid(db, purchase)
+        try:
+            payment = db.execute(
+                select(Payment)
+                .where(
+                    Payment.provider == PaymentService._PROVIDER,
+                    Payment.purchase_id == purchase_id,
+                )
+                .with_for_update()
+            ).scalar_one_or_none()
 
-        logger.info("PIN generado correctamente.")
+            logger.info("Payment encontrado: %s", payment)
+
+            if payment is None:
+                logger.error("NO SE ENCONTRÓ EL PAYMENT LOCAL")
+                db.rollback()
+                return
+
+            purchase = db.execute(
+                select(Purchase)
+                .where(Purchase.id == payment.purchase_id)
+                .with_for_update()
+            ).scalar_one()
+
+            logger.info("Purchase encontrada: %s", purchase.id)
+            logger.info("Estado actual: %s", purchase.status)
+
+            if purchase.status == PurchaseStatus.PAID:
+                logger.info("La compra ya estaba pagada.")
+                db.rollback()
+                return
+
+            payment.provider_payment_id = provider_payment_id
+            payment.status = "approved"
+
+            logger.info("Generando PIN...")
+
+            PurchaseService.mark_guest_purchase_paid(db, purchase)
+            
+            db.commit()
+            logger.info("PIN generado correctamente y transacción completada.")
+
+        except Exception as e:
+            db.rollback()
+            logger.exception("Error procesando el webhook: %s", e)
+            raise
 
     @staticmethod
     def _notification_payment_id(notification: dict[str, Any]) -> str | None:
