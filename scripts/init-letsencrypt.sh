@@ -68,7 +68,7 @@ fi
 CERT_PATH="/etc/letsencrypt/live/$DOMAIN"
 echo -e "${YELLOW}► Creando certificado temporal (dummy)...${NC}"
 mkdir -p "$DATA_PATH/conf/live/$DOMAIN"
-docker compose -f "$COMPOSE_FILE" run --rm --entrypoint "\
+docker compose --env-file backend/.env -f "$COMPOSE_FILE" ... run --rm --entrypoint "\
     openssl req -x509 -nodes -newkey rsa:$RSA_KEY_SIZE -days 1 \
     -keyout '$CERT_PATH/privkey.pem' \
     -out '$CERT_PATH/fullchain.pem' \
@@ -77,7 +77,7 @@ echo -e "${GREEN}  ✔ Certificado dummy creado${NC}"
 
 # ---- Arrancar nginx ----
 echo -e "${YELLOW}► Arrancando nginx...${NC}"
-docker compose -f "$COMPOSE_FILE" up --force-recreate -d nginx
+docker compose --env-file backend/.env -f "$COMPOSE_FILE" ... up --force-recreate -d nginx
 echo -e "${GREEN}  ✔ Nginx arrancado${NC}"
 
 # ---- Esperar a que nginx esté listo ----
@@ -86,7 +86,7 @@ sleep 5
 
 # ---- Eliminar certificado dummy ----
 echo -e "${YELLOW}► Eliminando certificado temporal...${NC}"
-docker compose -f "$COMPOSE_FILE" run --rm --entrypoint "\
+docker compose --env-file backend/.env -f "$COMPOSE_FILE" ...\
     rm -rf /etc/letsencrypt/live/$DOMAIN && \
     rm -rf /etc/letsencrypt/archive/$DOMAIN && \
     rm -rf /etc/letsencrypt/renewal/$DOMAIN.conf" certbot
@@ -103,7 +103,7 @@ if [ $STAGING != "0" ]; then
     echo -e "${YELLOW}  ⚠ Modo STAGING activado (certificado de prueba)${NC}"
 fi
 
-docker compose -f "$COMPOSE_FILE" run --rm --entrypoint "\
+docker compose --env-file backend/.env -f "$COMPOSE_FILE" ...\
     certbot certonly --webroot -w /var/www/certbot \
     $STAGING_ARG \
     --email $EMAIL \
