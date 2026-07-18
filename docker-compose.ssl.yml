@@ -47,7 +47,7 @@ services:
     # Reload nginx every 6 hours to pick up renewed certificates
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
-    certbot:
+  certbot:
     image: certbot/certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
