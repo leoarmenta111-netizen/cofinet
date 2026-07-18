@@ -86,10 +86,10 @@ sleep 5
 
 # ---- Eliminar certificado dummy ----
 echo -e "${YELLOW}► Eliminando certificado temporal...${NC}"
-docker compose --env-file backend/.env -f "$COMPOSE_FILE" \
-    rm -rf /etc/letsencrypt/live/$DOMAIN && \
-    rm -rf /etc/letsencrypt/archive/$DOMAIN && \
-    rm -rf /etc/letsencrypt/renewal/$DOMAIN.conf" certbot
+docker compose --env-file backend/.env -f "$COMPOSE_FILE" run --rm --entrypoint "\
+rm -rf /etc/letsencrypt/live/$DOMAIN && \
+rm -rf /etc/letsencrypt/archive/$DOMAIN && \
+rm -rf /etc/letsencrypt/renewal/$DOMAIN.conf" certbot
 echo -e "${GREEN}  ✔ Certificado temporal eliminado${NC}"
 
 # ---- Solicitar certificado real ----
@@ -103,27 +103,27 @@ if [ $STAGING != "0" ]; then
     echo -e "${YELLOW}  ⚠ Modo STAGING activado (certificado de prueba)${NC}"
 fi
 
-docker compose --env-file backend/.env -f "$COMPOSE_FILE" \
-    certbot certonly --webroot -w /var/www/certbot \
+docker compose --env-file backend/.env -f "$COMPOSE_FILE" run --rm certbot \
+    certonly --webroot \
+    -w /var/www/certbot \
     $STAGING_ARG \
-    --email $EMAIL \
-    --domain $DOMAIN \
-    --rsa-key-size $RSA_KEY_SIZE \
+    --email "$EMAIL" \
+    --domain "$DOMAIN" \
+    --rsa-key-size "$RSA_KEY_SIZE" \
     --agree-tos \
     --no-eff-email \
-    --force-renewal" certbot
+    --force-renewal
 
 echo ""
 echo -e "${GREEN}  ✔ Certificado Let's Encrypt obtenido${NC}"
 
 # ---- Recargar nginx con certificado real ----
 echo -e "${YELLOW}► Recargando nginx con certificado válido...${NC}"
-docker compose --env-file backend/.env -f exec nginx nginx -s reload
-echo -e "${GREEN}  ✔ Nginx recargado${NC}"
+docker compose --env-file backend/.env -f "$COMPOSE_FILE" exec nginx nginx -s reloadecho -e "${GREEN}  ✔ Nginx recargado${NC}"
 
 # ---- Arrancar todos los servicios ----
 echo -e "${YELLOW}► Arrancando todos los servicios...${NC}"
-docker compose --env-file backend/.env -f up -d
+docker compose --env-file backend/.env -f "$COMPOSE_FILE" up -d
 echo -e "${GREEN}  ✔ Todos los servicios arrancados${NC}"
 
 echo ""
