@@ -118,12 +118,12 @@ echo -e "${GREEN}  ✔ Certificado Let's Encrypt obtenido${NC}"
 
 # ---- Recargar nginx con certificado real ----
 echo -e "${YELLOW}► Recargando nginx con certificado válido...${NC}"
-docker compose -f "$COMPOSE_FILE" exec nginx nginx -s reload
+docker compose --env-file backend/.env -f exec nginx nginx -s reload
 echo -e "${GREEN}  ✔ Nginx recargado${NC}"
 
 # ---- Arrancar todos los servicios ----
 echo -e "${YELLOW}► Arrancando todos los servicios...${NC}"
-docker compose -f "$COMPOSE_FILE" up -d
+docker compose --env-file backend/.env -f up -d
 echo -e "${GREEN}  ✔ Todos los servicios arrancados${NC}"
 
 echo ""
