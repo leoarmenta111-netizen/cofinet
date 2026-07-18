@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from decimal import Decimal
-import json
 import logging
 from typing import Any
 from urllib.parse import urlparse
@@ -9,7 +8,7 @@ import mercadopago
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.payment import Payment
@@ -70,14 +69,8 @@ class PaymentService:
 
     @staticmethod
     def _create_preference(purchase: Purchase) -> dict[str, Any]:
-        import json
-
-        print("=" * 80)
-        print(json.dumps(preference_data, indent=2))
-        print("=" * 80)
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
-        
-        
+
         preference_data: dict[str, Any] = {
             "items": [
                 {

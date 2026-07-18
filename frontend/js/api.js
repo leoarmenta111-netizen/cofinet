@@ -1,6 +1,6 @@
 const API_BASE_URL =
     window.location.hostname === "localhost"
-        ? "http://2.24.31.123/api"
+        ? "https://cofinet-portal.duckdns.org/api"
         : "/api";
 
 class ApiError extends Error {

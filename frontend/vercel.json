@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://2.24.31.123/api/:path*"
+      "destination": "https://cofinet-portal.duckdns.org/api/:path*"
     }
   ]
 }
