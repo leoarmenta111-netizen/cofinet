@@ -1,4 +1,7 @@
-const API_BASE_URL = "/api";
+const API_BASE_URL =
+    window.location.hostname === "localhost"
+        ? "http://2.24.31.123/api"
+        : "/api";
 
 class ApiError extends Error {
     constructor(message, status) {

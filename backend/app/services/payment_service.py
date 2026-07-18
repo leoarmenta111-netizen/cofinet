@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from decimal import Decimal
+import json
 import logging
 from typing import Any
 from urllib.parse import urlparse
@@ -69,7 +70,13 @@ class PaymentService:
 
     @staticmethod
     def _create_preference(purchase: Purchase) -> dict[str, Any]:
+        import json
+
+        print("=" * 80)
+        print(json.dumps(preference_data, indent=2))
+        print("=" * 80)
         sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+        
         
         preference_data: dict[str, Any] = {
             "items": [
