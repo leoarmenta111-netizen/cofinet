@@ -94,7 +94,7 @@ class PaymentService:
                 "failure": f"{frontend_url}/?purchase_id={purchase.id}",
             }
             preference_data["auto_return"] = "approved"
-        logger.info("Mercado Pago preference payload: %r", preference_data)
+        print(preference_data)
         try:
             result = sdk.preference().create(preference_data)
         except Exception as exc:
