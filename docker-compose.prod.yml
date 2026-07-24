@@ -1,0 +1,37 @@
+name: cofinet-prod
+
+services:
+  backend:
+    env_file:
+      - .env.production
+
+  db-init:
+    env_file:
+      - .env.production
+
+  nginx:
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?PUBLIC_DOMAIN is required}
+      NGINX_ENVSUBST_FILTER: ^PUBLIC_DOMAIN$
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/prod.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+
+  certbot:
+    profiles: ["certbot"]
+    image: certbot/certbot:v2.11.0
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    networks:
+      - application
+    restart: "no"
+
+volumes:
+  postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:?Set POSTGRES_VOLUME_NAME to the verified existing production volume}
+    external: true

@@ -1,5 +1,70 @@
 cuandoDocumentoListoPago(enlazarControlesPago);
 
+
+function guardarContextoHotspot() {
+    const params = new URLSearchParams(window.location.search);
+
+    const loginUrl = params.get("login_url");
+    const destination = params.get("dst");
+    const mac = params.get("mac");
+
+    if (!loginUrl) return;
+
+    localStorage.setItem(
+        "cofinet_hotspot_context",
+        JSON.stringify({
+            loginUrl,
+            destination: destination || "http://neverssl.com/",
+            mac: mac || ""
+        })
+    );
+}
+
+function iniciarSesionHotspotDespuesDelPago(pin) {
+    let context;
+
+    try {
+        context = JSON.parse(
+            localStorage.getItem("cofinet_hotspot_context") || "null"
+        );
+    } catch {
+        context = null;
+    }
+
+    if (!context?.loginUrl || !pin) {
+        return false;
+    }
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = context.loginUrl;
+    form.style.display = "none";
+
+    const fields = {
+        username: pin,
+        password: pin,
+        dst: context.destination || "http://neverssl.com/",
+        popup: "false"
+    };
+
+    Object.entries(fields).forEach(([name, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+
+    localStorage.removeItem("cofinet_hotspot_context");
+
+    form.submit();
+    return true;
+}
+
+
+
 function cuandoDocumentoListoPago(callback) {
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", callback);
@@ -21,10 +86,17 @@ function enlazarControlesPago() {
         form.addEventListener("submit", event => event.preventDefault());
     });
     document.querySelectorAll("[data-mercadopago-checkout]").forEach(button => {
-        button.addEventListener("click", () => {
-            if (button.dataset.checkoutUrl) window.location.assign(button.dataset.checkoutUrl);
-        });
+    button.addEventListener("click", () => {
+
+        if (!button.dataset.checkoutUrl) return;
+
+        window.open(
+            button.dataset.checkoutUrl,
+            "_blank"
+        );
+
     });
+});
     document.querySelectorAll("[data-card-format='number']").forEach(input => {
         input.addEventListener("input", () => formatearTarjeta(input));
     });
@@ -42,7 +114,9 @@ async function comprarPlan(planId, button) {
     try {
         const checkout = await window.CofiApi.createGuestCheckout(planId);
         const selectedPlan = window.CofiPlans?.find(plan => plan.id === planId);
-        sessionStorage.setItem("cofinet_pending_purchase", JSON.stringify({
+        guardarContextoHotspot();
+
+        localStorage.setItem("cofinet_pending_purchase", JSON.stringify({
             purchaseId: checkout.purchase_id,
             plan: selectedPlan?.name || "Plan seleccionado",
             durationMinutes: selectedPlan?.duration_minutes || 0
@@ -58,37 +132,60 @@ async function comprarPlan(planId, button) {
 }
 
 function restaurarCompraPendiente() {
-    const purchaseId = Number(new URLSearchParams(window.location.search).get("purchase_id"));
-    if (!Number.isInteger(purchaseId) || purchaseId <= 0) return;
 
     let pendingPurchase;
+
     try {
-        pendingPurchase = JSON.parse(sessionStorage.getItem("cofinet_pending_purchase") || "null");
+        pendingPurchase = JSON.parse(
+            localStorage.getItem("cofinet_pending_purchase") || "null"
+        );
     } catch {
         pendingPurchase = null;
     }
-    if (!pendingPurchase || pendingPurchase.purchaseId !== purchaseId) return;
 
-    const intervalId = window.setInterval(async () => {
-        try {
-            const purchase = await window.CofiApi.getGuestPurchaseStatus(purchaseId);
-            if (purchase.status !== "paid") return;
+    if (!pendingPurchase) return;
 
-            window.clearInterval(intervalId);
-            sessionStorage.removeItem("cofinet_pending_purchase");
-            window.history.replaceState({}, document.title, window.location.pathname);
-            mostrarCompraExitosa({
-                plan: pendingPurchase.plan,
-                pin: purchase.pin,
-                duration_minutes: pendingPurchase.durationMinutes,
-                expires_at: purchase.expires_at
-            });
-        } catch (error) {
-            console.warn("No fue posible consultar el estado del pago.", error);
-        }
-    }, 3000);
+    const purchaseId = pendingPurchase.purchaseId;
+
+    async function revisarCompra() {
+
+    try {
+
+        const purchase = await window.CofiApi.getGuestPurchaseStatus(purchaseId);
+
+        if (purchase.status !== "paid") return;
+
+        window.clearInterval(intervalId);
+
+        localStorage.removeItem("cofinet_pending_purchase");
+
+        const purchaseData = {
+            plan: pendingPurchase.plan,
+            pin: purchase.pin,
+            duration_minutes: pendingPurchase.durationMinutes,
+            expires_at: purchase.expires_at
+        };
+
+        mostrarCompraExitosa(purchaseData);
+
+        window.setTimeout(() => {
+            iniciarSesionHotspotDespuesDelPago(purchase.pin);
+        }, 1200);
+
+    } catch (error) {
+
+        console.warn("No fue posible consultar el estado.", error);
+
+    }
+
 }
 
+// Revisar inmediatamente
+revisarCompra();
+
+// Después seguir revisando cada 3 segundos
+const intervalId = window.setInterval(revisarCompra, 3000);
+}
 function cerrarFormularioPago() {
     document.getElementById("modal-pago").classList.add("hidden");
 }

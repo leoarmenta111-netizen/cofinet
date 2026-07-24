@@ -1,0 +1,25 @@
+name: cofinet-dev
+
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-5433}:5432"
+
+  backend:
+    env_file:
+      - .env.local
+    build:
+      target: development
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - ./backend/app:/app/app
+
+  db-init:
+    env_file:
+      - .env.local
+
+  nginx:
+    ports:
+      - "${HTTP_BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-8080}:80"
+    volumes:
+      - ./nginx/dev.conf:/etc/nginx/conf.d/default.conf:ro

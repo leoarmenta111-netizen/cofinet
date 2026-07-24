@@ -2,6 +2,8 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 import secrets
 
+from app.services.mikrotik_service import MikroTikService
+
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -84,26 +86,59 @@ class PurchaseService:
             ) from exc
         return purchase
 
+    
     @staticmethod
     def mark_guest_purchase_paid(db: Session, purchase: Purchase) -> None:
-        """Issue one unique credential for a verified pending guest purchase."""
+        """Issue one unique credential and create its MikroTik Hotspot user."""
         issued_at = datetime.now(UTC)
+
         for _ in range(PurchaseService._PIN_GENERATION_ATTEMPTS):
             pin_code = PurchaseService._generate_pin()
+
             if PurchaseService._pin_exists(db, pin_code):
                 continue
 
+            mikrotik = None
+            mikrotik_user_created = False
+
             try:
+                mikrotik = MikroTikService()
+
+                mikrotik.create_hotspot_user(
+                    username=pin_code,
+                    password=pin_code,
+                    duration_minutes=purchase.plan.duration_minutes,
+                    profile="default",
+                )
+                mikrotik_user_created = True
+
                 with db.begin_nested():
                     purchase.status = PurchaseStatus.PAID
                     purchase.pin_code = pin_code
                     purchase.issued_at = issued_at
-                    purchase.expires_at = issued_at + timedelta(minutes=purchase.plan.duration_minutes)
+                    purchase.expires_at = issued_at + timedelta(
+                        minutes=purchase.plan.duration_minutes
+                    )
                     db.flush()
+
                 return
+
             except IntegrityError:
-                # The unique constraint also protects against concurrent notifications.
+                if mikrotik_user_created and mikrotik is not None:
+                    mikrotik.remove_hotspot_user(pin_code)
                 continue
+
+            except Exception:
+                if mikrotik_user_created and mikrotik is not None:
+                    try:
+                        mikrotik.remove_hotspot_user(pin_code)
+                    except Exception:
+                        pass
+                raise
+
+            finally:
+                if mikrotik is not None:
+                    mikrotik.disconnect()
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

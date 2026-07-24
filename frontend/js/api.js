@@ -1,7 +1,5 @@
-const API_BASE_URL =
-    window.location.hostname === "localhost"
-        ? "https://cofinet-portal.duckdns.org/api"
-        : "/api";
+// All environments expose the API through the same-origin Nginx /api proxy.
+const API_BASE_URL = "/api";
 
 class ApiError extends Error {
     constructor(message, status) {

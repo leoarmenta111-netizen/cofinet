@@ -3,24 +3,34 @@ venv/
 .venv/
 backend/venv/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Environment
-backend/.env
+# Environment and secrets
 .env
 .env.*
 !.env.example
+!.env.*.example
+backend/.env
+backend/.env.*
+!backend/.env.example
 
-# VS Code
+# Database dumps (keep documentation/placeholders only)
+backups/*
+!backups/.gitkeep
+!backups/README.md
+
+# Certificates and ACME account credentials
+certbot/conf/*
+!certbot/conf/.gitkeep
+certbot/www/*
+!certbot/www/.gitkeep
+
+# Editors, OS files, and logs
 .vscode/
-
-# Logs
-<<<<<<< HEAD
-<<<<<<< HEAD
+.idea/
+.DS_Store
+Thumbs.db
 *.log
-=======
-*.log
->>>>>>> 16bb972 (Remove enviroment file repository)
-=======
-*.log
->>>>>>> 800593e (Finish frontend reorganization)

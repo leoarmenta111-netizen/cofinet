@@ -14,7 +14,7 @@ app = FastAPI(
 
     title=settings.APP_NAME,
 
-    version=settings.VERSION,
+    version=settings.APP_VERSION,
 
     description="Backend API for CofiNet+ Captive Portal"
 
@@ -22,11 +22,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://cofinet-eta.vercel.app",
-        "http://127.0.0.1:5500",
-        "http://localhost:5500"
-    ],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,7 +42,7 @@ async def root():
     return {
         "project": "CofiNet+",
         "status": "online",
-        "version": "1.0.0"
+        "version": settings.APP_VERSION
     }
 
 

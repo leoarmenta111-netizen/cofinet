@@ -23,12 +23,26 @@ async def mercadopago_webhook(
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
     """Verifies the payment with Mercado Pago before changing local records."""
+
     try:
         payload: Any = await request.json()
-    except ValueError:
+    except Exception:
         payload = {}
+
+    if not isinstance(payload, dict):
+        payload = {}
+
+    query = dict(request.query_params)
+
+    if "id" in query and "id" not in payload:
+        payload["id"] = query["id"]
+
+    if "data.id" in query:
+        payload["data"] = {"id": query["data.id"]}
+
     PaymentService.process_mercadopago_webhook(
         db,
-        payload if isinstance(payload, dict) else {},
+        payload,
     )
+
     return {"status": "ok"}

@@ -6,12 +6,21 @@ set -e
 # Configuración
 #############################################
 
-DOMAIN="cofinet-portal.duckdns.org"
-EMAIL="leoarmenta111@gmail.com"
-STAGING=0
+ENV_FILE="${ENV_FILE:-.env.production}"
+env_value() {
+    sed -n "s/^$1=//p" "$ENV_FILE" | tail -n 1
+}
 
-DATA_PATH="./certbot"
-COMPOSE_FILE="docker-compose.ssl.yml"
+DOMAIN="${PUBLIC_DOMAIN:-$(env_value PUBLIC_DOMAIN)}"
+EMAIL="${LETSENCRYPT_EMAIL:-$(env_value LETSENCRYPT_EMAIL)}"
+STAGING="${LETSENCRYPT_STAGING:-0}"
+DATA_PATH="${CERTBOT_DATA_PATH:-./certbot}"
+COMPOSE_ARGS=(--env-file "$ENV_FILE" -f docker-compose.yml -f docker-compose.prod.yml --profile certbot)
+
+if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "REPLACE_ME" ] || [ -z "$EMAIL" ] || [ "$EMAIL" = "REPLACE_ME" ]; then
+    echo "PUBLIC_DOMAIN and LETSENCRYPT_EMAIL must be configured in $ENV_FILE." >&2
+    exit 2
+fi
 
 RSA_KEY_SIZE=4096
 
@@ -68,8 +77,7 @@ echo -e "${YELLOW}Creando certificado dummy...${NC}"
 mkdir -p "${DATA_PATH}/conf/live/${DOMAIN}"
 
 docker compose \
-    --env-file backend/.env \
-    -f ${COMPOSE_FILE} \
+    "${COMPOSE_ARGS[@]}" \
     run --rm \
     --entrypoint "\
 openssl req \
@@ -89,8 +97,7 @@ certbot
 echo -e "${YELLOW}Levantando nginx...${NC}"
 
 docker compose \
-    --env-file backend/.env \
-    -f ${COMPOSE_FILE} \
+    "${COMPOSE_ARGS[@]}" \
     up --force-recreate -d nginx
 
 sleep 5
@@ -102,8 +109,7 @@ sleep 5
 echo -e "${YELLOW}Eliminando certificado dummy...${NC}"
 
 docker compose \
-    --env-file backend/.env \
-    -f ${COMPOSE_FILE} \
+    "${COMPOSE_ARGS[@]}" \
     run --rm \
     --entrypoint "\
 rm -Rf /etc/letsencrypt/live/${DOMAIN} && \
@@ -124,8 +130,7 @@ if [ "$STAGING" != "0" ]; then
 fi
 
 docker compose \
-    --env-file backend/.env \
-    -f ${COMPOSE_FILE} \
+    "${COMPOSE_ARGS[@]}" \
     run --rm certbot \
     certonly \
     --webroot \
@@ -145,8 +150,7 @@ docker compose \
 echo -e "${YELLOW}Recargando nginx...${NC}"
 
 docker compose \
-    --env-file backend/.env \
-    -f ${COMPOSE_FILE} \
+    "${COMPOSE_ARGS[@]}" \
     exec nginx nginx -s reload
 
 #############################################
@@ -156,9 +160,8 @@ docker compose \
 echo -e "${YELLOW}Levantando servicios...${NC}"
 
 docker compose \
-    --env-file backend/.env \
-    -f ${COMPOSE_FILE} \
-    up -d
+    "${COMPOSE_ARGS[@]}" \
+    up -d postgres backend nginx
 
 echo ""
 echo "=========================================="

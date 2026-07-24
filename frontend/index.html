@@ -1323,11 +1323,28 @@ class="w-5 h-5">
                 <h3 id="success-screen-title" class="text-lg md:text-xl font-black text-cofiOlive font-grotesk tracking-wide transition-all">Ya cuentas con conexión CofiNet+</h3>
                 <p id="success-screen-subtitle" class="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider">Disfruta la experiencia Coficenter®.</p>
                 <div id="purchase-success-details" class="hidden pt-3 space-y-1 text-[10px] text-zinc-400 uppercase tracking-wider">
-                    <p class="text-cofiOlive font-bold">Tu código de acceso</p>
-                    <p>PIN: <span id="purchase-pin"></span></p>
-                    <p>Tiempo adquirido: <span id="purchase-duration"></span></p>
-                    <p>Expiration: <span id="purchase-expires-at"></span></p>
-                </div>
+
+    <p>
+        Plan:
+        <span id="purchase-plan-name"></span>
+    </p>
+
+    <p>
+        PIN:
+        <span id="purchase-pin"></span>
+    </p>
+
+    <p>
+        Tiempo adquirido:
+        <span id="purchase-duration"></span>
+    </p>
+
+    <p>
+        Expiración:
+        <span id="purchase-expires-at"></span>
+    </p>
+
+</div>
             </div>
 
                 <div id="guest-purchase-details" class="hidden pt-3 space-y-1 text-[10px] text-zinc-400 uppercase tracking-wider">
@@ -1427,5 +1444,14 @@ class="w-5 h-5">
     <script src="js/payment.js"></script>
     <script src="js/animations.js"></script>
     <script src="js/membership.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('a[href="portal.html"]').forEach(link => {
+        link.href = "portal.html" + window.location.search;
+    });
+});
+</script>
+
 </body>
 </html>
