@@ -3,27 +3,191 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
     <title>PINs de efectivo | CofiNet+</title>
-    <style>body{font-family:Arial,sans-serif;background:#f4f4ef;margin:0;color:#202820}header,main{max-width:960px;margin:auto;padding:1rem}header{display:flex;justify-content:space-between;align-items:center}.panel{background:#fff;padding:1rem;border-radius:10px;box-shadow:0 2px 10px #0001}select,button{padding:.6rem;margin:.25rem}button,a{color:#fff;background:#33452d;border:0;border-radius:5px;text-decoration:none;cursor:pointer}table{width:100%;border-collapse:collapse;margin-top:1rem}td,th{text-align:left;padding:.6rem;border-bottom:1px solid #ddd}.result{font-weight:bold;min-height:1.5rem}</style>
+    <link rel="stylesheet" href="admin.css">
 </head>
-<body>
-    <header><strong>CofiNet+ Admin</strong><div><a href="dashboard.html">Dashboard</a> <button onclick="logoutAdmin()">Salir</button></div></header>
-    <main><h1>PINs de efectivo</h1><section class="panel"><form id="pin-form"><label for="plan">Plan</label> <select id="plan" required></select><button>Generar PIN</button></form><p class="result" id="result"></p></section><section class="panel"><table><thead><tr><th>PIN</th><th>Plan</th><th>Monto</th><th>Emitido</th><th>Expira</th></tr></thead><tbody id="pin-list"></tbody></table></section></main>
+<body class="auth-pending" data-page="pins">
+    <div class="app-shell protected-content">
+        <aside class="sidebar">
+            <div class="brand-lockup"><span class="brand-mark">C</span><span>CofiNet+</span></div>
+            <nav data-admin-nav aria-label="Navegación principal"></nav>
+            <div class="sidebar-profile"><div class="profile-row"><span class="avatar" data-admin-initials></span><div class="profile-copy"><strong data-admin-name></strong><span data-admin-role></span></div></div><button class="button button-ghost logout-button" type="button" onclick="CofiAdmin.logoutAdmin()">Cerrar sesión</button></div>
+        </aside>
+        <div class="main-area">
+            <header class="topbar"><button class="button button-ghost menu-toggle" data-menu-toggle aria-expanded="false" aria-label="Abrir menú">Menú</button><span class="topbar-title">Punto de venta</span><span class="muted" data-admin-name></span></header>
+            <main class="content">
+                <header class="page-header"><div><p class="eyebrow">Acceso en efectivo</p><h1 class="page-title">Generar PIN</h1><p class="page-description">Selecciona un plan y genera un acceso único. El PIN se registra a nombre del operador actual.</p></div></header>
+                <div class="split-layout">
+                    <section class="panel">
+                        <div class="panel-header"><h2>Nuevo PIN</h2><span class="badge badge-neutral">MikroTik requerido</span></div>
+                        <div class="panel-body">
+                            <form id="pin-form">
+                                <div class="field"><label for="plan">Plan activo</label><select id="plan" name="plan" required><option value="">Cargando planes…</option></select></div>
+                                <div class="plan-preview"><div><span>Precio</span><strong id="plan-price">—</strong></div><div><span>Duración</span><strong id="plan-duration">—</strong></div></div>
+                                <p id="plan-description" class="integration-note">Selecciona un plan para ver sus condiciones.</p>
+                                <button id="generate-button" class="button button-primary button-block" type="submit" disabled>Generar PIN</button>
+                                <p id="pin-error" class="form-error" role="alert"></p>
+                            </form>
+                        </div>
+                    </section>
+                    <section class="panel" aria-live="polite">
+                        <div class="panel-header"><h2>PIN generado</h2><span id="success-badge" class="badge badge-neutral">Sin generar</span></div>
+                        <div id="pin-placeholder" class="empty-state"><strong>Listo para la siguiente venta</strong><p>El PIN aparecerá aquí solamente después de que MikroTik y la base de datos confirmen la creación.</p></div>
+                        <div id="pin-success" class="pin-success">
+                            <span class="muted">Acceso creado correctamente</span>
+                            <strong id="generated-pin" class="pin-code"></strong>
+                            <div class="success-details"><div><span>Plan</span><strong id="generated-plan"></strong></div><div><span>Vigencia</span><strong id="generated-duration"></strong></div><div><span>Creado</span><strong id="generated-issued"></strong></div><div><span>Expira</span><strong id="generated-expires"></strong></div></div>
+                            <div class="success-actions"><button id="copy-pin" class="button button-primary" type="button">Copiar PIN</button><button id="print-pin" class="button button-secondary" type="button">Imprimir ticket</button></div>
+                        </div>
+                    </section>
+                </div>
+                <section class="panel" style="margin-top:1rem">
+                    <div class="panel-header"><div><h2 id="history-title">Historial de PINs</h2><small class="muted" id="history-note"></small></div><button id="refresh-pins" class="button button-ghost button-small" type="button">Actualizar</button></div>
+                    <div class="table-wrap"><table><thead><tr><th>PIN</th><th>Plan</th><th>Importe</th><th>Duración</th><th>Operador</th><th>Creado</th><th>Expira</th></tr></thead><tbody id="pin-list"><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody></table></div>
+                </section>
+                <section class="panel" style="margin-top:1rem">
+                    <div class="panel-header"><div><h2>Generación por lote</h2><small class="muted">De 1 a 100 accesos confirmados individualmente en MikroTik y PostgreSQL.</small></div><span class="badge badge-neutral">PINs de 6 dígitos</span></div>
+                    <div class="panel-body">
+                        <form id="batch-form" class="batch-form">
+                            <div class="field"><label for="batch-plan">Plan activo</label><select id="batch-plan" required><option value="">Cargando planes…</option></select></div>
+                            <div class="field"><label for="batch-quantity">Cantidad</label><input id="batch-quantity" type="number" min="1" max="100" value="100" required inputmode="numeric"></div>
+                            <div class="field batch-submit"><label>&nbsp;</label><button id="batch-generate" class="button button-primary" type="submit" disabled>Generar lote</button></div>
+                        </form>
+                        <div id="batch-progress" class="batch-progress" hidden role="status" aria-live="polite"><span class="progress-spinner" aria-hidden="true"></span><div><strong>Generando accesos…</strong><p id="batch-progress-copy">Esperando confirmación individual de MikroTik y base de datos.</p></div></div>
+                        <p id="batch-error" class="form-error" role="alert"></p>
+                        <div id="batch-result" class="batch-result" hidden aria-live="polite">
+                            <div><span>Solicitados</span><strong id="batch-requested">0</strong></div><div><span>Creados</span><strong id="batch-created">0</strong></div><div><span>Fallidos</span><strong id="batch-failed">0</strong></div><div><span>Estado</span><strong id="batch-status">—</strong></div>
+                            <div class="batch-result-actions"><button id="batch-print" class="button button-primary" type="button">Imprimir lote</button><button id="batch-csv" class="button button-secondary" type="button">Descargar CSV</button></div>
+                        </div>
+                    </div>
+                    <div class="panel-header"><div><h2>Historial de lotes</h2><small class="muted" id="batch-history-note">Cargando…</small></div><button id="refresh-batches" class="button button-ghost button-small" type="button">Actualizar</button></div>
+                    <div class="table-wrap"><table><thead><tr><th>Lote</th><th>Plan</th><th>Resultado</th><th>Estado</th><th>Operador</th><th>Creado</th><th>Acciones</th></tr></thead><tbody id="batch-list"><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody></table></div>
+                </section>
+                <section id="internal-access-section" class="panel" style="margin-top:1rem" hidden>
+                    <div class="panel-header"><div><h2>Acceso permanente para dispositivos</h2><small class="muted">Credenciales internas, sin expiración y excluidas de ventas.</small></div><span class="badge badge-warning">Solo SUPER_ADMIN</span></div>
+                    <div class="panel-body">
+                        <form id="internal-form" class="batch-form">
+                            <div class="field internal-label-field"><label for="internal-label">Etiqueta del dispositivo</label><input id="internal-label" maxlength="120" minlength="2" placeholder="Tablet Pedidos 1" required autocomplete="off"></div>
+                            <div class="field batch-submit"><label>&nbsp;</label><button id="internal-generate" class="button button-primary" type="submit">Generar acceso permanente</button></div>
+                        </form>
+                        <p class="integration-note">Usa el PIN como usuario y contraseña. El perfil <span class="mono">internal-devices</span> debe existir en el MikroTik de QA con un usuario compartido.</p>
+                        <p id="internal-error" class="form-error" role="alert"></p>
+                    </div>
+                    <div class="table-wrap"><table><thead><tr><th>Dispositivo</th><th>PIN</th><th>Tipo</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr></thead><tbody id="internal-list"><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody></table></div>
+                </section>
+            </main>
+        </div>
+    </div>
+    <section id="print-ticket" class="print-ticket" aria-hidden="true"><h1>CofiNet+</h1><p>Acceso WiFi</p><strong class="ticket-pin" data-ticket-pin></strong><dl><dt>Plan</dt><dd data-ticket-plan></dd><dt>Duración</dt><dd data-ticket-duration></dd><dt>Creado</dt><dd data-ticket-issued></dd><dt>Expira</dt><dd data-ticket-expires></dd></dl><p>Conserva este ticket durante tu sesión.</p></section>
+    <section id="batch-print-area" class="batch-print-area" aria-hidden="true"><header><h1>CofiNet+</h1><p id="batch-print-heading">Accesos WiFi</p></header><div id="batch-ticket-grid" class="batch-ticket-grid"></div></section>
     <script src="admin.js"></script>
     <script>
-        requireAdmin();
+(() => {
+
+        const { PIN_OPERATOR, adminRequest, bootstrapAdmin, copyText, formatDate, formatDuration, formatMoney, printPinTicket, setButtonLoading, showEmpty, showToast } = window.CofiAdmin;
+        let plans = [];
+        let latestPin = null;
+        let activeAdmin = null;
         const planSelect = document.getElementById("plan");
-        function showPins(pins) {
-            const list = document.getElementById("pin-list"); list.replaceChildren();
-            pins.forEach(pin => { const row = document.createElement("tr"); [pin.pin, pin.plan_name, `$${Number(pin.amount).toFixed(2)} MXN`, new Date(pin.issued_at).toLocaleString("es-MX"), new Date(pin.expires_at).toLocaleString("es-MX")].forEach(value => { const cell = document.createElement("td"); cell.textContent = value; row.append(cell); }); list.append(row); });
+
+        function updatePlanPreview() {
+            if (!plans.length) {
+                document.getElementById("plan-price").textContent = "—";
+                document.getElementById("plan-duration").textContent = "—";
+                document.getElementById("plan-description").textContent = "No hay planes activos disponibles.";
+                document.getElementById("generate-button").disabled = true;
+                return;
+            }
+            const plan = plans.find(item => item.id === Number(planSelect.value));
+            document.getElementById("plan-price").textContent = plan ? formatMoney(plan.price) : "—";
+            document.getElementById("plan-duration").textContent = plan ? formatDuration(plan.duration_minutes) : "—";
+            document.getElementById("plan-description").textContent = plan?.description || "Selecciona un plan para ver sus condiciones.";
+            document.getElementById("generate-button").disabled = !plan;
         }
-        async function load() {
-            const [plans, pins] = await Promise.all([adminRequest("/plans"), adminRequest("/admin/pins")]);
-            planSelect.replaceChildren(); plans.forEach(plan => { const option = document.createElement("option"); option.value = plan.id; option.textContent = `${plan.name} — $${Number(plan.price).toFixed(2)} MXN`; planSelect.append(option); });
-            showPins(pins.pins);
+
+        function configurePlans(loadedPlans) {
+            plans = loadedPlans;
+            if (!plans.length) {
+                planSelect.replaceChildren(new Option("No hay planes activos disponibles.", ""));
+                planSelect.disabled = true;
+                updatePlanPreview();
+                return;
+            }
+
+            planSelect.disabled = false;
+            planSelect.replaceChildren();
+            plans.forEach(plan => planSelect.add(new Option(`${plan.name} · ${formatMoney(plan.price)} · ${formatDuration(plan.duration_minutes)}`, plan.id)));
+            planSelect.value = String(plans[0].id);
+            updatePlanPreview();
         }
-        document.getElementById("pin-form").addEventListener("submit", async event => { event.preventDefault(); try { const pin = await adminRequest("/admin/pins", { method: "POST", body: JSON.stringify({ plan_id: Number(planSelect.value) }) }); document.getElementById("result").textContent = `PIN generado: ${pin.pin}`; load(); } catch (error) { document.getElementById("result").textContent = error.message; } });
-        load().catch(error => { alert(error.message); if (!adminToken()) window.location.replace("login.html"); });
-    </script>
+
+        function renderPins(pins) {
+            const body = document.getElementById("pin-list");
+            body.replaceChildren();
+            if (!pins.length) {
+                const row = document.createElement("tr"); const cell = document.createElement("td"); cell.colSpan = 7;
+                showEmpty(cell, "Aún no hay PINs", activeAdmin.role === PIN_OPERATOR ? "Los PINs que generes aparecerán aquí." : "Los PINs de efectivo aparecerán aquí.");
+                row.append(cell); body.append(row); return;
+            }
+            for (const pin of pins) {
+                const row = document.createElement("tr");
+                const values = [pin.pin, pin.plan_name, formatMoney(pin.amount), formatDuration(pin.duration_minutes), pin.created_by_admin_name || "Sin auditoría", formatDate(pin.issued_at), formatDate(pin.expires_at)];
+                values.forEach((value, index) => { const cell = document.createElement("td"); cell.textContent = value; if (index === 0) cell.className = "mono"; row.append(cell); });
+                body.append(row);
+            }
+        }
+
+        async function loadPins() {
+            const response = await adminRequest("/admin/pins");
+            renderPins(response.pins);
+        }
+
+        async function loadPage() {
+            activeAdmin = await bootstrapAdmin();
+            if (!activeAdmin) return;
+            document.getElementById("history-title").textContent = activeAdmin.role === PIN_OPERATOR ? "Mis PINs" : "Historial de PINs de efectivo";
+            document.getElementById("history-note").textContent = activeAdmin.role === PIN_OPERATOR ? "Solo los generados por tu cuenta" : "Todos los operadores";
+            const [loadedPlans] = await Promise.all([adminRequest("/plans"), loadPins()]);
+            configurePlans(loadedPlans);
+        }
+
+        planSelect.addEventListener("change", updatePlanPreview);
+        document.getElementById("refresh-pins").addEventListener("click", () => loadPins().catch(error => showToast(error.message, "error")));
+        document.getElementById("copy-pin").addEventListener("click", () => latestPin && copyText(latestPin.pin).catch(() => showToast("No fue posible copiar el PIN.", "error")));
+        document.getElementById("print-pin").addEventListener("click", () => latestPin && printPinTicket(latestPin));
+        document.getElementById("pin-form").addEventListener("submit", async event => {
+            event.preventDefault();
+            const button = document.getElementById("generate-button");
+            const errorNode = document.getElementById("pin-error");
+            if (!planSelect.value || button.disabled) return;
+            errorNode.textContent = "";
+            setButtonLoading(button, true, "Creando acceso…");
+            try {
+                latestPin = await adminRequest("/admin/pins", { method: "POST", body: JSON.stringify({ plan_id: Number(planSelect.value) }) });
+                document.getElementById("pin-placeholder").hidden = true;
+                document.getElementById("pin-success").classList.add("is-visible");
+                const badge = document.getElementById("success-badge"); badge.textContent = "Confirmado"; badge.className = "badge badge-success";
+                document.getElementById("generated-pin").textContent = latestPin.pin;
+                document.getElementById("generated-plan").textContent = latestPin.plan_name;
+                document.getElementById("generated-duration").textContent = formatDuration(latestPin.duration_minutes);
+                document.getElementById("generated-issued").textContent = formatDate(latestPin.issued_at);
+                document.getElementById("generated-expires").textContent = formatDate(latestPin.expires_at);
+                showToast("PIN creado y confirmado correctamente.", "success");
+                await loadPins();
+            } catch (error) {
+                errorNode.textContent = error.status === 502 ? "MikroTik no está disponible o configurado. No se creó ningún PIN." : error.message;
+                showToast(errorNode.textContent, "error");
+            } finally {
+                setButtonLoading(button, false);
+                updatePlanPreview();
+            }
+        });
+
+        loadPage().catch(error => showToast(error.message, "error"));
+
+})();
+</script>
+    <script src="pins-features.js"></script>
 </body>
 </html>

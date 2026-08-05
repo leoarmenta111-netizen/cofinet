@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.plan import Plan
-from app.schemas.plan import PlanCreate, PlanUpdate
+from app.schemas.plan import AdminPlanUpdate, PlanCreate, PlanUpdate
 
 
 class PlanService:
@@ -64,6 +64,26 @@ class PlanService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Plan name already registered",
             ) from exc
+        except SQLAlchemyError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Could not update plan",
+            ) from exc
+        return plan
+
+    @staticmethod
+    def update_admin_catalogue_plan(
+        db: Session, plan_id: int, plan_data: AdminPlanUpdate
+    ) -> Plan:
+        plan = PlanService.get_active_plan(db, plan_id)
+        changes = plan_data.model_dump(exclude_unset=True, exclude_none=True)
+        for field, value in changes.items():
+            setattr(plan, field, value)
+
+        try:
+            db.commit()
+            db.refresh(plan)
         except SQLAlchemyError as exc:
             db.rollback()
             raise HTTPException(

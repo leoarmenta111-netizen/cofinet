@@ -3,7 +3,9 @@ from collections.abc import Sequence
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
+from app.auth.admin_security import require_super_admin
 from app.database.deps import get_db
+from app.models.admin import Admin
 from app.models.plan import Plan
 from app.schemas.plan import PlanCreate, PlanResponse, PlanUpdate
 from app.services.plan_service import PlanService
@@ -36,7 +38,11 @@ def get_plan(plan_id: int, db: Session = Depends(get_db)) -> Plan:
         500: {"description": "Database error"},
     },
 )
-def create_plan(plan: PlanCreate, db: Session = Depends(get_db)) -> Plan:
+def create_plan(
+    plan: PlanCreate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+) -> Plan:
     """Create a plan."""
     return PlanService.create_plan(db, plan)
 
@@ -50,7 +56,12 @@ def create_plan(plan: PlanCreate, db: Session = Depends(get_db)) -> Plan:
         500: {"description": "Database error"},
     },
 )
-def update_plan(plan_id: int, plan: PlanUpdate, db: Session = Depends(get_db)) -> Plan:
+def update_plan(
+    plan_id: int,
+    plan: PlanUpdate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+) -> Plan:
     """Update an active plan."""
     return PlanService.update_plan(db, plan_id, plan)
 
@@ -63,7 +74,11 @@ def update_plan(plan_id: int, plan: PlanUpdate, db: Session = Depends(get_db)) -
         500: {"description": "Database error"},
     },
 )
-def delete_plan(plan_id: int, db: Session = Depends(get_db)) -> Response:
+def delete_plan(
+    plan_id: int,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+) -> Response:
     """Soft-delete an active plan."""
     PlanService.delete_plan(db, plan_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

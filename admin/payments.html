@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark">
+    <title>Payments | CofiNet+</title><link rel="stylesheet" href="admin.css">
+</head>
+<body class="auth-pending" data-page="payments">
+    <div class="app-shell protected-content">
+        <aside class="sidebar"><div class="brand-lockup"><span class="brand-mark">C</span><span>CofiNet+</span></div><nav data-admin-nav aria-label="Navegación principal"></nav><div class="sidebar-profile"><div class="profile-row"><span class="avatar" data-admin-initials></span><div class="profile-copy"><strong data-admin-name></strong><span data-admin-role></span></div></div><button class="button button-ghost logout-button" type="button" onclick="CofiAdmin.logoutAdmin()">Cerrar sesión</button></div></aside>
+        <div class="main-area"><header class="topbar"><button class="button button-ghost menu-toggle" data-menu-toggle aria-expanded="false">Menú</button><span class="topbar-title">Mercado Pago</span><span class="muted" data-admin-name></span></header>
+            <main class="content"><header class="page-header"><div><p class="eyebrow">Transacciones</p><h1 class="page-title">Payments</h1><p class="page-description">Historial local de preferencias y pagos registrados por CofiNet. No se realizan consultas externas desde esta vista.</p></div><button id="refresh" class="button button-secondary" type="button">Actualizar</button></header>
+                <section class="panel"><div class="panel-header"><h2>Historial de pagos</h2><span class="badge badge-neutral">Solo lectura</span></div><div class="table-wrap"><table><thead><tr><th>Pago</th><th>Compra</th><th>Plan</th><th>Importe</th><th>Estado</th><th>Creado</th><th></th></tr></thead><tbody id="payments"><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody></table></div></section>
+            </main>
+        </div>
+    </div>
+    <dialog id="payment-dialog" class="dialog dialog-large"><form method="dialog"><h2>Detalle de transacción</h2><div id="payment-detail" class="success-details"></div><div class="dialog-actions"><button class="button button-secondary" value="close">Cerrar</button></div></form></dialog>
+    <script src="admin.js"></script>
+    <script>
+(() => {
+
+        const { SUPER_ADMIN, adminRequest, bootstrapAdmin, formatDate, formatMoney, showEmpty, showToast, statusClass, statusLabel } = window.CofiAdmin;
+        let paymentData = [];
+        function detailItem(label, value) { const item = document.createElement("div"); const title = document.createElement("span"); title.textContent = label; const content = document.createElement("strong"); content.textContent = value || "—"; item.append(title, content); return item; }
+        function showPayment(payment) {
+            const detail = document.getElementById("payment-detail"); detail.replaceChildren(
+                detailItem("ID local", payment.payment_id), detailItem("Compra", payment.purchase_id), detailItem("Proveedor", payment.provider), detailItem("Estado", statusLabel(payment.status)),
+                detailItem("ID de pago", payment.provider_payment_id), detailItem("ID de preferencia", payment.provider_preference_id), detailItem("Importe", formatMoney(payment.amount, payment.currency)), detailItem("Actualizado", formatDate(payment.updated_at))
+            );
+            document.getElementById("payment-dialog").showModal();
+        }
+        function renderPayments(payments) {
+            const body = document.getElementById("payments"); body.replaceChildren();
+            if (!payments.length) { const row = document.createElement("tr"); const cell = document.createElement("td"); cell.colSpan = 7; showEmpty(cell, "Sin pagos registrados", "Las transacciones locales de Mercado Pago aparecerán aquí."); row.append(cell); body.append(row); return; }
+            payments.forEach(payment => {
+                const row = document.createElement("tr");
+                const values = [`#${payment.payment_id}`, `#${payment.purchase_id}`, payment.plan_name, formatMoney(payment.amount, payment.currency)];
+                values.forEach(value => { const cell = document.createElement("td"); cell.textContent = value; row.append(cell); });
+                const status = document.createElement("td"); const badge = document.createElement("span"); badge.className = `badge badge-${statusClass(payment.status)}`; badge.textContent = statusLabel(payment.status); status.append(badge); row.append(status);
+                const created = document.createElement("td"); created.textContent = formatDate(payment.created_at); row.append(created);
+                const actions = document.createElement("td"); const button = document.createElement("button"); button.className = "button button-ghost button-small"; button.type = "button"; button.textContent = "Ver detalle"; button.addEventListener("click", () => showPayment(payment)); actions.append(button); row.append(actions); body.append(row);
+            });
+        }
+        async function loadPayments() { const response = await adminRequest("/admin/payments"); paymentData = response.payments; renderPayments(paymentData); }
+        document.getElementById("refresh").addEventListener("click", () => loadPayments().catch(error => showToast(error.message, "error")));
+        (async () => { const admin = await bootstrapAdmin({ allowedRoles: [SUPER_ADMIN] }); if (!admin) return; await loadPayments(); })().catch(error => showToast(error.message, "error"));
+    
+})();
+</script>
+</body>
+</html>

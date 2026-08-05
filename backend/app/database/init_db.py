@@ -1,6 +1,7 @@
 from app.database.session import Base, SessionLocal, engine
 from sqlalchemy import text
 from app.models.admin import Admin
+from app.models.admin_access import InternalHotspotCredential, PinBatch, PinBatchFailure
 from app.models.plan import Plan
 from app.models.payment import Payment
 from app.models.membership import Membership

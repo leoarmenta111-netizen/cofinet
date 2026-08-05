@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>Planes | CofiNet+</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body class="auth-pending" data-page="plans">
+    <div class="app-shell protected-content">
+        <aside class="sidebar"><div class="brand-lockup"><span class="brand-mark">C</span><span>CofiNet+</span></div><nav data-admin-nav aria-label="Navegación principal"></nav><div class="sidebar-profile"><div class="profile-row"><span class="avatar" data-admin-initials></span><div class="profile-copy"><strong data-admin-name></strong><span data-admin-role></span></div></div><button class="button button-ghost logout-button" type="button" onclick="CofiAdmin.logoutAdmin()">Cerrar sesión</button></div></aside>
+        <div class="main-area">
+            <header class="topbar"><button class="button button-ghost menu-toggle" data-menu-toggle aria-expanded="false">Menú</button><span class="topbar-title">Catálogo activo</span><span class="muted" data-admin-name></span></header>
+            <main class="content">
+                <header class="page-header"><div><p class="eyebrow">Oferta comercial</p><h1 class="page-title">Planes</h1><p class="page-description">Consulta los precios y duraciones disponibles. Los cambios del super admin aplican solamente a futuras compras y PINs.</p></div></header>
+                <section id="plans" class="cards-grid" aria-live="polite"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></section>
+            </main>
+        </div>
+    </div>
+    <script src="admin.js"></script>
+    <script>
+(() => {
+    const { SUPER_ADMIN, PIN_OPERATOR, adminRequest, bootstrapAdmin, formatDuration, formatMoney, showEmpty, showToast } = window.CofiAdmin;
+
+    function friendlyDuration(minutes) {
+        if (minutes % 1440 === 0) return { value: minutes / 1440, unit: "days" };
+        if (minutes % 60 === 0) return { value: minutes / 60, unit: "hours" };
+        return { value: minutes, unit: "minutes" };
+    }
+
+    function toMinutes(value, unit) {
+        const multiplier = unit === "days" ? 1440 : unit === "hours" ? 60 : 1;
+        return value * multiplier;
+    }
+
+    function renderPlan(plan, canEdit) {
+        const card = document.createElement("article");
+        card.className = "plan-card";
+        card.dataset.planId = plan.id;
+
+        const heading = document.createElement("div");
+        heading.className = "plan-card-heading";
+        const name = document.createElement("h2");
+        name.textContent = plan.name;
+        heading.append(name);
+
+        const description = document.createElement("p");
+        description.textContent = plan.description || "Sin descripción";
+        const price = document.createElement("strong");
+        price.className = "plan-price";
+        price.textContent = formatMoney(plan.price);
+        const duration = document.createElement("span");
+        duration.className = "plan-duration";
+        duration.textContent = formatDuration(plan.duration_minutes);
+        const status = document.createElement("div");
+        status.className = "plan-save-status";
+        status.setAttribute("role", "status");
+        status.setAttribute("aria-live", "polite");
+
+        if (canEdit) {
+            const edit = document.createElement("button");
+            edit.type = "button";
+            edit.className = "button button-secondary button-small";
+            edit.textContent = "Editar";
+            edit.setAttribute("aria-label", `Editar plan ${plan.name}`);
+            edit.addEventListener("click", () => openEditor(card, plan));
+            heading.append(edit);
+        }
+
+        card.append(heading, description, price, duration, status);
+        return card;
+    }
+
+    function openEditor(card, plan) {
+        if (card.querySelector("form")) return;
+        const initial = friendlyDuration(plan.duration_minutes);
+        const form = document.createElement("form");
+        form.className = "plan-edit-form";
+        form.innerHTML = `
+            <div class="field">
+                <label for="plan-price-${plan.id}">Precio (MXN)</label>
+                <input id="plan-price-${plan.id}" name="price" type="number" min="0" max="99999999.99" step="0.01" required value="${Number(plan.price).toFixed(2)}">
+            </div>
+            <div class="plan-duration-fields">
+                <div class="field">
+                    <label for="plan-duration-${plan.id}">Duración</label>
+                    <input id="plan-duration-${plan.id}" name="duration" type="number" min="1" step="1" required value="${initial.value}">
+                </div>
+                <div class="field">
+                    <label for="plan-unit-${plan.id}">Unidad</label>
+                    <select id="plan-unit-${plan.id}" name="unit">
+                        <option value="minutes">Minutos</option>
+                        <option value="hours">Horas</option>
+                        <option value="days">Días</option>
+                    </select>
+                </div>
+            </div>
+            <p class="form-error" role="alert"></p>
+            <div class="plan-edit-actions">
+                <button type="button" class="button button-ghost" data-cancel>Cancelar</button>
+                <button type="submit" class="button button-primary" disabled>Guardar cambios</button>
+            </div>`;
+        form.elements.unit.value = initial.unit;
+        card.append(form);
+        card.classList.add("is-editing");
+        const submit = form.querySelector('[type="submit"]');
+        const cancel = form.querySelector("[data-cancel]");
+        const error = form.querySelector(".form-error");
+
+        const currentValues = () => ({
+            price: Number(form.elements.price.value),
+            durationMinutes: toMinutes(Number(form.elements.duration.value), form.elements.unit.value)
+        });
+        const updateSubmit = () => {
+            const values = currentValues();
+            const valid = form.checkValidity() && Number.isFinite(values.price) && Number.isInteger(values.durationMinutes) && values.durationMinutes > 0;
+            const changed = values.price !== Number(plan.price) || values.durationMinutes !== plan.duration_minutes;
+            submit.disabled = !valid || !changed;
+        };
+        form.addEventListener("input", updateSubmit);
+        form.addEventListener("change", updateSubmit);
+        cancel.addEventListener("click", () => { form.remove(); card.classList.remove("is-editing"); card.querySelector("button").focus(); });
+        form.addEventListener("submit", async event => {
+            event.preventDefault();
+            if (submit.disabled) return;
+            const values = currentValues();
+            if (!Number.isInteger(values.durationMinutes)) {
+                error.textContent = "La duración debe equivaler a minutos completos.";
+                return;
+            }
+            Array.from(form.elements).forEach(control => { control.disabled = true; });
+            submit.textContent = "Guardando…";
+            error.textContent = "";
+            try {
+                const updated = await adminRequest(`/admin/plans/${plan.id}`, {
+                    method: "PATCH",
+                    body: JSON.stringify({ price: values.price, duration_minutes: values.durationMinutes })
+                });
+                card.replaceWith(renderPlan(updated, true));
+                showToast(`${updated.name} se actualizó correctamente.`, "success");
+            } catch (requestError) {
+                Array.from(form.elements).forEach(control => { control.disabled = false; });
+                submit.textContent = "Guardar cambios";
+                error.textContent = requestError.message;
+                updateSubmit();
+            }
+        });
+        form.elements.price.focus();
+    }
+
+    (async () => {
+        const admin = await bootstrapAdmin({ allowedRoles: [SUPER_ADMIN, PIN_OPERATOR] });
+        if (!admin) return;
+        const plans = await adminRequest("/plans");
+        const container = document.getElementById("plans");
+        container.replaceChildren();
+        if (!plans.length) {
+            showEmpty(container, "Sin planes activos", "No hay planes disponibles en este momento.");
+            return;
+        }
+        plans.forEach(plan => container.append(renderPlan(plan, admin.role === SUPER_ADMIN)));
+    })().catch(error => showToast(error.message, "error"));
+})();
+    </script>
+</body>
+</html>
