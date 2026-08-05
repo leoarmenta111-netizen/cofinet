@@ -8,6 +8,10 @@ WORKDIR /build
 COPY requirements.txt requirements-payment.txt ./
 RUN pip wheel --wheel-dir /wheels -r requirements.txt -r requirements-payment.txt
 
+FROM builder AS development-builder
+COPY requirements-dev.txt ./
+RUN pip wheel --wheel-dir /dev-wheels -r requirements-dev.txt
+
 FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -22,6 +26,9 @@ COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* \
     && rm -rf /wheels
 COPY --chown=cofinet:cofinet app ./app
+COPY --chown=cofinet:cofinet alembic ./alembic
+COPY --chown=cofinet:cofinet alembic.ini ./alembic.ini
+COPY --chown=cofinet:cofinet scripts ./scripts
 
 USER cofinet
 EXPOSE 8000
@@ -29,5 +36,8 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 FROM runtime AS development
 USER root
-RUN pip install --no-cache-dir watchfiles==1.1.1
+COPY --from=development-builder /dev-wheels /dev-wheels
+RUN pip install --no-cache-dir --no-index --find-links=/dev-wheels /dev-wheels/* \
+    && rm -rf /dev-wheels
+COPY --chown=cofinet:cofinet tests ./tests
 USER cofinet
