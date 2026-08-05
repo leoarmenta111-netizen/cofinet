@@ -201,7 +201,7 @@
             const row = document.createElement("tr");
             const cell = document.createElement("td");
             cell.colSpan = 6;
-            showEmpty(cell, "Sin accesos internos", "Genera credenciales únicamente para dispositivos propiedad de la empresa.");
+            showEmpty(cell, "Sin dispositivos registrados", "Genera un acceso permanente para comenzar.");
             row.append(cell);
             body.append(row);
             return;

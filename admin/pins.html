@@ -65,13 +65,13 @@
                     <div class="table-wrap"><table><thead><tr><th>Lote</th><th>Plan</th><th>Resultado</th><th>Estado</th><th>Operador</th><th>Creado</th><th>Acciones</th></tr></thead><tbody id="batch-list"><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody></table></div>
                 </section>
                 <section id="internal-access-section" class="panel" style="margin-top:1rem" hidden>
-                    <div class="panel-header"><div><h2>Acceso permanente para dispositivos</h2><small class="muted">Credenciales internas, sin expiración y excluidas de ventas.</small></div><span class="badge badge-warning">Solo SUPER_ADMIN</span></div>
+                    <div class="panel-header"><div><h2>Acceso permanente para dispositivos</h2><small class="muted">Crea credenciales sin vencimiento para tablets, kioscos y equipos autorizados.</small></div><span class="badge badge-warning">Solo SUPER_ADMIN</span></div>
                     <div class="panel-body">
                         <form id="internal-form" class="batch-form">
-                            <div class="field internal-label-field"><label for="internal-label">Etiqueta del dispositivo</label><input id="internal-label" maxlength="120" minlength="2" placeholder="Tablet Pedidos 1" required autocomplete="off"></div>
+                            <div class="field internal-label-field"><label for="internal-label">Nombre del dispositivo</label><input id="internal-label" maxlength="120" minlength="2" placeholder="Ej. Tablet de pedidos 1" required autocomplete="off"></div>
                             <div class="field batch-submit"><label>&nbsp;</label><button id="internal-generate" class="button button-primary" type="submit">Generar acceso permanente</button></div>
                         </form>
-                        <p class="integration-note">Usa el PIN como usuario y contraseña. El perfil <span class="mono">internal-devices</span> debe existir en el MikroTik de QA con un usuario compartido.</p>
+                        <p class="integration-note">El PIN generado funciona como usuario y contraseña. Revoca el acceso cuando el dispositivo deje de utilizarse.</p>
                         <p id="internal-error" class="form-error" role="alert"></p>
                     </div>
                     <div class="table-wrap"><table><thead><tr><th>Dispositivo</th><th>PIN</th><th>Tipo</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr></thead><tbody id="internal-list"><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody></table></div>
