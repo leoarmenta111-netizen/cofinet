@@ -2,38 +2,24 @@ name: cofinet-prod
 
 services:
   backend:
+    container_name: cofinet-api
     env_file:
-      - .env.production
+      - ./backend/.env
 
   db-init:
     env_file:
-      - .env.production
+      - ./backend/.env
 
   db-migrate:
     env_file:
-      - .env.production
+      - ./backend/.env
 
   nginx:
-    environment:
-      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?PUBLIC_DOMAIN is required}
-      NGINX_ENVSUBST_FILTER: ^PUBLIC_DOMAIN$
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/prod.conf.template:/etc/nginx/templates/default.conf.template:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
-
-  certbot:
-    profiles: ["certbot"]
-    image: certbot/certbot:v2.11.0
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    networks:
-      - application
-    restart: "no"
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   postgres_data:
