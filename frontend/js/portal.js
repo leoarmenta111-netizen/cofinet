@@ -105,6 +105,63 @@
 
     window.addEventListener("DOMContentLoaded", () => pinBoxes[0].focus());
 
+
+    function decodeHotspotValue(value) {
+        if (!value) return "";
+
+        let decoded = value;
+
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+            try {
+                const nextValue = decodeURIComponent(decoded);
+
+                if (nextValue === decoded) break;
+
+                decoded = nextValue;
+            } catch {
+                break;
+            }
+        }
+
+        return decoded;
+    }
+
+    function loginToHotspot(pin) {
+        const params = new URLSearchParams(window.location.search);
+        const loginUrl = decodeHotspotValue(params.get("login_url"));
+
+        if (!loginUrl) return false;
+
+        const destination =
+            decodeHotspotValue(params.get("dst")) ||
+            "http://neverssl.com/";
+
+        const hotspotForm = document.createElement("form");
+        hotspotForm.method = "POST";
+        hotspotForm.action = loginUrl;
+        hotspotForm.style.display = "none";
+
+        const fields = {
+            username: pin,
+            password: pin,
+            dst: destination,
+            popup: "false"
+        };
+
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = name;
+            input.value = value;
+            hotspotForm.appendChild(input);
+        });
+
+        document.body.appendChild(hotspotForm);
+        hotspotForm.submit();
+
+        return true;
+    }
+
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const pin = pinValue();
@@ -118,7 +175,11 @@
 
         setLoading(true);
         try {
-            showAccessGranted(await validatePin(pin));
+            const access = await validatePin(pin);
+
+            if (!loginToHotspot(pin)) {
+                showAccessGranted(access);
+            }
         } catch (error) {
             showToast(error.message || "No fue posible validar el PIN.");
         } finally {

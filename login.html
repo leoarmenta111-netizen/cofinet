@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Abriendo CofiCenter</title>
+</head>
+<body>
+<script>
+(function () {
+    const portal = new URL("https://cofinet-portal.duckdns.org/");
+
+    portal.searchParams.set("hotspot", "1");
+    portal.searchParams.set(
+        "login_url",
+        "$(link-login-only)"
+    );
+    portal.searchParams.set(
+        "dst",
+        "$(link-orig)"
+    );
+    portal.searchParams.set(
+        "mac",
+        "$(mac)"
+    );
+
+    window.location.replace(portal.toString());
+})();
+</script>
+
+<p>Abriendo CofiCenter...</p>
+</body>
+</html>

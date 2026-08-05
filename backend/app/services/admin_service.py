@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 import secrets
-
+from app.services.mikrotik_service import MikroTikService
 from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -85,37 +85,113 @@ class AdminService:
         )
 
     @staticmethod
-    def create_cash_pin(db: Session, pin_request: AdminPinCreate) -> AdminPinResponse:
+    def create_cash_pin(
+        db: Session,
+        pin_request: AdminPinCreate,
+    ) -> AdminPinResponse:
         plan = db.execute(
-            select(Plan).where(Plan.id == pin_request.plan_id, Plan.is_active.is_(True))
+            select(Plan).where(
+                Plan.id == pin_request.plan_id,
+                Plan.is_active.is_(True),
+            )
         ).scalar_one_or_none()
+
         if plan is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Plan not found",
+            )
 
         issued_at = datetime.now(UTC)
+
         for _ in range(AdminService._PIN_GENERATION_ATTEMPTS):
             pin_code = AdminService._generate_pin()
-            if db.execute(select(Purchase.id).where(Purchase.pin_code == pin_code)).scalar_one_or_none():
+
+            pin_exists = db.execute(
+                select(Purchase.id).where(Purchase.pin_code == pin_code)
+            ).scalar_one_or_none()
+
+            if pin_exists:
                 continue
+
+            mikrotik = None
+            mikrotik_user_created = False
+
             purchase = Purchase(
                 plan_id=plan.id,
                 amount=plan.price,
                 status=PurchaseStatus.PAID,
                 pin_code=pin_code,
                 issued_at=issued_at,
-                expires_at=issued_at + timedelta(minutes=plan.duration_minutes),
+                expires_at=issued_at + timedelta(
+                    minutes=plan.duration_minutes
+                ),
             )
+
             try:
+                mikrotik = MikroTikService()
+
+                mikrotik.create_hotspot_user(
+                    username=pin_code,
+                    password=pin_code,
+                    duration_minutes=plan.duration_minutes,
+                    profile="default",
+                )
+                mikrotik_user_created = True
+
                 db.add(purchase)
                 db.commit()
                 db.refresh(purchase)
+
                 return AdminService._pin_response(purchase, plan)
+
             except IntegrityError:
                 db.rollback()
+
+                if mikrotik_user_created and mikrotik is not None:
+                    try:
+                        mikrotik.remove_hotspot_user(pin_code)
+                    except Exception:
+                        pass
+
+                continue
+
             except SQLAlchemyError as exc:
                 db.rollback()
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not create cash PIN") from exc
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not generate a unique PIN")
+
+                if mikrotik_user_created and mikrotik is not None:
+                    try:
+                        mikrotik.remove_hotspot_user(pin_code)
+                    except Exception:
+                        pass
+
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Could not create cash PIN",
+                ) from exc
+
+            except Exception as exc:
+                db.rollback()
+
+                if mikrotik_user_created and mikrotik is not None:
+                    try:
+                        mikrotik.remove_hotspot_user(pin_code)
+                    except Exception:
+                        pass
+
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Could not create PIN in MikroTik",
+                ) from exc
+
+            finally:
+                if mikrotik is not None:
+                    mikrotik.disconnect()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not generate a unique PIN",
+        )
 
     @staticmethod
     def list_cash_pins(db: Session) -> list[AdminPinResponse]:

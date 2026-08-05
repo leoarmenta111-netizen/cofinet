@@ -191,18 +191,45 @@ function mostrarCompraExitosa(purchase) {
 }
 
 function mostrarCompraPendiente(checkout, plan) {
+
     if (timerInterval) clearInterval(timerInterval);
-    document.getElementById("success-screen-title").textContent = "Purchase created successfully";
-    document.getElementById("success-screen-subtitle").textContent = "Complete payment to activate your internet access.";
-    document.getElementById("guest-purchase-plan").textContent = plan?.name || "Plan seleccionado";
-    document.getElementById("guest-purchase-amount").textContent = `$${Number(plan?.price || 0).toLocaleString("es-MX")} MXN`;
-    const checkoutButton = document.querySelector("[data-mercadopago-checkout]");
-    checkoutButton.dataset.checkoutUrl = checkout.checkout_url;
-    document.getElementById("purchase-success-details").classList.add("hidden");
-    document.getElementById("connection-timer").classList.add("hidden");
-    document.getElementById("guest-purchase-details").classList.remove("hidden");
-    document.getElementById("contenedor-portal").classList.add("hidden");
-    const finalScreen = document.getElementById("pantalla-final");
+
+    document.getElementById("success-screen-title").textContent =
+        "Esperando confirmación del pago";
+
+    document.getElementById("success-screen-subtitle").textContent =
+        "Mercado Pago se abrió en una nueva pestaña. Completa el pago y vuelve a esta ventana.";
+
+    document.getElementById("guest-purchase-plan").textContent =
+        plan?.name || "Plan seleccionado";
+
+    document.getElementById("guest-purchase-amount").textContent =
+        `$${
+            Number(plan?.price || 0).toLocaleString("es-MX")
+        } MXN`;
+const checkoutButton = document.querySelector("[data-mercadopago-checkout]");
+
+        if (checkoutButton) {
+        checkoutButton.dataset.checkoutUrl = checkout.checkout_url;
+        }
+
+    document.getElementById("purchase-success-details")
+        .classList.add("hidden");
+
+    document.getElementById("connection-timer")
+        .classList.add("hidden");
+
+    document.getElementById("guest-purchase-details")
+        .classList.remove("hidden");
+
+    document.getElementById("contenedor-portal")
+        .classList.add("hidden");
+
+    const finalScreen =
+        document.getElementById("pantalla-final");
+
     finalScreen.classList.remove("hidden");
     finalScreen.style.display = "flex";
+
+    
 }
