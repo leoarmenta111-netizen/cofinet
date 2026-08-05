@@ -47,7 +47,7 @@
         document.getElementById("create-form").addEventListener("submit", async event => { event.preventDefault(); const form = event.currentTarget; if (!form.reportValidity()) return; const button = document.getElementById("create-button"); setButtonLoading(button, true, "Creando…"); try { await adminRequest("/admin/accounts", { method: "POST", body: JSON.stringify({ email: form.email.value, full_name: form.full_name.value, password: form.password.value, role: form.role.value, confirm_super_admin: form.confirm_super_admin.checked }) }); createDialog.close(); showToast("Administrador creado."); await loadAdmins(); } catch (error) { document.getElementById("create-error").textContent = error.message; } finally { setButtonLoading(button, false); } });
         document.getElementById("reset-form").addEventListener("submit", async event => { event.preventDefault(); const form = event.currentTarget; if (!form.reportValidity()) return; try { await adminRequest(`/admin/accounts/${document.getElementById("reset-admin-id").value}/reset-password`, { method: "POST", body: JSON.stringify({ new_password: form.password.value }) }); resetDialog.close(); showToast("Contraseña restablecida."); } catch (error) { document.getElementById("reset-error").textContent = error.message; } });
         (async () => { const admin = await bootstrapAdmin({ allowedRoles: [SUPER_ADMIN] }); if (!admin) return; await loadAdmins(); })().catch(error => showToast(error.message, "error"));
-    
+
 })();
 </script>
 </body>

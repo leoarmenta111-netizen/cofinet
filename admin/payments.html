@@ -43,7 +43,7 @@
         async function loadPayments() { const response = await adminRequest("/admin/payments"); paymentData = response.payments; renderPayments(paymentData); }
         document.getElementById("refresh").addEventListener("click", () => loadPayments().catch(error => showToast(error.message, "error")));
         (async () => { const admin = await bootstrapAdmin({ allowedRoles: [SUPER_ADMIN] }); if (!admin) return; await loadPayments(); })().catch(error => showToast(error.message, "error"));
-    
+
 })();
 </script>
 </body>
