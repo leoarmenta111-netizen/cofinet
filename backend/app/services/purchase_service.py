@@ -1,15 +1,16 @@
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
+import logging
 import secrets
 
-from app.services.mikrotik_service import MikroTikService
+from app.services.mikrotik_service import MikroTikService, MikroTikUserExistsError
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.purchase import Purchase, PurchaseStatus
+from app.models.purchase import Purchase, PurchaseCreationSource, PurchaseStatus
 from app.models.user import User
 from app.schemas.purchase import (
     GuestPurchaseResponse,
@@ -18,6 +19,9 @@ from app.schemas.purchase import (
     PurchaseResponse,
 )
 from app.services.plan_service import PlanService
+
+
+logger = logging.getLogger(__name__)
 
 
 class PurchaseService:
@@ -44,6 +48,7 @@ class PurchaseService:
                 status=PurchaseStatus.PAID,
                 pin_code=pin_code,
                 expires_at=expires_at,
+                creation_source=PurchaseCreationSource.SYSTEM,
             )
             try:
                 db.add(purchase)
@@ -73,6 +78,7 @@ class PurchaseService:
             plan_id=plan.id,
             amount=plan.price,
             status=PurchaseStatus.PENDING,
+            creation_source=PurchaseCreationSource.MERCADOPAGO,
         )
         try:
             db.add(purchase)
@@ -104,37 +110,60 @@ class PurchaseService:
             try:
                 mikrotik = MikroTikService()
 
-                mikrotik.create_hotspot_user(
+                mikrotik.create_hotspot_user_strict(
                     username=pin_code,
                     password=pin_code,
                     duration_minutes=purchase.plan.duration_minutes,
                     profile="default",
+                    comment="CofiCenter Mercado Pago purchase",
                 )
                 mikrotik_user_created = True
 
-                with db.begin_nested():
-                    purchase.status = PurchaseStatus.PAID
-                    purchase.pin_code = pin_code
-                    purchase.issued_at = issued_at
-                    purchase.expires_at = issued_at + timedelta(
-                        minutes=purchase.plan.duration_minutes
-                    )
-                    db.flush()
+                purchase.status = PurchaseStatus.PAID
+                purchase.pin_code = pin_code
+                purchase.issued_at = issued_at
+                purchase.expires_at = issued_at + timedelta(
+                    minutes=purchase.plan.duration_minutes
+                )
+                db.flush()
+                db.commit()
 
                 return
 
-            except IntegrityError:
-                if mikrotik_user_created and mikrotik is not None:
-                    mikrotik.remove_hotspot_user(pin_code)
-                continue
-
-            except Exception:
+            except (IntegrityError, MikroTikUserExistsError):
+                db.rollback()
                 if mikrotik_user_created and mikrotik is not None:
                     try:
                         mikrotik.remove_hotspot_user(pin_code)
                     except Exception:
-                        pass
-                raise
+                        logger.exception("Could not compensate duplicate guest PIN %s", pin_code)
+                continue
+
+            except SQLAlchemyError as exc:
+                db.rollback()
+                if mikrotik_user_created and mikrotik is not None:
+                    try:
+                        mikrotik.remove_hotspot_user(pin_code)
+                    except Exception:
+                        logger.exception("Could not compensate guest PIN %s", pin_code)
+                logger.exception("Database rejected paid guest PIN %s", pin_code)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Could not confirm paid purchase",
+                ) from exc
+
+            except Exception as exc:
+                db.rollback()
+                if mikrotik_user_created and mikrotik is not None:
+                    try:
+                        mikrotik.remove_hotspot_user(pin_code)
+                    except Exception:
+                        logger.exception("Could not compensate guest PIN %s", pin_code)
+                logger.exception("MikroTik rejected paid guest PIN %s", pin_code)
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Could not create PIN in MikroTik",
+                ) from exc
 
             finally:
                 if mikrotik is not None:
@@ -189,7 +218,7 @@ class PurchaseService:
             purchase_id=purchase.id,
             plan=purchase.plan.name,
             pin=purchase.pin_code,
-            duration_minutes=purchase.plan.duration_minutes,
+            duration_minutes=PurchaseService.issued_duration_minutes(purchase),
             expires_at=purchase.expires_at,
             status=purchase.status,
         )
@@ -212,3 +241,10 @@ class PurchaseService:
         return db.execute(
             select(Purchase.id).where(Purchase.pin_code == pin_code)
         ).scalar_one_or_none() is not None
+
+    @staticmethod
+    def issued_duration_minutes(purchase: Purchase) -> int:
+        """Return the immutable issued duration without changing legacy rows."""
+        if purchase.issued_at is not None and purchase.expires_at is not None:
+            return int((purchase.expires_at - purchase.issued_at).total_seconds() // 60)
+        return purchase.plan.duration_minutes

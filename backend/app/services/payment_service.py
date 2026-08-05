@@ -201,8 +201,6 @@ class PaymentService:
             logger.info("Generando PIN...")
 
             PurchaseService.mark_guest_purchase_paid(db, purchase)
-
-            db.commit()
             logger.info("PIN generado correctamente y transacción completada.")
 
         except Exception as e:

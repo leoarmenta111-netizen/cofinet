@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.purchase import Purchase, PurchaseStatus
 from app.schemas.pin import PinValidationResponse
+from app.services.purchase_service import PurchaseService
 
 
 class PinService:
@@ -46,6 +47,6 @@ class PinService:
         return PinValidationResponse(
             purchase_id=purchase.id,
             plan=purchase.plan.name,
-            minutes=purchase.plan.duration_minutes,
+            minutes=PurchaseService.issued_duration_minutes(purchase),
             expires_at=purchase.expires_at,
         )
