@@ -1,6 +1,8 @@
 # Despliegue de CofiNet+ en producción
 
-Esta guía prepara el despliegue; no autoriza conectarse ni ejecutar comandos en producción desde el entorno de desarrollo. La reconciliación con `production-snapshot-before-editable-plans` confirmó que el servidor real usa `/opt/cofinet`, `backend/.env` y el contenedor `cofinet-api`. El despliegue combina `docker-compose.yml` con `docker-compose.prod.yml` sin modificar ese archivo de secretos.
+Esta guía prepara el despliegue; no autoriza conectarse ni ejecutar comandos en producción desde el entorno de desarrollo. La reconciliación con `production-snapshot-before-editable-plans` confirmó que el servidor real usa `/opt/cofinet`, `backend/.env` y los contenedores `cofinet-api`, `cofinet-postgres-1` y `cofinet-nginx-1`. El despliegue combina `docker-compose.yml` con `docker-compose.prod.yml` sin modificar ese archivo de secretos.
+
+El backend no publica el puerto 8000 al host. Todas las verificaciones locales de la API deben pasar por Nginx mediante `http://127.0.0.1/api/...`.
 
 Defina una vez el comando para evitar diferencias entre pasos:
 
@@ -65,6 +67,8 @@ No ejecute `docker compose down -v`, no elimine el volumen PostgreSQL y no ejecu
 $COMPOSE ps
 $COMPOSE ps backend
 docker ps --filter 'name=^/cofinet-api$'
+docker ps --filter 'name=^/cofinet-postgres-1$'
+docker ps --filter 'name=^/cofinet-nginx-1$'
 $COMPOSE logs --since=10m --no-log-prefix backend nginx
 curl -fsS http://127.0.0.1/api/health
 curl -fsS http://127.0.0.1/api/plans

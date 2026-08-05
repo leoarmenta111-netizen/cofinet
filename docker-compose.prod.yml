@@ -1,4 +1,4 @@
-name: cofinet-prod
+name: cofinet
 
 services:
   backend:

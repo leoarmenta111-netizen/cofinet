@@ -31,7 +31,7 @@ Never add `-v` unless intentionally deleting that environment's database volume.
 | QA | `.env.qa` | `docker-compose.qa.yml` | `http://localhost:8081` |
 | Production | `backend/.env` | `docker-compose.prod.yml` | live-compatible Nginx configuration |
 
-Always use the shared `docker-compose.yml` plus exactly one overlay. Compose project names (`cofinet-dev`, `cofinet-qa`, `cofinet-prod`) create isolated networks and PostgreSQL volumes.
+Always use the shared `docker-compose.yml` plus exactly one overlay. Local and QA use isolated project names; production deliberately retains the live `cofinet` project name so existing container and volume identities remain compatible.
 
 ## Repository structure
 
