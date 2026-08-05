@@ -9,6 +9,10 @@ services:
     env_file:
       - .env.production
 
+  db-migrate:
+    env_file:
+      - .env.production
+
   nginx:
     environment:
       PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?PUBLIC_DOMAIN is required}

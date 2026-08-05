@@ -3,8 +3,10 @@
 Docker Desktop must use Linux containers. From PowerShell, Git Bash, WSL, or Linux at the repository root:
 
 ```bash
-docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml up -d postgres
 docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml --profile tools run --rm db-init
+docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml --profile tools run --rm db-migrate
+docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml up -d --build backend nginx
 docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml ps
 ```
 
@@ -20,6 +22,12 @@ docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev
 
 Edit `.env.local` only for local values. Keep Mercado Pago and MikroTik blank until testing those integrations; then use sandbox/dedicated non-production credentials.
 
+Administrator RBAC tests run in the development image:
+
+```bash
+docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml run --rm backend pytest -q
+```
+
 ## Local smoke checklist
 
 - `/api/health` returns 200
@@ -28,4 +36,3 @@ Edit `.env.local` only for local values. Keep Mercado Pago and MikroTik blank un
 - Plans load and safe non-production flows complete
 - Logs contain no secrets or tracebacks
 - Restarting the stack preserves local data
-

@@ -75,6 +75,19 @@ services:
       - database
     restart: "no"
 
+  db-migrate:
+    profiles: ["tools"]
+    build:
+      context: ./backend
+      target: runtime
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+    restart: "no"
+
 volumes:
   postgres_data:
 

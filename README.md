@@ -7,8 +7,10 @@ CofiNet+ is a FastAPI, PostgreSQL, Nginx, and static-frontend captive portal wit
 Prerequisites: Docker Desktop/Engine with Compose v2 and Git.
 
 ```bash
-docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml up -d postgres
 docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml --profile tools run --rm db-init
+docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml --profile tools run --rm db-migrate
+docker compose --env-file .env.local -f docker-compose.yml -f docker-compose.dev.yml up -d --build backend nginx
 ```
 
 Open `http://localhost:8080`. The API health endpoint is `http://localhost:8080/api/health`.
@@ -57,5 +59,6 @@ docker-compose.prod.yml  Production override
 - [Backup guide](docs/BACKUP.md)
 - [Restore guide](docs/RESTORE.md)
 - [Git workflow](docs/GIT_WORKFLOW.md)
+- [Administrator RBAC and dashboard](docs/ADMIN_RBAC.md)
 
 The older `docker-compose.ssl.yml`, `docker-compose.backup.yml`, and Nginx configs remain temporarily for rollback compatibility. New work should use the environment overlays above; remove legacy files only after a verified production migration.
