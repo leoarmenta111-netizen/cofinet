@@ -192,6 +192,7 @@ function statusLabel(status) {
 function statusClass(status) {
     if (["approved", "paid", "active"].includes(status)) return "success";
     if (status === "pending") return "warning";
+    if (["error", "failed", "cancelled", "expired"].includes(status)) return "danger";
     return "neutral";
 }
 

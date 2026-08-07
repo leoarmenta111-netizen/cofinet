@@ -42,6 +42,13 @@
         return ({ completed: "Completo", partial: "Parcial", failed: "Fallido", processing: "Procesando" })[value] || value;
     }
 
+    function statusBadge(label, tone) {
+        const badge = document.createElement("span");
+        badge.className = `badge badge-${tone}`;
+        badge.textContent = label;
+        return badge;
+    }
+
     async function configureBatchPlans() {
         const plans = await adminRequest("/plans");
         batchPlan.replaceChildren();
@@ -88,10 +95,7 @@
             const values = [
                 batch.batch_uuid.slice(0, 8),
                 batch.plan_name,
-                `${batch.created}/${batch.requested}`,
-                statusLabel(batch.status),
-                batch.created_by_admin_name || "Sin auditoría",
-                formatDate(batch.created_at)
+                `${batch.created}/${batch.requested}`
             ];
             values.forEach((value, index) => {
                 const cell = document.createElement("td");
@@ -99,6 +103,15 @@
                 if (index === 0) cell.className = "mono";
                 row.append(cell);
             });
+            const status = document.createElement("td");
+            const statusTone = batch.status === "completed" ? "success" : batch.status === "failed" ? "danger" : "warning";
+            status.append(statusBadge(statusLabel(batch.status), statusTone));
+            row.append(status);
+            for (const value of [batch.created_by_admin_name || "Sin auditoría", formatDate(batch.created_at)]) {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.append(cell);
+            }
             const actions = document.createElement("td");
             actions.className = "row-actions";
             actions.append(
@@ -217,11 +230,12 @@
             const type = document.createElement("td");
             type.append(permanentBadge());
             row.append(type);
-            for (const value of [credential.is_active ? "Activo" : "Deshabilitado", formatDate(credential.created_at)]) {
-                const cell = document.createElement("td");
-                cell.textContent = value;
-                row.append(cell);
-            }
+            const status = document.createElement("td");
+            status.append(statusBadge(credential.is_active ? "Activo" : "Deshabilitado", credential.is_active ? "success" : "neutral"));
+            row.append(status);
+            const created = document.createElement("td");
+            created.textContent = formatDate(credential.created_at);
+            row.append(created);
             const actions = document.createElement("td");
             actions.className = "row-actions";
             actions.append(

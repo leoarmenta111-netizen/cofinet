@@ -84,6 +84,65 @@ class MikroTikService:
         for user in existing:
             users.remove(id=user[".id"])
 
+
+    def set_hotspot_user_disabled(
+        self,
+        username: str,
+        disabled: bool,
+    ) -> bool:
+        """Enable or disable an existing Hotspot user.
+
+        Returns False when the user does not exist.
+        """
+        users = self.api.get_resource("/ip/hotspot/user")
+        matches = users.get(name=username)
+
+        if not matches:
+            return False
+
+        user = matches[0]
+
+        # routeros_api normally exposes `.id` as `id`.
+        routeros_id = user.get("id") or user.get(".id")
+
+        if not routeros_id:
+            raise RuntimeError(
+                f"RouterOS user {username!r} has no usable id. "
+                f"Available fields: {sorted(user.keys())}"
+            )
+
+        expected = "true" if disabled else "false"
+
+        users.set(
+            id=routeros_id,
+            disabled=expected,
+        )
+
+        updated = users.get(name=username)
+
+        if not updated:
+            raise RuntimeError(
+                f"RouterOS user {username!r} disappeared after status update"
+            )
+
+        actual_value = str(
+            updated[0].get("disabled", "false")
+        ).strip().lower()
+
+        actual_disabled = actual_value in {
+            "true",
+            "yes",
+            "1",
+        }
+
+        if actual_disabled != disabled:
+            raise RuntimeError(
+                f"RouterOS did not confirm disabled={expected} "
+                f"for user {username!r}"
+            )
+
+        return True
+
     def get_hotspot_diagnostics(self, username: str) -> tuple[list[dict], list[dict]]:
         """Read a Hotspot user and active sessions without changing RouterOS state."""
         users = self.api.get_resource("/ip/hotspot/user").get(name=username)

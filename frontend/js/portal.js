@@ -43,8 +43,15 @@
         };
 
         document.getElementById("result-plan").textContent = data.plan;
-        document.getElementById("result-minutes").textContent = `${data.minutes} minutos`;
-        document.getElementById("result-expires-at").textContent = formatExpiration(data.expires_at);
+        if (data.permanent === true) {
+            document.getElementById("result-minutes").textContent = "Sin límite";
+            document.getElementById("result-expires-at").textContent = "No expira";
+        } else {
+            document.getElementById("result-minutes").textContent =
+                `${data.minutes} minutos`;
+            document.getElementById("result-expires-at").textContent =
+                formatExpiration(data.expires_at);
+        }
         result.classList.remove("hidden");
         showToast("Acceso concedido. Tu conexión está lista.", "success");
     }

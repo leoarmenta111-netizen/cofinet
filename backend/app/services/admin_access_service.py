@@ -229,7 +229,7 @@ class AdminAccessService:
             select(InternalHotspotCredential)
             .options(joinedload(InternalHotspotCredential.created_by_admin))
             .where(InternalHotspotCredential.id == credential_id)
-            .with_for_update()
+            .with_for_update(of=InternalHotspotCredential)
         ).scalar_one_or_none()
         if credential is None:
             raise HTTPException(
@@ -243,20 +243,27 @@ class AdminAccessService:
         try:
             mikrotik = MikroTikService()
             if is_active:
-                try:
+                user_found = mikrotik.set_hotspot_user_disabled(
+                    credential.pin_code,
+                    False,
+                )
+
+                # Si el usuario fue eliminado manualmente del router,
+                # volver a crearlo de forma segura.
+                if not user_found:
                     mikrotik.create_permanent_hotspot_user_strict(
                         username=credential.pin_code,
                         password=credential.pin_code,
                         profile=AdminAccessService._INTERNAL_PROFILE,
                         comment=f"CofiNet internal device: {credential.label}",
                     )
-                except MikroTikUserExistsError as exc:
-                    raise HTTPException(
-                        status_code=status.HTTP_409_CONFLICT,
-                        detail="The MikroTik username already exists; activation is unsafe",
-                    ) from exc
             else:
-                mikrotik.remove_hotspot_user(credential.pin_code)
+                # Deshabilitar conserva la credencial en RouterOS,
+                # pero impide que pueda autenticarse.
+                mikrotik.set_hotspot_user_disabled(
+                    credential.pin_code,
+                    True,
+                )
         except HTTPException:
             raise
         except Exception as exc:
@@ -275,14 +282,23 @@ class AdminAccessService:
             db.rollback()
             try:
                 if is_active:
-                    mikrotik.remove_hotspot_user(credential.pin_code)
-                else:
-                    mikrotik.create_permanent_hotspot_user_strict(
-                        username=credential.pin_code,
-                        password=credential.pin_code,
-                        profile=AdminAccessService._INTERNAL_PROFILE,
-                        comment=f"CofiNet internal device: {credential.label}",
+                    mikrotik.set_hotspot_user_disabled(
+                        credential.pin_code,
+                        True,
                     )
+                else:
+                    restored = mikrotik.set_hotspot_user_disabled(
+                        credential.pin_code,
+                        False,
+                    )
+
+                    if not restored:
+                        mikrotik.create_permanent_hotspot_user_strict(
+                            username=credential.pin_code,
+                            password=credential.pin_code,
+                            profile=AdminAccessService._INTERNAL_PROFILE,
+                            comment=f"CofiNet internal device: {credential.label}",
+                        )
             except Exception:
                 logger.exception("Failed to compensate MikroTik after database status failure")
             raise HTTPException(
