@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.api.plans import router as plans_router
+from app.api.branches import router as branches_router
 from app.api.guest_purchases import router as guest_purchases_router
 from app.api.purchases import router as purchases_router
 from app.core.config import settings
@@ -29,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(plans_router)
+app.include_router(branches_router)
 app.include_router(guest_purchases_router)
 app.include_router(purchases_router)
 app.include_router(auth_router)
