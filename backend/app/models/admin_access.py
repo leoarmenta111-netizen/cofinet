@@ -29,6 +29,14 @@ class PinBatch(Base):
     id = Column(Integer, primary_key=True, index=True)
     batch_uuid = Column(String(36), unique=True, nullable=False, index=True)
     request_uuid = Column(String(36), unique=True, nullable=False, index=True)
+    branch_id = Column(
+        Integer,
+        ForeignKey("branches.id"),
+        nullable=False,
+        default=1,
+        server_default="1",
+        index=True,
+    )
     plan_id = Column(Integer, ForeignKey("plans.id"), nullable=False, index=True)
     requested_quantity = Column(Integer, nullable=False)
     created_quantity = Column(Integer, nullable=False, default=0, server_default="0")
@@ -53,6 +61,7 @@ class PinBatch(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     completed_at = Column(DateTime(timezone=True), nullable=True)
 
+    branch = relationship("Branch", back_populates="pin_batches")
     plan = relationship("Plan")
     created_by_admin = relationship("Admin", foreign_keys=[created_by_admin_id])
     purchases = relationship("Purchase", back_populates="pin_batch")
@@ -97,6 +106,16 @@ class InternalHotspotCredential(Base):
     __tablename__ = "internal_hotspot_credentials"
 
     id = Column(Integer, primary_key=True, index=True)
+
+    branch_id = Column(
+        Integer,
+        ForeignKey("branches.id"),
+        nullable=False,
+        default=1,
+        server_default="1",
+        index=True,
+    )
+
     request_uuid = Column(String(36), unique=True, nullable=False, index=True)
     label = Column(String(120), unique=True, nullable=False, index=True)
     pin_code = Column(String(6), unique=True, nullable=False, index=True)
@@ -114,6 +133,10 @@ class InternalHotspotCredential(Base):
     revoked_at = Column(DateTime(timezone=True), nullable=True)
     last_used_at = Column(DateTime(timezone=True), nullable=True)
 
+    branch = relationship(
+        "Branch",
+        back_populates="internal_hotspot_credentials",
+    )
     created_by_admin = relationship("Admin", foreign_keys=[created_by_admin_id])
 
     __table_args__ = (

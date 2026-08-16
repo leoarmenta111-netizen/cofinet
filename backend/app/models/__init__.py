@@ -4,8 +4,10 @@ from app.models.admin_access import (
     PinBatchFailure,
     PinBatchStatus,
 )
+from app.models.branch import Branch
 
 __all__ = [
+    "Branch",
     "InternalHotspotCredential",
     "PinBatch",
     "PinBatchFailure",

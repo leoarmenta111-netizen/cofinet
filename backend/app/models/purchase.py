@@ -38,6 +38,15 @@ class Purchase(Base):
         nullable=True,
         index=True,
     )
+    branch_id = Column(
+        Integer,
+        ForeignKey("branches.id"),
+        nullable=False,
+        default=1,
+        server_default="1",
+        index=True,
+    )
+
     plan_id = Column(Integer, ForeignKey("plans.id"), nullable=False, index=True)
     amount = Column(Numeric(10, 2), nullable=False)
     status = Column(
@@ -66,6 +75,7 @@ class Purchase(Base):
     expires_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    branch = relationship("Branch", back_populates="purchases")
     user = relationship("User")
     plan = relationship("Plan")
     created_by_admin = relationship("Admin", foreign_keys=[created_by_admin_id])
