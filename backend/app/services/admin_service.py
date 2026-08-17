@@ -127,39 +127,97 @@ class AdminService:
             ) from exc
 
     @staticmethod
-    def dashboard(db: Session) -> AdminDashboardResponse:
+    def dashboard(
+        db: Session,
+        branch_code: str | None = None,
+    ) -> AdminDashboardResponse:
         now = datetime.now(UTC)
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        week_start = today_start - timedelta(days=today_start.weekday())
+        today_start = now.replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        week_start = today_start - timedelta(
+            days=today_start.weekday()
+        )
         month_start = today_start.replace(day=1)
+
+        branch = (
+            BranchService.get_by_code(db, branch_code)
+            if branch_code
+            else None
+        )
+
+        branch_filters = (
+            [Purchase.branch_id == branch.id]
+            if branch is not None
+            else []
+        )
 
         active_purchases = db.execute(
             select(func.count(Purchase.id)).where(
                 Purchase.status == PurchaseStatus.PAID,
                 Purchase.expires_at > now,
+                *branch_filters,
             )
         ).scalar_one()
+
         expired_purchases = db.execute(
             select(func.count(Purchase.id)).where(
-                or_(Purchase.status == PurchaseStatus.EXPIRED, Purchase.expires_at <= now),
+                or_(
+                    Purchase.status == PurchaseStatus.EXPIRED,
+                    Purchase.expires_at <= now,
+                ),
+                *branch_filters,
             )
         ).scalar_one()
+
         active_pins = db.execute(
             select(func.count(Purchase.id)).where(
                 Purchase.pin_code.is_not(None),
                 Purchase.status == PurchaseStatus.PAID,
                 Purchase.expires_at > now,
+                *branch_filters,
             )
         ).scalar_one()
+
+        pending_payment_query = (
+            select(func.count(Payment.id))
+            .join(Payment.purchase)
+            .where(
+                Payment.provider == "mercadopago",
+                Payment.status == "pending",
+            )
+        )
+
+        if branch is not None:
+            pending_payment_query = pending_payment_query.where(
+                Purchase.branch_id == branch.id
+            )
+
         pending_payments = db.execute(
-            select(func.count(Payment.id)).where(
-                Payment.provider == "mercadopago", Payment.status == "pending"
-            )
+            pending_payment_query
         ).scalar_one()
+
+        branch_id = branch.id if branch is not None else None
+
         return AdminDashboardResponse(
-            total_sales_today=AdminService._revenue_since(db, today_start),
-            total_sales_week=AdminService._revenue_since(db, week_start),
-            total_sales_month=AdminService._revenue_since(db, month_start),
+            total_sales_today=AdminService._revenue_since(
+                db,
+                today_start,
+                branch_id=branch_id,
+            ),
+            total_sales_week=AdminService._revenue_since(
+                db,
+                week_start,
+                branch_id=branch_id,
+            ),
+            total_sales_month=AdminService._revenue_since(
+                db,
+                month_start,
+                branch_id=branch_id,
+            ),
             active_purchases=active_purchases,
             expired_purchases=expired_purchases,
             active_pins=active_pins,
@@ -280,32 +338,87 @@ class AdminService:
         return [AdminService._pin_response(purchase, purchase.plan) for purchase in purchases]
 
     @staticmethod
-    def list_payments(db: Session) -> list[AdminPaymentResponse]:
-        payments = db.execute(
+    def list_payments(
+        db: Session,
+        branch_code: str | None = None,
+    ) -> list[AdminPaymentResponse]:
+        branch = (
+            BranchService.get_by_code(db, branch_code)
+            if branch_code
+            else None
+        )
+
+        query = (
             select(Payment)
-            .options(joinedload(Payment.purchase).joinedload(Purchase.plan))
-            .order_by(Payment.created_at.desc(), Payment.id.desc())
-        ).scalars().all()
-        return [AdminService._payment_response(payment) for payment in payments]
+            .options(
+                joinedload(Payment.purchase).joinedload(Purchase.plan),
+                joinedload(Payment.purchase).joinedload(Purchase.branch),
+            )
+            .order_by(
+                Payment.created_at.desc(),
+                Payment.id.desc(),
+            )
+        )
+
+        if branch is not None:
+            query = (
+                query
+                .join(Payment.purchase)
+                .where(Purchase.branch_id == branch.id)
+            )
+
+        payments = db.execute(query).scalars().all()
+
+        return [
+            AdminService._payment_response(payment)
+            for payment in payments
+        ]
 
     @staticmethod
-    def get_payment(db: Session, payment_id: int) -> AdminPaymentResponse:
+    def get_payment(
+        db: Session,
+        payment_id: int,
+    ) -> AdminPaymentResponse:
         payment = db.execute(
             select(Payment)
-            .options(joinedload(Payment.purchase).joinedload(Purchase.plan))
+            .options(
+                joinedload(Payment.purchase).joinedload(Purchase.plan),
+                joinedload(Payment.purchase).joinedload(Purchase.branch),
+            )
             .where(Payment.id == payment_id)
         ).scalar_one_or_none()
+
         if payment is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Payment not found",
+            )
+
         return AdminService._payment_response(payment)
 
     @staticmethod
-    def _revenue_since(db: Session, start: datetime) -> Decimal:
-        return db.execute(
-            select(func.coalesce(func.sum(Purchase.amount), Decimal("0"))).where(
-                Purchase.status == PurchaseStatus.PAID,
-                Purchase.issued_at >= start,
+    def _revenue_since(
+        db: Session,
+        start: datetime,
+        branch_id: int | None = None,
+    ) -> Decimal:
+        conditions = [
+            Purchase.status == PurchaseStatus.PAID,
+            Purchase.issued_at >= start,
+        ]
+
+        if branch_id is not None:
+            conditions.append(
+                Purchase.branch_id == branch_id
             )
+
+        return db.execute(
+            select(
+                func.coalesce(
+                    func.sum(Purchase.amount),
+                    Decimal("0"),
+                )
+            ).where(*conditions)
         ).scalar_one()
 
     @staticmethod
@@ -333,9 +446,14 @@ class AdminService:
     @staticmethod
     def _payment_response(payment: Payment) -> AdminPaymentResponse:
         purchase = payment.purchase
+        branch = purchase.branch
+
         return AdminPaymentResponse(
             payment_id=payment.id,
             purchase_id=payment.purchase_id,
+            branch_id=purchase.branch_id,
+            branch_code=branch.code,
+            branch_name=branch.name,
             provider=payment.provider,
             provider_payment_id=payment.provider_payment_id,
             provider_preference_id=payment.provider_preference_id,

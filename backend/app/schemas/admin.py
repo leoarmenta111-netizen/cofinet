@@ -104,6 +104,9 @@ class AdminPinList(BaseModel):
 class AdminPaymentResponse(BaseModel):
     payment_id: int
     purchase_id: int
+    branch_id: int
+    branch_code: str
+    branch_name: str
     provider: str
     provider_payment_id: str | None
     provider_preference_id: str

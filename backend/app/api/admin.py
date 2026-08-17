@@ -92,10 +92,14 @@ def admin_me(current_admin: Admin = Depends(get_current_active_admin)) -> Admin:
 
 @router.get("/dashboard", response_model=AdminDashboardResponse)
 def admin_dashboard(
+    branch_code: str | None = None,
     _admin: Admin = Depends(require_super_admin),
     db: Session = Depends(get_db),
 ) -> AdminDashboardResponse:
-    return AdminService.dashboard(db)
+    return AdminService.dashboard(
+        db,
+        branch_code=branch_code,
+    )
 
 
 @router.post("/pins", response_model=AdminPinResponse, status_code=status.HTTP_201_CREATED)
@@ -220,10 +224,16 @@ def update_internal_access_status(
 
 @router.get("/payments", response_model=AdminPaymentList)
 def list_admin_payments(
+    branch_code: str | None = None,
     _admin: Admin = Depends(require_super_admin),
     db: Session = Depends(get_db),
 ) -> AdminPaymentList:
-    return AdminPaymentList(payments=AdminService.list_payments(db))
+    return AdminPaymentList(
+        payments=AdminService.list_payments(
+            db,
+            branch_code=branch_code,
+        )
+    )
 
 
 @router.get("/payments/{payment_id}", response_model=AdminPaymentResponse)
