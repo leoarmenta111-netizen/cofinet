@@ -53,11 +53,19 @@ window.CofiApi = {
             body: JSON.stringify({ plan_id: planId })
         });
     },
-    createGuestCheckout(planId) {
+    createGuestCheckout(planId, branchCode = null) {
+        const payload = {
+            plan_id: planId
+        };
+
+        if (branchCode) {
+            payload.branch_code = branchCode;
+        }
+
         return requestApi("/guest-purchases", {
             method: "POST",
             includeAuth: false,
-            body: JSON.stringify({ plan_id: planId })
+            body: JSON.stringify(payload)
         });
     },
     getGuestPurchaseStatus(purchaseId) {

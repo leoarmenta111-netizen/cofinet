@@ -4,6 +4,19 @@ let cofinetPurchasePollingIntervalId = null;
 let cofinetPurchasePollingGeneration = 0;
 
 
+function obtenerCodigoSucursalActual() {
+    const params = new URLSearchParams(window.location.search);
+    const branchCode = params.get("branch");
+
+    if (!branchCode) {
+        return null;
+    }
+
+    const normalized = branchCode.trim().toLowerCase();
+
+    return normalized || null;
+}
+
 
 function guardarContextoHotspot() {
     const params = new URLSearchParams(window.location.search);
@@ -11,6 +24,7 @@ function guardarContextoHotspot() {
     const loginUrl = params.get("login_url");
     const destination = params.get("dst");
     const mac = params.get("mac");
+    const branchCode = obtenerCodigoSucursalActual();
 
     if (!loginUrl) return;
 
@@ -19,7 +33,8 @@ function guardarContextoHotspot() {
         JSON.stringify({
             loginUrl,
             destination: destination || "http://neverssl.com/",
-            mac: mac || ""
+            mac: mac || "",
+            branchCode
         })
     );
 }
@@ -116,14 +131,21 @@ async function comprarPlan(planId, button) {
     button.textContent = "Procesando...";
 
     try {
-        const checkout = await window.CofiApi.createGuestCheckout(planId);
+        const branchCode = obtenerCodigoSucursalActual();
+
+        const checkout = await window.CofiApi.createGuestCheckout(
+            planId,
+            branchCode
+        );
+
         const selectedPlan = window.CofiPlans?.find(plan => plan.id === planId);
         guardarContextoHotspot();
 
         const pendingPurchase = {
             purchaseId: checkout.purchase_id,
             plan: selectedPlan?.name || "Plan seleccionado",
-            durationMinutes: selectedPlan?.duration_minutes || 0
+            durationMinutes: selectedPlan?.duration_minutes || 0,
+            branchCode
         };
 
         localStorage.setItem(
