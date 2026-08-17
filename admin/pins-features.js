@@ -19,6 +19,22 @@
     let batchSubmitting = false;
     const batchPlan = document.getElementById("batch-plan");
     const batchButton = document.getElementById("batch-generate");
+    const branchSelect = document.getElementById("branch");
+
+    function selectedBranchCode() {
+        return branchSelect?.value || "";
+    }
+
+    function selectedBranchName() {
+        return branchSelect?.selectedOptions?.[0]?.textContent || "Sucursal";
+    }
+
+    function updateBatchAvailability() {
+        batchButton.disabled =
+            batchPlan.disabled ||
+            !batchPlan.value ||
+            !selectedBranchCode();
+    }
 
     function requestUuid() {
         if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -61,7 +77,7 @@
         for (const plan of plans) {
             batchPlan.add(new Option(`${plan.name} · ${formatMoney(plan.price)} · ${formatDuration(plan.duration_minutes)}`, plan.id));
         }
-        batchButton.disabled = false;
+        updateBatchAvailability();
     }
 
     function renderBatchResult(batch) {
@@ -84,7 +100,7 @@
         if (!batches.length) {
             const row = document.createElement("tr");
             const cell = document.createElement("td");
-            cell.colSpan = 7;
+            cell.colSpan = 8;
             showEmpty(cell, "Aún no hay lotes", "Los lotes confirmados aparecerán aquí para reimpresión.");
             row.append(cell);
             body.append(row);
@@ -94,6 +110,7 @@
             const row = document.createElement("tr");
             const values = [
                 batch.batch_uuid.slice(0, 8),
+                batch.branch_name || "Sucursal no identificada",
                 batch.plan_name,
                 `${batch.created}/${batch.requested}`
             ];
@@ -128,7 +145,7 @@
         renderBatches(response.batches);
     }
 
-    function buildTicket(ticket, { internal = false } = {}) {
+    function buildTicket(ticket, { internal = false, branchName = null } = {}) {
         const node = document.createElement("article");
         node.className = "batch-ticket";
         const brand = document.createElement("strong");
@@ -142,8 +159,19 @@
         pin.textContent = ticket.pin;
         const details = document.createElement("dl");
         const entries = internal
-            ? [["Dispositivo", ticket.label], ["Duración", "Permanente"], ["Generado", formatDate(ticket.created_at)]]
-            : [["Plan", ticket.plan_name], ["Duración", formatDuration(ticket.duration_minutes)], ["Precio", formatMoney(ticket.amount)], ["Generado", formatDate(ticket.issued_at)]];
+            ? [
+                ["Sucursal", branchName || ticket.branch_name || "—"],
+                ["Dispositivo", ticket.label],
+                ["Duración", "Permanente"],
+                ["Generado", formatDate(ticket.created_at)]
+            ]
+            : [
+                ["Sucursal", branchName || "—"],
+                ["Plan", ticket.plan_name],
+                ["Duración", formatDuration(ticket.duration_minutes)],
+                ["Precio", formatMoney(ticket.amount)],
+                ["Generado", formatDate(ticket.issued_at)]
+            ];
         for (const [label, value] of entries) {
             const term = document.createElement("dt");
             term.textContent = label;
@@ -171,7 +199,11 @@
     async function printBatchById(batchId) {
         try {
             const data = await adminRequest(`/admin/pin-batches/${batchId}/print-data`);
-            printTickets(data.tickets, `${data.plan_name} · ${data.tickets.length} accesos`);
+            printTickets(
+                data.tickets,
+                `${data.branch_name} · ${data.plan_name} · ${data.tickets.length} accesos`,
+                { branchName: data.branch_name }
+            );
         } catch (error) {
             showToast(error.message, "error");
         }
@@ -180,8 +212,16 @@
     function downloadBatchCsv(batch) {
         const quote = value => `"${String(value ?? "").replaceAll('"', '""')}"`;
         const rows = [
-            ["PIN", "Plan", "Duración minutos", "Precio MXN", "Generado", "Expira"],
-            ...batch.pins.map(pin => [pin.pin, pin.plan_name, pin.duration_minutes, pin.amount, pin.issued_at, pin.expires_at])
+            ["PIN", "Sucursal", "Plan", "Duración minutos", "Precio MXN", "Generado", "Expira"],
+            ...batch.pins.map(pin => [
+                pin.pin,
+                batch.branch_name,
+                pin.plan_name,
+                pin.duration_minutes,
+                pin.amount,
+                pin.issued_at,
+                pin.expires_at
+            ])
         ];
         const csv = "\ufeff" + rows.map(row => row.map(quote).join(",")).join("\r\n");
         const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -213,7 +253,7 @@
         if (!credentials.length) {
             const row = document.createElement("tr");
             const cell = document.createElement("td");
-            cell.colSpan = 6;
+            cell.colSpan = 7;
             showEmpty(cell, "Sin dispositivos registrados", "Genera un acceso permanente para comenzar.");
             row.append(cell);
             body.append(row);
@@ -221,7 +261,11 @@
         }
         for (const credential of credentials) {
             const row = document.createElement("tr");
-            for (const value of [credential.label, credential.pin]) {
+            for (const value of [
+                credential.label,
+                credential.branch_name || "Sucursal no identificada",
+                credential.pin
+            ]) {
                 const cell = document.createElement("td");
                 cell.textContent = value;
                 if (value === credential.pin) cell.className = "mono";
@@ -240,7 +284,17 @@
             actions.className = "row-actions";
             actions.append(
                 actionButton("Copiar", () => copyText(credential.pin)),
-                actionButton("Imprimir", () => printTickets([credential], credential.label, { internal: true }))
+                actionButton(
+                    "Imprimir",
+                    () => printTickets(
+                        [credential],
+                        `${credential.branch_name} · ${credential.label}`,
+                        {
+                            internal: true,
+                            branchName: credential.branch_name
+                        }
+                    )
+                )
             );
             const nextActive = !credential.is_active;
             actions.append(actionButton(
@@ -279,12 +333,22 @@
         }
     }
 
+    branchSelect?.addEventListener("change", updateBatchAvailability);
+    batchPlan.addEventListener("change", updateBatchAvailability);
+    window.addEventListener("cofinet:branch-changed", updateBatchAvailability);
+
     document.getElementById("refresh-batches").addEventListener("click", () => {
         loadBatches().catch(error => showToast(error.message, "error"));
     });
 
     document.getElementById("batch-print").addEventListener("click", () => {
-        if (latestBatch) printTickets(latestBatch.pins, `${latestBatch.plan_name} · ${latestBatch.created} accesos`);
+        if (latestBatch) {
+            printTickets(
+                latestBatch.pins,
+                `${latestBatch.branch_name} · ${latestBatch.plan_name} · ${latestBatch.created} accesos`,
+                { branchName: latestBatch.branch_name }
+            );
+        }
     });
 
     document.getElementById("batch-csv").addEventListener("click", () => {
@@ -294,11 +358,18 @@
     document.getElementById("batch-form").addEventListener("submit", async event => {
         event.preventDefault();
         const quantity = Number(document.getElementById("batch-quantity").value);
-        if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100 || batchButton.disabled || batchSubmitting) return;
+        if (
+            !Number.isInteger(quantity) ||
+            quantity < 1 ||
+            quantity > 100 ||
+            !selectedBranchCode() ||
+            batchButton.disabled ||
+            batchSubmitting
+        ) return;
         batchSubmitting = true;
         const confirmed = await confirmAdminAction({
             title: "Confirmar generación por lote",
-            message: `Se intentarán crear ${quantity} accesos. Cada PIN se confirmará en MikroTik y PostgreSQL.`,
+            message: `Se intentarán crear ${quantity} accesos para ${selectedBranchName()}. Cada PIN se confirmará en MikroTik y PostgreSQL.`,
             confirmLabel: `Generar ${quantity} PINs`
         });
         if (!confirmed) {
@@ -308,7 +379,7 @@
 
         const progress = document.getElementById("batch-progress");
         const errorNode = document.getElementById("batch-error");
-        const requestKey = `${batchPlan.value}:${quantity}`;
+        const requestKey = `${selectedBranchCode()}:${batchPlan.value}:${quantity}`;
         let pendingRequest = null;
         try {
             pendingRequest = JSON.parse(sessionStorage.getItem("cofinet_pending_pin_batch"));
@@ -328,6 +399,7 @@
                 method: "POST",
                 body: JSON.stringify({
                     plan_id: Number(batchPlan.value),
+                    branch_code: selectedBranchCode(),
                     quantity,
                     request_id: pendingRequest.requestId
                 })
@@ -355,14 +427,14 @@
 
     document.getElementById("internal-form").addEventListener("submit", async event => {
         event.preventDefault();
-        if (activeAdmin?.role !== SUPER_ADMIN) return;
+        if (activeAdmin?.role !== SUPER_ADMIN || !selectedBranchCode()) return;
         const labelInput = document.getElementById("internal-label");
         const label = labelInput.value.trim();
         const button = document.getElementById("internal-generate");
         const errorNode = document.getElementById("internal-error");
         const confirmed = await confirmAdminAction({
             title: "Generar acceso permanente",
-            message: `Crear una credencial interna sin expiración para ${label}?`,
+            message: `Crear una credencial interna sin expiración para ${label} en ${selectedBranchName()}?`,
             confirmLabel: "Generar acceso"
         });
         if (!confirmed) return;
@@ -371,7 +443,11 @@
         try {
             const credential = await adminRequest("/admin/internal-access", {
                 method: "POST",
-                body: JSON.stringify({ label, request_id: requestUuid() })
+                body: JSON.stringify({
+                    label,
+                    branch_code: selectedBranchCode(),
+                    request_id: requestUuid()
+                })
             });
             labelInput.value = "";
             await loadInternal();

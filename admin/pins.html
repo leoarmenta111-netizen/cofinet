@@ -18,6 +18,27 @@
             <header class="topbar"><button class="button button-ghost menu-toggle" data-menu-toggle aria-expanded="false" aria-label="Abrir menú">Menú</button><span class="topbar-title">Punto de venta</span><span class="muted" data-admin-name></span></header>
             <main class="content">
                 <header class="page-header"><div><p class="eyebrow">Acceso en efectivo</p><h1 class="page-title">Generar PIN</h1><p class="page-description">Selecciona un plan y genera un acceso único. El PIN se registra a nombre del operador actual.</p></div></header>
+                <section class="panel" style="margin-bottom:1rem">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Sucursal de operación</h2>
+                            <small class="muted">Los accesos nuevos se asignarán a esta sucursal.</small>
+                        </div>
+                        <span id="branch-badge" class="badge badge-neutral">Cargando…</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="field">
+                            <label for="branch">Sucursal</label>
+                            <select id="branch" required>
+                                <option value="">Cargando sucursales…</option>
+                            </select>
+                        </div>
+                        <p class="integration-note">
+                            El historial muestra la sucursal asociada a cada acceso.
+                        </p>
+                    </div>
+                </section>
+
                 <div class="split-layout">
                     <section class="panel">
                         <div class="panel-header"><h2>Nuevo PIN</h2><span class="badge badge-neutral">MikroTik requerido</span></div>
@@ -37,14 +58,14 @@
                         <div id="pin-success" class="pin-success">
                             <span class="muted">Acceso creado correctamente</span>
                             <strong id="generated-pin" class="pin-code"></strong>
-                            <div class="success-details"><div><span>Plan</span><strong id="generated-plan"></strong></div><div><span>Vigencia</span><strong id="generated-duration"></strong></div><div><span>Creado</span><strong id="generated-issued"></strong></div><div><span>Expira</span><strong id="generated-expires"></strong></div></div>
+                            <div class="success-details"><div><span>Sucursal</span><strong id="generated-branch"></strong></div><div><span>Plan</span><strong id="generated-plan"></strong></div><div><span>Vigencia</span><strong id="generated-duration"></strong></div><div><span>Creado</span><strong id="generated-issued"></strong></div><div><span>Expira</span><strong id="generated-expires"></strong></div></div>
                             <div class="success-actions"><button id="copy-pin" class="button button-primary" type="button">Copiar PIN</button><button id="print-pin" class="button button-secondary" type="button">Imprimir ticket</button></div>
                         </div>
                     </section>
                 </div>
                 <section class="panel" style="margin-top:1rem">
                     <div class="panel-header"><div><h2 id="history-title">Historial de PINs</h2><small class="muted" id="history-note"></small></div><button id="refresh-pins" class="button button-ghost button-small" type="button">Actualizar</button></div>
-                    <div class="table-wrap"><table><thead><tr><th>PIN</th><th>Plan</th><th>Importe</th><th>Duración</th><th>Operador</th><th>Creado</th><th>Expira</th></tr></thead><tbody id="pin-list"><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody></table></div>
+                    <div class="table-wrap"><table><thead><tr><th>PIN</th><th>Sucursal</th><th>Plan</th><th>Importe</th><th>Duración</th><th>Operador</th><th>Creado</th><th>Expira</th></tr></thead><tbody id="pin-list"><tr><td colspan="8" class="muted">Cargando…</td></tr></tbody></table></div>
                 </section>
                 <section class="panel" style="margin-top:1rem">
                     <div class="panel-header"><div><h2>Generación por lote</h2><small class="muted">De 1 a 100 accesos confirmados individualmente en MikroTik y PostgreSQL.</small></div><span class="badge badge-neutral">PINs de 6 dígitos</span></div>
@@ -62,7 +83,7 @@
                         </div>
                     </div>
                     <div class="panel-header"><div><h2>Historial de lotes</h2><small class="muted" id="batch-history-note">Cargando…</small></div><button id="refresh-batches" class="button button-ghost button-small" type="button">Actualizar</button></div>
-                    <div class="table-wrap"><table><thead><tr><th>Lote</th><th>Plan</th><th>Resultado</th><th>Estado</th><th>Operador</th><th>Creado</th><th>Acciones</th></tr></thead><tbody id="batch-list"><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody></table></div>
+                    <div class="table-wrap"><table><thead><tr><th>Lote</th><th>Sucursal</th><th>Plan</th><th>Resultado</th><th>Estado</th><th>Operador</th><th>Creado</th><th>Acciones</th></tr></thead><tbody id="batch-list"><tr><td colspan="8" class="muted">Cargando…</td></tr></tbody></table></div>
                 </section>
                 <section id="internal-access-section" class="panel" style="margin-top:1rem" hidden>
                     <div class="panel-header"><div><h2>Acceso permanente para dispositivos</h2><small class="muted">Crea credenciales sin vencimiento para tablets, kioscos y equipos autorizados.</small></div><span class="badge badge-warning">Solo SUPER_ADMIN</span></div>
@@ -74,22 +95,60 @@
                         <p class="integration-note">El PIN generado funciona como usuario y contraseña. Revoca el acceso cuando el dispositivo deje de utilizarse.</p>
                         <p id="internal-error" class="form-error" role="alert"></p>
                     </div>
-                    <div class="table-wrap"><table><thead><tr><th>Dispositivo</th><th>PIN</th><th>Tipo</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr></thead><tbody id="internal-list"><tr><td colspan="6" class="muted">Cargando…</td></tr></tbody></table></div>
+                    <div class="table-wrap"><table><thead><tr><th>Dispositivo</th><th>Sucursal</th><th>PIN</th><th>Tipo</th><th>Estado</th><th>Creado</th><th>Acciones</th></tr></thead><tbody id="internal-list"><tr><td colspan="7" class="muted">Cargando…</td></tr></tbody></table></div>
                 </section>
             </main>
         </div>
     </div>
-    <section id="print-ticket" class="print-ticket" aria-hidden="true"><h1>CofiNet+</h1><p>Acceso WiFi</p><strong class="ticket-pin" data-ticket-pin></strong><dl><dt>Plan</dt><dd data-ticket-plan></dd><dt>Duración</dt><dd data-ticket-duration></dd><dt>Creado</dt><dd data-ticket-issued></dd><dt>Expira</dt><dd data-ticket-expires></dd></dl><p>Conserva este ticket durante tu sesión.</p></section>
+    <section id="print-ticket" class="print-ticket" aria-hidden="true"><h1>CofiNet+</h1><p>Acceso WiFi</p><strong class="ticket-pin" data-ticket-pin></strong><dl><dt>Sucursal</dt><dd data-ticket-branch></dd><dt>Plan</dt><dd data-ticket-plan></dd><dt>Duración</dt><dd data-ticket-duration></dd><dt>Creado</dt><dd data-ticket-issued></dd><dt>Expira</dt><dd data-ticket-expires></dd></dl><p>Conserva este ticket durante tu sesión.</p></section>
     <section id="batch-print-area" class="batch-print-area" aria-hidden="true"><header><h1>CofiNet+</h1><p id="batch-print-heading">Accesos WiFi</p></header><div id="batch-ticket-grid" class="batch-ticket-grid"></div></section>
     <script src="admin.js"></script>
     <script>
 (() => {
 
         const { PIN_OPERATOR, adminRequest, bootstrapAdmin, copyText, formatDate, formatDuration, formatMoney, printPinTicket, setButtonLoading, showEmpty, showToast } = window.CofiAdmin;
+        const BRANCH_STORAGE_KEY = "cofinet_admin_branch_code";
+
         let plans = [];
+        let branches = [];
         let latestPin = null;
         let activeAdmin = null;
+
         const planSelect = document.getElementById("plan");
+        const branchSelect = document.getElementById("branch");
+
+        function selectedBranch() {
+            return branches.find(branch => branch.code === branchSelect.value) || null;
+        }
+
+        function configureBranches(loadedBranches) {
+            branches = loadedBranches;
+
+            branchSelect.replaceChildren();
+
+            if (!branches.length) {
+                branchSelect.add(new Option("No hay sucursales disponibles.", ""));
+                branchSelect.disabled = true;
+                document.getElementById("branch-badge").textContent = "Sin sucursales";
+                updatePlanPreview();
+                return;
+            }
+
+            for (const branch of branches) {
+                branchSelect.add(new Option(branch.name, branch.code));
+            }
+
+            const savedCode = localStorage.getItem(BRANCH_STORAGE_KEY);
+
+            const initial =
+                branches.find(branch => branch.code === savedCode) ||
+                branches.find(branch => branch.code === "nuevo-vallarta") ||
+                branches[0];
+
+            branchSelect.value = initial.code;
+            branchSelect.disabled = false;
+            branchSelect.dispatchEvent(new Event("change"));
+        }
 
         function updatePlanPreview() {
             if (!plans.length) {
@@ -103,7 +162,7 @@
             document.getElementById("plan-price").textContent = plan ? formatMoney(plan.price) : "—";
             document.getElementById("plan-duration").textContent = plan ? formatDuration(plan.duration_minutes) : "—";
             document.getElementById("plan-description").textContent = plan?.description || "Selecciona un plan para ver sus condiciones.";
-            document.getElementById("generate-button").disabled = !plan;
+            document.getElementById("generate-button").disabled = !plan || !branchSelect.value;
         }
 
         function configurePlans(loadedPlans) {
@@ -126,13 +185,13 @@
             const body = document.getElementById("pin-list");
             body.replaceChildren();
             if (!pins.length) {
-                const row = document.createElement("tr"); const cell = document.createElement("td"); cell.colSpan = 7;
+                const row = document.createElement("tr"); const cell = document.createElement("td"); cell.colSpan = 8;
                 showEmpty(cell, "Aún no hay PINs", activeAdmin.role === PIN_OPERATOR ? "Los PINs que generes aparecerán aquí." : "Los PINs de efectivo aparecerán aquí.");
                 row.append(cell); body.append(row); return;
             }
             for (const pin of pins) {
                 const row = document.createElement("tr");
-                const values = [pin.pin, pin.plan_name, formatMoney(pin.amount), formatDuration(pin.duration_minutes), pin.created_by_admin_name || "Sin auditoría", formatDate(pin.issued_at), formatDate(pin.expires_at)];
+                const values = [pin.pin, pin.branch_name || "Sucursal no identificada", pin.plan_name, formatMoney(pin.amount), formatDuration(pin.duration_minutes), pin.created_by_admin_name || "Sin auditoría", formatDate(pin.issued_at), formatDate(pin.expires_at)];
                 values.forEach((value, index) => { const cell = document.createElement("td"); cell.textContent = value; if (index === 0) cell.className = "mono"; row.append(cell); });
                 body.append(row);
             }
@@ -148,11 +207,37 @@
             if (!activeAdmin) return;
             document.getElementById("history-title").textContent = activeAdmin.role === PIN_OPERATOR ? "Mis PINs" : "Historial de PINs de efectivo";
             document.getElementById("history-note").textContent = activeAdmin.role === PIN_OPERATOR ? "Solo los generados por tu cuenta" : "Todos los operadores";
-            const [loadedPlans] = await Promise.all([adminRequest("/plans"), loadPins()]);
+            const [loadedBranches, loadedPlans] = await Promise.all([
+                adminRequest("/branches"),
+                adminRequest("/plans")
+            ]);
+
+            configureBranches(loadedBranches);
             configurePlans(loadedPlans);
+            await loadPins();
         }
 
         planSelect.addEventListener("change", updatePlanPreview);
+
+        branchSelect.addEventListener("change", () => {
+            const branch = selectedBranch();
+
+            if (branch) {
+                localStorage.setItem(BRANCH_STORAGE_KEY, branch.code);
+                document.getElementById("branch-badge").textContent = branch.name;
+            }
+
+            updatePlanPreview();
+
+            window.dispatchEvent(
+                new CustomEvent("cofinet:branch-changed", {
+                    detail: {
+                        branchCode: branch?.code || null,
+                        branchName: branch?.name || null
+                    }
+                })
+            );
+        });
         document.getElementById("refresh-pins").addEventListener("click", () => loadPins().catch(error => showToast(error.message, "error")));
         document.getElementById("copy-pin").addEventListener("click", () => latestPin && copyText(latestPin.pin).catch(() => showToast("No fue posible copiar el PIN.", "error")));
         document.getElementById("print-pin").addEventListener("click", () => latestPin && printPinTicket(latestPin));
@@ -160,15 +245,22 @@
             event.preventDefault();
             const button = document.getElementById("generate-button");
             const errorNode = document.getElementById("pin-error");
-            if (!planSelect.value || button.disabled) return;
+            if (!planSelect.value || !branchSelect.value || button.disabled) return;
             errorNode.textContent = "";
             setButtonLoading(button, true, "Creando acceso…");
             try {
-                latestPin = await adminRequest("/admin/pins", { method: "POST", body: JSON.stringify({ plan_id: Number(planSelect.value) }) });
+                latestPin = await adminRequest("/admin/pins", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        plan_id: Number(planSelect.value),
+                        branch_code: branchSelect.value
+                    })
+                });
                 document.getElementById("pin-placeholder").hidden = true;
                 document.getElementById("pin-success").classList.add("is-visible");
                 const badge = document.getElementById("success-badge"); badge.textContent = "Confirmado"; badge.className = "badge badge-success";
                 document.getElementById("generated-pin").textContent = latestPin.pin;
+                document.getElementById("generated-branch").textContent = latestPin.branch_name;
                 document.getElementById("generated-plan").textContent = latestPin.plan_name;
                 document.getElementById("generated-duration").textContent = formatDuration(latestPin.duration_minutes);
                 document.getElementById("generated-issued").textContent = formatDate(latestPin.issued_at);

@@ -275,6 +275,12 @@ function printPinTicket(pin) {
     const ticket = document.getElementById("print-ticket");
     if (!ticket) return;
     ticket.querySelector("[data-ticket-pin]").textContent = pin.pin;
+
+    const branchNode = ticket.querySelector("[data-ticket-branch]");
+    if (branchNode) {
+        branchNode.textContent = pin.branch_name || "—";
+    }
+
     ticket.querySelector("[data-ticket-plan]").textContent = pin.plan_name;
     ticket.querySelector("[data-ticket-duration]").textContent = formatDuration(pin.duration_minutes);
     ticket.querySelector("[data-ticket-issued]").textContent = formatDate(pin.issued_at);
