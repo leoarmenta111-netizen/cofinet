@@ -25,6 +25,7 @@ from app.schemas.admin_access import (
     PinBatchDetailResponse,
 )
 from app.services.admin_access_query_service import AdminAccessQueryService
+from app.services.branch_service import BranchService
 from app.services.mikrotik_service import MikroTikService, MikroTikUserExistsError
 
 
@@ -40,9 +41,13 @@ class AdminAccessService:
         db: Session, request: PinBatchCreate, current_admin: Admin
     ) -> PinBatchDetailResponse:
         request_uuid = str(request.request_id)
+        branch = BranchService.resolve(db, request.branch_code)
+
         existing = AdminAccessService._batch_by_request(db, request_uuid)
         if existing is not None:
-            AdminAccessService._validate_batch_replay(existing, request, current_admin)
+            AdminAccessService._validate_batch_replay(
+                existing, request, current_admin, branch.id
+            )
             if existing.status == PinBatchStatus.PROCESSING:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
@@ -59,6 +64,7 @@ class AdminAccessService:
         batch = PinBatch(
             batch_uuid=str(uuid4()),
             request_uuid=request_uuid,
+            branch_id=branch.id,
             plan_id=plan.id,
             requested_quantity=request.quantity,
             created_quantity=0,
@@ -74,7 +80,9 @@ class AdminAccessService:
             db.rollback()
             existing = AdminAccessService._batch_by_request(db, request_uuid)
             if existing is not None:
-                AdminAccessService._validate_batch_replay(existing, request, current_admin)
+                AdminAccessService._validate_batch_replay(
+                    existing, request, current_admin, branch.id
+                )
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="This batch request is already processing",
@@ -92,7 +100,7 @@ class AdminAccessService:
 
         mikrotik = None
         try:
-            mikrotik = MikroTikService()
+            mikrotik = MikroTikService.for_branch(branch.code)
         except Exception:
             for _ in range(request.quantity):
                 AdminAccessService._record_batch_failure(
@@ -125,13 +133,19 @@ class AdminAccessService:
         db: Session, request: InternalAccessCreate, current_admin: Admin
     ) -> InternalAccessResponse:
         request_uuid = str(request.request_id)
+        branch = BranchService.resolve(db, request.branch_code)
+
         existing = db.execute(
             select(InternalHotspotCredential)
             .options(joinedload(InternalHotspotCredential.created_by_admin))
             .where(InternalHotspotCredential.request_uuid == request_uuid)
         ).scalar_one_or_none()
         if existing is not None:
-            if existing.label != request.label or existing.created_by_admin_id != current_admin.id:
+            if (
+                existing.label != request.label
+                or existing.branch_id != branch.id
+                or existing.created_by_admin_id != current_admin.id
+            ):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Internal access request identifier conflicts with existing data",
@@ -151,7 +165,7 @@ class AdminAccessService:
 
         mikrotik = None
         try:
-            mikrotik = MikroTikService()
+            mikrotik = MikroTikService.for_branch(branch.code)
             for _ in range(AdminAccessService._PIN_GENERATION_ATTEMPTS):
                 pin_code = AdminAccessService._generate_pin()
                 if AdminAccessService._pin_exists(db, pin_code):
@@ -172,6 +186,7 @@ class AdminAccessService:
                     ) from exc
 
                 credential = InternalHotspotCredential(
+                    branch_id=branch.id,
                     request_uuid=request_uuid,
                     label=request.label,
                     pin_code=pin_code,
@@ -227,7 +242,10 @@ class AdminAccessService:
     ) -> InternalAccessResponse:
         credential = db.execute(
             select(InternalHotspotCredential)
-            .options(joinedload(InternalHotspotCredential.created_by_admin))
+            .options(
+                joinedload(InternalHotspotCredential.branch),
+                joinedload(InternalHotspotCredential.created_by_admin),
+            )
             .where(InternalHotspotCredential.id == credential_id)
             .with_for_update(of=InternalHotspotCredential)
         ).scalar_one_or_none()
@@ -241,7 +259,9 @@ class AdminAccessService:
 
         mikrotik = None
         try:
-            mikrotik = MikroTikService()
+            mikrotik = MikroTikService.for_branch(
+                credential.branch.code
+            )
             if is_active:
                 user_found = mikrotik.set_hotspot_user_disabled(
                     credential.pin_code,
@@ -353,6 +373,7 @@ class AdminAccessService:
             batch = db.get(PinBatch, batch_id)
             issued_at = datetime.now(UTC)
             purchase = Purchase(
+                branch_id=batch.branch_id,
                 plan_id=plan.id,
                 amount=plan.price,
                 status=PurchaseStatus.PAID,
@@ -444,6 +465,7 @@ class AdminAccessService:
             select(PinBatch)
             .options(
                 joinedload(PinBatch.plan),
+                joinedload(PinBatch.branch),
                 joinedload(PinBatch.created_by_admin),
                 selectinload(PinBatch.purchases).joinedload(Purchase.plan),
                 selectinload(PinBatch.failures),
@@ -453,10 +475,14 @@ class AdminAccessService:
 
     @staticmethod
     def _validate_batch_replay(
-        batch: PinBatch, request: PinBatchCreate, current_admin: Admin
+        batch: PinBatch,
+        request: PinBatchCreate,
+        current_admin: Admin,
+        branch_id: int,
     ) -> None:
         if (
-            batch.plan_id != request.plan_id
+            batch.branch_id != branch_id
+            or batch.plan_id != request.plan_id
             or batch.requested_quantity != request.quantity
             or batch.created_by_admin_id != current_admin.id
         ):

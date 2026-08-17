@@ -7,7 +7,29 @@ class MikroTikUserExistsError(RuntimeError):
     """Raised when strict credential creation finds an existing Hotspot user."""
 
 
+class MikroTikBranchNotConfiguredError(RuntimeError):
+    """Raised when a branch does not have a MikroTik configured yet."""
+
+
 class MikroTikService:
+    # Temporary compatibility while branch-specific routers are configured.
+    # Tomorrow this becomes branch -> router configuration instead of a guard.
+    _LEGACY_ROUTER_BRANCH_CODES = {
+        "nuevo-vallarta",
+        "principal",
+    }
+
+    @classmethod
+    def for_branch(cls, branch_code: str) -> "MikroTikService":
+        normalized = branch_code.strip().lower()
+
+        if normalized not in cls._LEGACY_ROUTER_BRANCH_CODES:
+            raise MikroTikBranchNotConfiguredError(
+                f"MikroTik is not configured for branch {normalized!r}"
+            )
+
+        return cls()
+
     def __init__(self) -> None:
         self.pool = routeros_api.RouterOsApiPool(
             host=os.environ["MIKROTIK_HOST"],

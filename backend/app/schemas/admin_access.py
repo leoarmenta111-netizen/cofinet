@@ -10,6 +10,7 @@ from app.models.admin_access import PinBatchStatus
 
 class PinBatchCreate(BaseModel):
     plan_id: int = Field(gt=0)
+    branch_code: str | None = Field(default=None, max_length=50)
     quantity: int = Field(default=100, ge=1, le=100)
     request_id: UUID
 
@@ -43,6 +44,9 @@ class PinBatchSummaryResponse(BaseModel):
     id: int
     batch_uuid: UUID
     request_id: UUID
+    branch_id: int
+    branch_code: str
+    branch_name: str
     plan_id: int
     plan_name: str
     requested: int
@@ -66,6 +70,9 @@ class PinBatchListResponse(BaseModel):
 
 class PinBatchPrintResponse(BaseModel):
     batch_uuid: UUID
+    branch_id: int
+    branch_code: str
+    branch_name: str
     plan_name: str
     generated_at: datetime
     tickets: list[PinBatchPrintableTicket]
@@ -73,6 +80,7 @@ class PinBatchPrintResponse(BaseModel):
 
 class InternalAccessCreate(BaseModel):
     label: str = Field(min_length=2, max_length=120)
+    branch_code: str | None = Field(default=None, max_length=50)
     request_id: UUID
 
     @field_validator("label")
@@ -90,6 +98,9 @@ class InternalAccessStatusUpdate(BaseModel):
 
 class InternalAccessResponse(BaseModel):
     id: int
+    branch_id: int
+    branch_code: str
+    branch_name: str
     label: str
     pin: str
     is_active: bool

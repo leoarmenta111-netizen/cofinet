@@ -22,6 +22,7 @@ from app.schemas.admin import (
     AdminPinResponse,
 )
 from app.services.mikrotik_service import MikroTikService, MikroTikUserExistsError
+from app.services.branch_service import BranchService
 from app.services.purchase_service import PurchaseService
 
 
@@ -177,7 +178,9 @@ class AdminService:
         if plan is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
 
+        branch = BranchService.resolve(db, pin_request.branch_code)
         issued_at = datetime.now(UTC)
+
         for _ in range(AdminService._PIN_GENERATION_ATTEMPTS):
             pin_code = AdminService._generate_pin()
             if db.execute(select(Purchase.id).where(Purchase.pin_code == pin_code)).scalar_one_or_none():
@@ -186,6 +189,7 @@ class AdminService:
             mikrotik = None
             mikrotik_user_created = False
             purchase = Purchase(
+                branch_id=branch.id,
                 plan_id=plan.id,
                 amount=plan.price,
                 status=PurchaseStatus.PAID,
@@ -197,7 +201,7 @@ class AdminService:
             )
 
             try:
-                mikrotik = MikroTikService()
+                mikrotik = MikroTikService.for_branch(branch.code)
                 mikrotik.create_hotspot_user_strict(
                     username=pin_code,
                     password=pin_code,
@@ -210,6 +214,7 @@ class AdminService:
                 db.commit()
                 db.refresh(purchase)
                 purchase.plan = plan
+                purchase.branch = branch
                 purchase.created_by_admin = current_admin
                 return AdminService._pin_response(purchase, plan)
             except (IntegrityError, MikroTikUserExistsError):
@@ -257,7 +262,11 @@ class AdminService:
     def list_cash_pins(db: Session, current_admin: Admin) -> list[AdminPinResponse]:
         query = (
             select(Purchase)
-            .options(joinedload(Purchase.plan), joinedload(Purchase.created_by_admin))
+            .options(
+                joinedload(Purchase.plan),
+                joinedload(Purchase.branch),
+                joinedload(Purchase.created_by_admin),
+            )
             .where(
                 Purchase.creation_source == PurchaseCreationSource.ADMIN_CASH,
                 Purchase.status == PurchaseStatus.PAID,
@@ -302,8 +311,13 @@ class AdminService:
     @staticmethod
     def _pin_response(purchase: Purchase, plan: Plan) -> AdminPinResponse:
         creator = purchase.created_by_admin
+        branch = purchase.branch
+
         return AdminPinResponse(
             purchase_id=purchase.id,
+            branch_id=purchase.branch_id,
+            branch_code=branch.code,
+            branch_name=branch.name,
             plan_id=plan.id,
             plan_name=plan.name,
             duration_minutes=PurchaseService.issued_duration_minutes(purchase),

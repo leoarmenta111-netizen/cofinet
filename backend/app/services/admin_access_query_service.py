@@ -29,7 +29,11 @@ class AdminAccessQueryService:
     def list_pin_batches(db: Session, current_admin: Admin) -> list[PinBatchSummaryResponse]:
         query = (
             select(PinBatch)
-            .options(joinedload(PinBatch.plan), joinedload(PinBatch.created_by_admin))
+            .options(
+                joinedload(PinBatch.plan),
+                joinedload(PinBatch.branch),
+                joinedload(PinBatch.created_by_admin),
+            )
             .order_by(PinBatch.created_at.desc(), PinBatch.id.desc())
         )
         if current_admin.role == AdminRole.PIN_OPERATOR:
@@ -45,6 +49,7 @@ class AdminAccessQueryService:
             select(PinBatch)
             .options(
                 joinedload(PinBatch.plan),
+                joinedload(PinBatch.branch),
                 joinedload(PinBatch.created_by_admin),
                 selectinload(PinBatch.purchases).joinedload(Purchase.plan),
                 selectinload(PinBatch.failures),
@@ -63,6 +68,9 @@ class AdminAccessQueryService:
         detail = AdminAccessQueryService.get_pin_batch(db, batch_id, current_admin)
         return PinBatchPrintResponse(
             batch_uuid=detail.batch_uuid,
+            branch_id=detail.branch_id,
+            branch_code=detail.branch_code,
+            branch_name=detail.branch_name,
             plan_name=detail.plan_name,
             generated_at=detail.created_at,
             tickets=[
@@ -75,7 +83,10 @@ class AdminAccessQueryService:
     def list_internal_access(db: Session) -> list[InternalAccessResponse]:
         credentials = db.execute(
             select(InternalHotspotCredential)
-            .options(joinedload(InternalHotspotCredential.created_by_admin))
+            .options(
+                joinedload(InternalHotspotCredential.branch),
+                joinedload(InternalHotspotCredential.created_by_admin),
+            )
             .order_by(
                 InternalHotspotCredential.created_at.desc(),
                 InternalHotspotCredential.id.desc(),
@@ -94,10 +105,15 @@ class AdminAccessQueryService:
     @staticmethod
     def batch_summary(batch: PinBatch) -> PinBatchSummaryResponse:
         creator = batch.created_by_admin
+        branch = batch.branch
+
         return PinBatchSummaryResponse(
             id=batch.id,
             batch_uuid=UUID(batch.batch_uuid),
             request_id=UUID(batch.request_uuid),
+            branch_id=batch.branch_id,
+            branch_code=branch.code,
+            branch_name=branch.name,
             plan_id=batch.plan_id,
             plan_name=batch.plan.name,
             requested=batch.requested_quantity,
@@ -145,8 +161,13 @@ class AdminAccessQueryService:
     @staticmethod
     def internal_response(credential: InternalHotspotCredential) -> InternalAccessResponse:
         creator = credential.created_by_admin
+        branch = credential.branch
+
         return InternalAccessResponse(
             id=credential.id,
+            branch_id=credential.branch_id,
+            branch_code=branch.code,
+            branch_name=branch.name,
             label=credential.label,
             pin=credential.pin_code,
             is_active=credential.is_active,

@@ -77,10 +77,14 @@ class AdminDashboardResponse(BaseModel):
 
 class AdminPinCreate(BaseModel):
     plan_id: int = Field(gt=0)
+    branch_code: str | None = Field(default=None, max_length=50)
 
 
 class AdminPinResponse(BaseModel):
     purchase_id: int
+    branch_id: int
+    branch_code: str
+    branch_name: str
     plan_id: int
     plan_name: str
     duration_minutes: int

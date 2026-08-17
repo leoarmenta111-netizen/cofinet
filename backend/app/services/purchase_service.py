@@ -18,6 +18,7 @@ from app.schemas.purchase import (
     PurchaseCreate,
     PurchaseResponse,
 )
+from app.services.branch_service import BranchService
 from app.services.plan_service import PlanService
 
 
@@ -74,7 +75,10 @@ class PurchaseService:
     def create_guest_purchase(db: Session, purchase_data: PurchaseCreate) -> Purchase:
         """Create a pending guest purchase without granting access credentials."""
         plan = PlanService.get_active_plan(db, purchase_data.plan_id)
+        branch = BranchService.resolve(db, purchase_data.branch_code)
+
         purchase = Purchase(
+            branch_id=branch.id,
             plan_id=plan.id,
             amount=plan.price,
             status=PurchaseStatus.PENDING,
@@ -97,6 +101,7 @@ class PurchaseService:
     def mark_guest_purchase_paid(db: Session, purchase: Purchase) -> None:
         """Issue one unique credential and create its MikroTik Hotspot user."""
         issued_at = datetime.now(UTC)
+        branch = BranchService.get_by_id(db, purchase.branch_id)
 
         for _ in range(PurchaseService._PIN_GENERATION_ATTEMPTS):
             pin_code = PurchaseService._generate_pin()
@@ -108,7 +113,7 @@ class PurchaseService:
             mikrotik_user_created = False
 
             try:
-                mikrotik = MikroTikService()
+                mikrotik = MikroTikService.for_branch(branch.code)
 
                 mikrotik.create_hotspot_user_strict(
                     username=pin_code,

@@ -49,6 +49,28 @@ class BranchService:
         return branch
 
     @staticmethod
+    def get_by_id(
+        db: Session,
+        branch_id: int,
+        *,
+        active_only: bool = True,
+    ) -> Branch:
+        query = select(Branch).where(Branch.id == branch_id)
+
+        if active_only:
+            query = query.where(Branch.is_active.is_(True))
+
+        branch = db.execute(query).scalar_one_or_none()
+
+        if branch is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Branch not found",
+            )
+
+        return branch
+
+    @staticmethod
     def get_default(db: Session) -> Branch:
         """Return Nuevo Vallarta while supporting the legacy principal code."""
         branch = db.execute(
