@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from app.models.branch import Branch
 
 
-DEFAULT_BRANCH_CODE = "principal"
+DEFAULT_BRANCH_CODE = "nuevo-vallarta"
+LEGACY_DEFAULT_BRANCH_CODE = "principal"
 
 
 class BranchService:
@@ -49,12 +50,28 @@ class BranchService:
 
     @staticmethod
     def get_default(db: Session) -> Branch:
-        """Return the legacy/default branch during multi-branch transition."""
-        return BranchService.get_by_code(
-            db,
-            DEFAULT_BRANCH_CODE,
-            active_only=True,
-        )
+        """Return Nuevo Vallarta while supporting the legacy principal code."""
+        branch = db.execute(
+            select(Branch)
+            .where(
+                Branch.code.in_(
+                    [DEFAULT_BRANCH_CODE, LEGACY_DEFAULT_BRANCH_CODE]
+                ),
+                Branch.is_active.is_(True),
+            )
+            .order_by(
+                (Branch.code == DEFAULT_BRANCH_CODE).desc(),
+                Branch.id.asc(),
+            )
+        ).scalars().first()
+
+        if branch is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Default branch not found",
+            )
+
+        return branch
 
     @staticmethod
     def resolve(
@@ -68,4 +85,9 @@ class BranchService:
         if branch_code is None or not branch_code.strip():
             return BranchService.get_default(db)
 
-        return BranchService.get_by_code(db, branch_code)
+        normalized_code = branch_code.strip().lower()
+
+        if normalized_code == LEGACY_DEFAULT_BRANCH_CODE:
+            return BranchService.get_default(db)
+
+        return BranchService.get_by_code(db, normalized_code)
