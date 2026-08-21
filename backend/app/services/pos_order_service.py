@@ -1,0 +1,444 @@
+from collections import defaultdict
+from decimal import Decimal, ROUND_HALF_UP
+
+from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from app.models.branch import Branch
+from app.models.pos_catalog import (
+    PosBranchProduct,
+    PosModifierOption,
+    PosProduct,
+)
+from app.models.pos_orders import (
+    PosOrder,
+    PosOrderItem,
+    PosOrderItemModifier,
+    PosPayment,
+)
+from app.schemas.pos_orders import (
+    PosOrderCreate,
+    PosOrderItemResponse,
+    PosOrderModifierResponse,
+    PosOrderResponse,
+    PosPaymentResponse,
+)
+
+
+CENT = Decimal("0.01")
+
+
+def money(value) -> Decimal:
+    return Decimal(value).quantize(
+        CENT,
+        rounding=ROUND_HALF_UP,
+    )
+
+
+class PosOrderService:
+    @staticmethod
+    def _response(
+        order: PosOrder,
+    ) -> PosOrderResponse:
+        payment = order.payments[0]
+
+        return PosOrderResponse(
+            id=order.id,
+            order_uuid=order.order_uuid,
+            folio=order.folio,
+            branch_code=order.branch.code,
+            terminal_id=order.terminal_id,
+            status=order.status,
+            payment_status=order.payment_status,
+            subtotal=money(order.subtotal),
+            total=money(order.total),
+            currency=order.currency,
+            created_at_client=order.created_at_client,
+            items=[
+                PosOrderItemResponse(
+                    product_id=item.product_id,
+                    product_name=item.product_name,
+                    quantity=item.quantity,
+                    unit_price=money(item.unit_price),
+                    line_total=money(item.line_total),
+                    modifiers=[
+                        PosOrderModifierResponse(
+                            group_name=modifier.group_name,
+                            option_name=modifier.option_name,
+                            price_delta=money(
+                                modifier.price_delta
+                            ),
+                        )
+                        for modifier in item.modifiers
+                    ],
+                )
+                for item in order.items
+            ],
+            payment=PosPaymentResponse(
+                method=payment.method,
+                amount=money(payment.amount),
+                amount_tendered=(
+                    money(payment.amount_tendered)
+                    if payment.amount_tendered is not None
+                    else None
+                ),
+                change_due=(
+                    money(payment.change_due)
+                    if payment.change_due is not None
+                    else None
+                ),
+                external_reference=(
+                    payment.external_reference
+                ),
+            ),
+        )
+
+    @classmethod
+    def create(
+        cls,
+        db: Session,
+        payload: PosOrderCreate,
+    ) -> PosOrderResponse:
+        order_uuid = str(payload.order_uuid)
+
+        existing = db.execute(
+            select(PosOrder).where(
+                PosOrder.order_uuid == order_uuid
+            )
+        ).scalar_one_or_none()
+
+        if existing:
+            return cls._response(existing)
+
+        branch_code = payload.branch_code.strip().lower()
+
+        if branch_code == "principal":
+            branch_code = "nuevo-vallarta"
+
+        branch = db.execute(
+            select(Branch).where(
+                Branch.code == branch_code,
+                Branch.is_active.is_(True),
+            )
+        ).scalar_one_or_none()
+
+        if branch is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Branch not found",
+            )
+
+        calculated_items = []
+        subtotal = Decimal("0.00")
+
+        for requested_item in payload.items:
+            branch_product = db.execute(
+                select(PosBranchProduct)
+                .join(PosBranchProduct.product)
+                .where(
+                    PosBranchProduct.branch_id == branch.id,
+                    PosBranchProduct.product_id
+                    == requested_item.product_id,
+                    PosBranchProduct.is_available.is_(True),
+                    PosProduct.is_active.is_(True),
+                )
+            ).scalar_one_or_none()
+
+            if branch_product is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Product is not available "
+                        f"in this branch: "
+                        f"{requested_item.product_id}"
+                    ),
+                )
+
+            product = branch_product.product
+
+            if not product.category.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Product category is inactive",
+                )
+
+            base_price = money(
+                branch_product.price
+                if branch_product.price is not None
+                else product.base_price
+            )
+
+            requested_option_ids = list(
+                dict.fromkeys(
+                    requested_item.modifier_option_ids
+                )
+            )
+
+            selected_by_group = defaultdict(list)
+
+            if requested_option_ids:
+                options = (
+                    db.execute(
+                        select(PosModifierOption).where(
+                            PosModifierOption.id.in_(
+                                requested_option_ids
+                            ),
+                            PosModifierOption.is_active.is_(True),
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+
+                if len(options) != len(
+                    requested_option_ids
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "One or more modifier options "
+                            "are invalid"
+                        ),
+                    )
+
+                for option in options:
+                    selected_by_group[
+                        option.group_id
+                    ].append(option)
+
+            active_groups = {}
+
+            for link in product.modifier_links:
+                group = link.modifier_group
+
+                if group.is_active:
+                    active_groups[group.id] = group
+
+            for group_id in selected_by_group:
+                if group_id not in active_groups:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Modifier option does not "
+                            "belong to this product"
+                        ),
+                    )
+
+            for group in active_groups.values():
+                selected = selected_by_group.get(
+                    group.id,
+                    [],
+                )
+
+                selected_count = len(selected)
+
+                if selected_count < group.min_select:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            f"Modifier group '{group.name}' "
+                            f"requires at least "
+                            f"{group.min_select} selection(s)"
+                        ),
+                    )
+
+                if selected_count > group.max_select:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            f"Modifier group '{group.name}' "
+                            f"allows at most "
+                            f"{group.max_select} selection(s)"
+                        ),
+                    )
+
+            modifier_total = Decimal("0.00")
+            modifier_snapshots = []
+
+            for group_id, options in selected_by_group.items():
+                group = active_groups[group_id]
+
+                for option in options:
+                    delta = money(option.price_delta)
+
+                    modifier_total += delta
+
+                    modifier_snapshots.append(
+                        {
+                            "group_id": group.id,
+                            "option_id": option.id,
+                            "group_name": group.name,
+                            "option_name": option.name,
+                            "price_delta": delta,
+                        }
+                    )
+
+            unit_price = money(
+                base_price + modifier_total
+            )
+
+            if unit_price < 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Calculated product price is invalid",
+                )
+
+            line_total = money(
+                unit_price * requested_item.quantity
+            )
+
+            subtotal += line_total
+
+            calculated_items.append(
+                {
+                    "product": product,
+                    "quantity": requested_item.quantity,
+                    "base_price": base_price,
+                    "modifier_total": money(
+                        modifier_total
+                    ),
+                    "unit_price": unit_price,
+                    "line_total": line_total,
+                    "notes": requested_item.notes,
+                    "modifiers": modifier_snapshots,
+                }
+            )
+
+        subtotal = money(subtotal)
+        total = subtotal
+
+        payment_method = payload.payment.method
+
+        amount_tendered = None
+        change_due = None
+
+        if payment_method == "CASH":
+            if payload.payment.amount_tendered is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Cash payment requires "
+                        "amount_tendered"
+                    ),
+                )
+
+            amount_tendered = money(
+                payload.payment.amount_tendered
+            )
+
+            if amount_tendered < total:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Insufficient cash received",
+                )
+
+            change_due = money(
+                amount_tendered - total
+            )
+
+        order = PosOrder(
+            order_uuid=order_uuid,
+            branch_id=branch.id,
+            terminal_id=payload.terminal_id,
+            status="NEW",
+            payment_status="PAID",
+            subtotal=subtotal,
+            total=total,
+            currency="MXN",
+            notes=payload.notes,
+            created_at_client=payload.created_at_client,
+        )
+
+        db.add(order)
+        db.flush()
+
+        prefix = (
+            branch.code
+            .replace("-", "")
+            .upper()[:3]
+        )
+
+        order.folio = (
+            f"{prefix}-{order.id:06d}"
+        )
+
+        for calculated in calculated_items:
+            item = PosOrderItem(
+                order_id=order.id,
+                product_id=calculated["product"].id,
+                product_name=calculated["product"].name,
+                quantity=calculated["quantity"],
+                unit_base_price=calculated["base_price"],
+                unit_modifier_total=calculated[
+                    "modifier_total"
+                ],
+                unit_price=calculated["unit_price"],
+                line_total=calculated["line_total"],
+                notes=calculated["notes"],
+            )
+
+            db.add(item)
+            db.flush()
+
+            for modifier in calculated["modifiers"]:
+                db.add(
+                    PosOrderItemModifier(
+                        order_item_id=item.id,
+                        modifier_group_id=modifier[
+                            "group_id"
+                        ],
+                        modifier_option_id=modifier[
+                            "option_id"
+                        ],
+                        group_name=modifier[
+                            "group_name"
+                        ],
+                        option_name=modifier[
+                            "option_name"
+                        ],
+                        price_delta=modifier[
+                            "price_delta"
+                        ],
+                    )
+                )
+
+        payment = PosPayment(
+            payment_uuid=str(
+                payload.payment.payment_uuid
+            ),
+            order_id=order.id,
+            method=payment_method,
+            amount=total,
+            amount_tendered=amount_tendered,
+            change_due=change_due,
+            external_reference=(
+                payload.payment.external_reference
+            ),
+            created_at_client=(
+                payload.payment.created_at_client
+            ),
+        )
+
+        db.add(payment)
+
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+
+            existing = db.execute(
+                select(PosOrder).where(
+                    PosOrder.order_uuid == order_uuid
+                )
+            ).scalar_one_or_none()
+
+            if existing:
+                return cls._response(existing)
+
+            raise
+
+        db.refresh(order)
+
+        return cls._response(order)
