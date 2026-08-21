@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0F0F10">
+    <meta name="theme-color" content="#F4F5F2">
     <title>CoFiNet | Activar Internet</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=20260817-light">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -50,6 +50,67 @@
             box-shadow: 0 0 0 3px rgba(163, 163, 117, .2);
         }
         @keyframes portal-spin { to { transform: rotate(360deg); } }
+
+        /* CofiNet light PIN view - 20260817 */
+        :root {
+            color-scheme: light;
+        }
+
+        html,
+        body {
+            background: #F4F5F2 !important;
+            color: #102D1E !important;
+        }
+
+        body > main > section {
+            border-color: #D9DDD7 !important;
+            background: #FFFFFF !important;
+            box-shadow: 0 18px 48px rgba(20, 45, 31, .10) !important;
+        }
+
+        body > main > section > header h1 {
+            color: #102D1E !important;
+        }
+
+        body > main > section > header p:last-child,
+        #pin-hint {
+            color: #667169 !important;
+        }
+
+        .pin-box {
+            border-color: #CFD5CF !important;
+            background: #FFFFFF !important;
+            color: #102D1E !important;
+            box-shadow: 0 2px 8px rgba(20, 45, 31, .04);
+        }
+
+        .pin-box:hover {
+            border-color: #A3A375 !important;
+        }
+
+        .pin-box:focus {
+            border-color: #8C8C5E !important;
+            box-shadow: 0 0 0 4px rgba(163, 163, 117, .18) !important;
+        }
+
+        #connect-button {
+            color: #102117 !important;
+            box-shadow: 0 8px 20px rgba(20, 45, 31, .10);
+        }
+
+        #access-result {
+            background: #F3F8F4 !important;
+            border-color: #BFD8C5 !important;
+        }
+
+        #access-result dt {
+            color: #667169 !important;
+        }
+
+        #access-result dd {
+            color: #102D1E !important;
+        }
+
     </style>
 </head>
 <body class="min-h-screen bg-cofiDark font-sans text-white antialiased">
