@@ -12,6 +12,7 @@ from app.api.memberships import router as memberships_router
 from app.api.pos_catalog import router as pos_catalog_router
 from app.api.pos_orders import router as pos_orders_router
 from app.api.admin_pos_sales import router as admin_pos_sales_router
+from app.api.admin_pos_catalog import router as admin_pos_catalog_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -44,6 +45,7 @@ app.include_router(memberships_router)
 app.include_router(pos_catalog_router)
 app.include_router(pos_orders_router)
 app.include_router(admin_pos_sales_router)
+app.include_router(admin_pos_catalog_router)
 
 @app.get("/")
 async def root():
