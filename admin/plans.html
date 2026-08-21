@@ -6,6 +6,26 @@
     <meta name="color-scheme" content="light">
     <title>Planes | CofiNet+</title>
     <link rel="stylesheet" href="admin.css">
+    <style>
+        .plan-edit-form textarea {
+            width: 100%;
+            min-height: 92px;
+            resize: vertical;
+            padding: 0.75rem 0.85rem;
+            border: 1px solid #d7d5ca;
+            border-radius: 10px;
+            background: #fff;
+            color: #1d2a23;
+            font: inherit;
+            line-height: 1.45;
+        }
+
+        .plan-edit-form textarea:focus {
+            outline: none;
+            border-color: #a3a375;
+            box-shadow: 0 0 0 3px rgba(163, 163, 117, .16);
+        }
+    </style>
 </head>
 <body class="auth-pending" data-page="plans">
     <div class="app-shell protected-content">
@@ -13,7 +33,7 @@
         <div class="main-area">
             <header class="topbar"><button class="button button-ghost menu-toggle" data-menu-toggle aria-expanded="false">Menú</button><span class="topbar-title">Catálogo activo</span><span class="muted" data-admin-name></span></header>
             <main class="content">
-                <header class="page-header"><div><p class="eyebrow">Oferta comercial</p><h1 class="page-title">Planes</h1><p class="page-description">Consulta los precios y duraciones disponibles. Los cambios del super admin aplican solamente a futuras compras y PINs.</p></div></header>
+                <header class="page-header"><div><p class="eyebrow">Oferta comercial</p><h1 class="page-title">Planes</h1><p class="page-description">Consulta y edita precios, duraciones y descripciones. Los cambios del super admin aplican a futuras compras y PINs.</p></div></header>
                 <section id="plans" class="cards-grid" aria-live="polite"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></section>
             </main>
         </div>
@@ -96,12 +116,24 @@
                     </select>
                 </div>
             </div>
+
+            <div class="field">
+                <label for="plan-description-${plan.id}">Descripción</label>
+                <textarea
+                    id="plan-description-${plan.id}"
+                    name="description"
+                    rows="3"
+                    maxlength="500"
+                    placeholder="Descripción que verá el cliente"></textarea>
+            </div>
+
             <p class="form-error" role="alert"></p>
             <div class="plan-edit-actions">
                 <button type="button" class="button button-ghost" data-cancel>Cancelar</button>
                 <button type="submit" class="button button-primary" disabled>Guardar cambios</button>
             </div>`;
         form.elements.unit.value = initial.unit;
+        form.elements.description.value = plan.description || "";
         card.append(form);
         card.classList.add("is-editing");
         const submit = form.querySelector('[type="submit"]');
@@ -110,12 +142,20 @@
 
         const currentValues = () => ({
             price: Number(form.elements.price.value),
-            durationMinutes: toMinutes(Number(form.elements.duration.value), form.elements.unit.value)
+            durationMinutes: toMinutes(
+                Number(form.elements.duration.value),
+                form.elements.unit.value
+            ),
+            description: form.elements.description.value.trim()
         });
         const updateSubmit = () => {
             const values = currentValues();
             const valid = form.checkValidity() && Number.isFinite(values.price) && Number.isInteger(values.durationMinutes) && values.durationMinutes > 0;
-            const changed = values.price !== Number(plan.price) || values.durationMinutes !== plan.duration_minutes;
+            const changed =
+                values.price !== Number(plan.price) ||
+                values.durationMinutes !== plan.duration_minutes ||
+                values.description !== (plan.description || "");
+
             submit.disabled = !valid || !changed;
         };
         form.addEventListener("input", updateSubmit);
@@ -135,7 +175,11 @@
             try {
                 const updated = await adminRequest(`/admin/plans/${plan.id}`, {
                     method: "PATCH",
-                    body: JSON.stringify({ price: values.price, duration_minutes: values.durationMinutes })
+                    body: JSON.stringify({
+                        price: values.price,
+                        duration_minutes: values.durationMinutes,
+                        description: values.description
+                    })
                 });
                 card.replaceWith(renderPlan(updated, true));
                 showToast(`${updated.name} se actualizó correctamente.`, "success");

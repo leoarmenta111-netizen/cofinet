@@ -62,7 +62,7 @@ def update_admin_plan(
     _admin: Admin = Depends(require_super_admin),
     db: Session = Depends(get_db),
 ) -> object:
-    """Update only the price and duration used by future purchases."""
+    """Update commercial plan fields used by future purchases."""
     return PlanService.update_admin_catalogue_plan(db, plan_id, update)
 
 

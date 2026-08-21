@@ -24,16 +24,26 @@ class AdminPlanUpdate(BaseModel):
     """Editable commercial fields exposed by the administrator catalogue."""
 
     price: Decimal | None = Field(
-        default=None, ge=0, allow_inf_nan=False, max_digits=10, decimal_places=2
+        default=None,
+        ge=0,
+        allow_inf_nan=False,
+        max_digits=10,
+        decimal_places=2,
     )
     duration_minutes: int | None = Field(default=None, gt=0)
+    description: str | None = Field(default=None, max_length=500)
 
     @model_validator(mode="after")
-    def require_numeric_change(self) -> "AdminPlanUpdate":
-        if not self.model_fields_set or any(
-            getattr(self, field) is None for field in self.model_fields_set
+    def require_change(self) -> "AdminPlanUpdate":
+        if not self.model_fields_set:
+            raise ValueError("At least one plan field is required")
+
+        if any(
+            getattr(self, field) is None
+            for field in self.model_fields_set
         ):
-            raise ValueError("At least one numeric plan field is required")
+            raise ValueError("Plan fields cannot be null")
+
         return self
 
 
