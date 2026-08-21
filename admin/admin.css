@@ -320,3 +320,169 @@ tbody tr:hover { background: var(--admin-surface-soft); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+
+/* =========================================================
+   POS SALES
+   ========================================================= */
+
+.sales-summary-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.sales-metric {
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--admin-surface);
+}
+
+.sales-metric span,
+.sales-metric strong,
+.sales-metric small {
+    display: block;
+}
+
+.sales-metric span {
+    color: var(--text-muted);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.sales-metric strong {
+    margin-top: .35rem;
+    color: var(--admin-brand-dark);
+    font-size: clamp(1.55rem, 3vw, 2.15rem);
+    line-height: 1.05;
+}
+
+.sales-metric small {
+    margin-top: .4rem;
+    color: var(--text-muted);
+    font-size: .72rem;
+}
+
+.sales-filters {
+    display: grid;
+    grid-template-columns:
+        minmax(180px, 1fr)
+        minmax(160px, .8fr)
+        minmax(160px, .8fr)
+        auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.sales-filter-actions {
+    display: flex;
+    gap: .5rem;
+    padding-bottom: 1px;
+}
+
+.sales-row {
+    transition: background .12s ease;
+}
+
+.sales-row:hover {
+    background: var(--admin-primary-soft);
+}
+
+.sales-total-cell {
+    color: var(--admin-brand-dark);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.sale-detail-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.sale-detail-heading h2 {
+    margin: 0;
+}
+
+.sale-items-section,
+.sale-payment-section {
+    margin-top: 1.4rem;
+}
+
+.sale-items-section h3,
+.sale-payment-section h3 {
+    margin-bottom: .75rem;
+}
+
+.sale-item-card {
+    padding: .95rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.sale-item-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.sale-item-modifiers {
+    margin-top: .45rem;
+    padding-left: 1rem;
+    color: var(--text-muted);
+    font-size: .84rem;
+}
+
+.sale-item-modifiers > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: .25rem;
+}
+
+.sale-detail-totals {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.sale-detail-totals > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: .5rem;
+}
+
+.sale-grand-total {
+    padding-top: .65rem;
+    border-top: 1px dashed var(--border);
+    color: var(--admin-brand-dark);
+    font-size: 1.25rem;
+}
+
+@media (max-width: 1050px) {
+    .sales-summary-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .sales-filters {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    .sales-summary-grid,
+    .sales-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .sales-filter-actions {
+        flex-wrap: wrap;
+    }
+}

@@ -1,0 +1,1407 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+    <meta name="color-scheme" content="light">
+
+    <title>Ventas POS | CofiCenter</title>
+
+    <link
+        rel="stylesheet"
+        href="admin.css?v=20260821-pos-sales"
+    >
+</head>
+
+<body
+    class="auth-pending"
+    data-page="sales"
+>
+
+<div class="app-shell protected-content">
+
+    <aside class="sidebar">
+        <div class="brand-lockup">
+            <span class="brand-mark">C</span>
+            <span>CofiNet+</span>
+        </div>
+
+        <nav
+            data-admin-nav
+            aria-label="Navegación principal"
+        ></nav>
+
+        <div class="sidebar-profile">
+            <div class="profile-row">
+                <span
+                    class="avatar"
+                    data-admin-initials
+                ></span>
+
+                <div class="profile-copy">
+                    <strong data-admin-name></strong>
+                    <span data-admin-role></span>
+                </div>
+            </div>
+
+            <button
+                class="button button-ghost logout-button"
+                type="button"
+                onclick="CofiAdmin.logoutAdmin()"
+            >
+                Cerrar sesión
+            </button>
+        </div>
+    </aside>
+
+
+    <div class="main-area">
+
+        <header class="topbar">
+            <button
+                class="button button-ghost menu-toggle"
+                data-menu-toggle
+                aria-expanded="false"
+            >
+                Menú
+            </button>
+
+            <span class="topbar-title">
+                Cofi POS
+            </span>
+
+            <span
+                class="muted"
+                data-admin-name
+            ></span>
+        </header>
+
+
+        <main class="content">
+
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">
+                        OPERACIÓN
+                    </p>
+
+                    <h1 class="page-title">
+                        Ventas POS
+                    </h1>
+
+                    <p class="page-description">
+                        Consulta ventas de CofiCenter por
+                        sucursal, fecha y método de pago.
+                    </p>
+                </div>
+
+                <button
+                    id="refresh-sales"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Actualizar
+                </button>
+            </header>
+
+
+            <!-- RESUMEN -->
+
+            <section
+                class="sales-summary-grid"
+                aria-label="Resumen de ventas"
+            >
+
+                <article class="sales-metric">
+                    <span>Ventas</span>
+                    <strong id="metric-sales">
+                        —
+                    </strong>
+                    <small>
+                        operaciones
+                    </small>
+                </article>
+
+                <article class="sales-metric">
+                    <span>Total</span>
+                    <strong id="metric-total">
+                        —
+                    </strong>
+                    <small>
+                        venta bruta
+                    </small>
+                </article>
+
+                <article class="sales-metric">
+                    <span>Efectivo</span>
+                    <strong id="metric-cash">
+                        —
+                    </strong>
+                    <small>
+                        cobrado en caja
+                    </small>
+                </article>
+
+                <article class="sales-metric">
+                    <span>Terminal</span>
+                    <strong id="metric-card">
+                        —
+                    </strong>
+                    <small>
+                        tarjeta externa
+                    </small>
+                </article>
+
+            </section>
+
+
+            <!-- FILTROS -->
+
+            <section class="panel">
+
+                <div class="panel-header">
+                    <div>
+                        <h2>Filtros</h2>
+
+                        <small class="muted">
+                            El resumen se actualiza con los
+                            mismos filtros del historial.
+                        </small>
+                    </div>
+
+                    <span
+                        id="sales-filter-badge"
+                        class="badge badge-neutral"
+                    >
+                        Hoy
+                    </span>
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="sales-filters">
+
+                        <div class="field">
+                            <label for="sales-branch">
+                                Sucursal
+                            </label>
+
+                            <select id="sales-branch">
+                                <option value="">
+                                    Todas las sucursales
+                                </option>
+                            </select>
+                        </div>
+
+
+                        <div class="field">
+                            <label for="sales-date">
+                                Fecha
+                            </label>
+
+                            <input
+                                id="sales-date"
+                                type="date"
+                            >
+                        </div>
+
+
+                        <div class="field">
+                            <label for="sales-payment">
+                                Método de pago
+                            </label>
+
+                            <select id="sales-payment">
+                                <option value="">
+                                    Todos
+                                </option>
+
+                                <option value="CASH">
+                                    Efectivo
+                                </option>
+
+                                <option value="CARD_EXTERNAL">
+                                    Terminal
+                                </option>
+                            </select>
+                        </div>
+
+
+                        <div class="sales-filter-actions">
+
+                            <button
+                                id="today-button"
+                                class="button button-secondary"
+                                type="button"
+                            >
+                                Hoy
+                            </button>
+
+                            <button
+                                id="clear-filters"
+                                class="button button-ghost"
+                                type="button"
+                            >
+                                Ver todas
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- HISTORIAL -->
+
+            <section class="panel">
+
+                <div class="panel-header">
+                    <div>
+                        <h2>Historial de ventas</h2>
+
+                        <small
+                            id="sales-count-copy"
+                            class="muted"
+                        >
+                            Cargando…
+                        </small>
+                    </div>
+                </div>
+
+
+                <div class="table-wrap">
+
+                    <table class="sales-table">
+
+                        <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Hora</th>
+                            <th>Sucursal</th>
+                            <th>Terminal</th>
+                            <th>Pago</th>
+                            <th>Estado</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+
+                        <tbody id="sales-list">
+                        <tr>
+                            <td
+                                colspan="8"
+                                class="muted"
+                            >
+                                Cargando…
+                            </td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<!-- DETALLE DE VENTA -->
+
+<dialog
+    id="sale-dialog"
+    class="dialog dialog-large sale-dialog"
+>
+
+    <form method="dialog">
+
+        <div class="sale-detail-heading">
+            <div>
+                <p class="eyebrow">
+                    DETALLE DE VENTA
+                </p>
+
+                <h2 id="sale-detail-folio">
+                    Venta
+                </h2>
+
+                <p
+                    id="sale-detail-date"
+                    class="muted"
+                ></p>
+            </div>
+
+            <span
+                id="sale-detail-status"
+                class="badge badge-success"
+            >
+                Pagado
+            </span>
+        </div>
+
+
+        <div
+            id="sale-detail-meta"
+            class="success-details"
+        ></div>
+
+
+        <section class="sale-items-section">
+
+            <h3>Productos</h3>
+
+            <div id="sale-detail-items"></div>
+
+        </section>
+
+
+        <div class="sale-detail-totals">
+
+            <div>
+                <span>Subtotal</span>
+                <strong id="sale-detail-subtotal">
+                    —
+                </strong>
+            </div>
+
+            <div class="sale-grand-total">
+                <span>Total</span>
+                <strong id="sale-detail-total">
+                    —
+                </strong>
+            </div>
+
+        </div>
+
+
+        <section class="sale-payment-section">
+
+            <h3>Pago</h3>
+
+            <div
+                id="sale-detail-payment"
+                class="success-details"
+            ></div>
+
+        </section>
+
+
+        <div class="dialog-actions">
+            <button
+                class="button button-secondary"
+                value="close"
+            >
+                Cerrar
+            </button>
+        </div>
+
+    </form>
+
+</dialog>
+
+
+<script src="admin.js?v=20260821-pos-sales"></script>
+
+<script>
+(() => {
+
+    const {
+        SUPER_ADMIN,
+        adminRequest,
+        bootstrapAdmin,
+        formatDate,
+        formatMoney,
+        showEmpty,
+        showToast,
+        setButtonLoading
+    } = window.CofiAdmin;
+
+
+    const BRANCH_STORAGE_KEY =
+        "cofinet_admin_branch_code";
+
+
+    const branchSelect =
+        document.getElementById(
+            "sales-branch"
+        );
+
+    const dateInput =
+        document.getElementById(
+            "sales-date"
+        );
+
+    const paymentSelect =
+        document.getElementById(
+            "sales-payment"
+        );
+
+
+    function paymentLabel(method) {
+        if (method === "CASH") {
+            return "Efectivo";
+        }
+
+        if (method === "CARD_EXTERNAL") {
+            return "Terminal";
+        }
+
+        return "—";
+    }
+
+
+    function orderStatusLabel(status) {
+        const labels = {
+            NEW: "Nueva",
+            PREPARING: "Preparando",
+            READY: "Lista",
+            DELIVERED: "Entregada",
+            CANCELLED: "Cancelada"
+        };
+
+        return labels[status] || status;
+    }
+
+
+    function paymentStatusLabel(status) {
+        const labels = {
+            PAID: "Pagado",
+            PENDING: "Pendiente",
+            REFUNDED: "Reembolsado"
+        };
+
+        return labels[status] || status;
+    }
+
+
+    function paymentStatusClass(status) {
+        if (status === "PAID") {
+            return "success";
+        }
+
+        if (status === "PENDING") {
+            return "warning";
+        }
+
+        if (status === "REFUNDED") {
+            return "danger";
+        }
+
+        return "neutral";
+    }
+
+
+    function formatSaleTime(value) {
+        if (!value) return "—";
+
+        return new Intl.DateTimeFormat(
+            "es-MX",
+            {
+                hour: "numeric",
+                minute: "2-digit"
+            }
+        ).format(
+            new Date(value)
+        );
+    }
+
+
+    function localDateString(date = new Date()) {
+        const year =
+            date.getFullYear();
+
+        const month =
+            String(
+                date.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                date.getDate()
+            ).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    }
+
+
+    function dateRange(value) {
+        if (!value) {
+            return null;
+        }
+
+        const start =
+            new Date(
+                `${value}T00:00:00`
+            );
+
+        const end =
+            new Date(start);
+
+        end.setDate(
+            end.getDate() + 1
+        );
+
+        return {
+            from:
+                start.toISOString(),
+
+            to:
+                end.toISOString()
+        };
+    }
+
+
+    function detailItem(
+        label,
+        value
+    ) {
+        const item =
+            document.createElement("div");
+
+        const title =
+            document.createElement("span");
+
+        const content =
+            document.createElement("strong");
+
+        title.textContent =
+            label;
+
+        content.textContent =
+            value || "—";
+
+        item.append(
+            title,
+            content
+        );
+
+        return item;
+    }
+
+
+    function configureBranches(branches) {
+        branchSelect.replaceChildren(
+            new Option(
+                "Todas las sucursales",
+                ""
+            )
+        );
+
+        for (const branch of branches) {
+            branchSelect.add(
+                new Option(
+                    branch.name,
+                    branch.code
+                )
+            );
+        }
+
+        const saved =
+            localStorage.getItem(
+                BRANCH_STORAGE_KEY
+            );
+
+        if (
+            saved &&
+            branches.some(
+                branch =>
+                    branch.code === saved
+            )
+        ) {
+            branchSelect.value =
+                saved;
+        }
+    }
+
+
+    function renderSummary(summary) {
+        document.getElementById(
+            "metric-sales"
+        ).textContent =
+            Number(
+                summary.sales_count || 0
+            ).toLocaleString("es-MX");
+
+        document.getElementById(
+            "metric-total"
+        ).textContent =
+            formatMoney(
+                summary.gross_total
+            );
+
+        document.getElementById(
+            "metric-cash"
+        ).textContent =
+            formatMoney(
+                summary.cash_total
+            );
+
+        document.getElementById(
+            "metric-card"
+        ).textContent =
+            formatMoney(
+                summary.card_total
+            );
+    }
+
+
+    function renderSales(sales) {
+        const body =
+            document.getElementById(
+                "sales-list"
+            );
+
+        body.replaceChildren();
+
+        document.getElementById(
+            "sales-count-copy"
+        ).textContent =
+            `${sales.length} ${
+                sales.length === 1
+                    ? "venta mostrada"
+                    : "ventas mostradas"
+            }`;
+
+        if (!sales.length) {
+            const row =
+                document.createElement("tr");
+
+            const cell =
+                document.createElement("td");
+
+            cell.colSpan = 8;
+
+            showEmpty(
+                cell,
+                "Sin ventas",
+                "No hay ventas que coincidan con los filtros seleccionados."
+            );
+
+            row.append(cell);
+            body.append(row);
+
+            return;
+        }
+
+
+        for (const sale of sales) {
+            const row =
+                document.createElement("tr");
+
+            row.className =
+                "sales-row";
+
+
+            const values = [
+                sale.folio,
+                formatSaleTime(
+                    sale.created_at_client
+                ),
+                sale.branch_name,
+                sale.terminal_id,
+                paymentLabel(
+                    sale.payment_method
+                )
+            ];
+
+
+            for (const value of values) {
+                const cell =
+                    document.createElement("td");
+
+                cell.textContent =
+                    value || "—";
+
+                row.append(cell);
+            }
+
+
+            const statusCell =
+                document.createElement("td");
+
+            const badge =
+                document.createElement("span");
+
+            badge.className =
+                `badge badge-${
+                    paymentStatusClass(
+                        sale.payment_status
+                    )
+                }`;
+
+            badge.textContent =
+                paymentStatusLabel(
+                    sale.payment_status
+                );
+
+            statusCell.append(badge);
+            row.append(statusCell);
+
+
+            const totalCell =
+                document.createElement("td");
+
+            totalCell.className =
+                "sales-total-cell";
+
+            totalCell.textContent =
+                formatMoney(
+                    sale.total
+                );
+
+            row.append(totalCell);
+
+
+            const actions =
+                document.createElement("td");
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.className =
+                "button button-ghost button-small";
+
+            button.textContent =
+                "Ver detalle";
+
+            button.addEventListener(
+                "click",
+                () =>
+                    openSale(
+                        sale.order_uuid
+                    )
+            );
+
+            actions.append(button);
+            row.append(actions);
+
+
+            row.addEventListener(
+                "dblclick",
+                () =>
+                    openSale(
+                        sale.order_uuid
+                    )
+            );
+
+            body.append(row);
+        }
+    }
+
+
+    function renderSaleItem(item) {
+        const card =
+            document.createElement(
+                "article"
+            );
+
+        card.className =
+            "sale-item-card";
+
+
+        const header =
+            document.createElement(
+                "div"
+            );
+
+        header.className =
+            "sale-item-header";
+
+
+        const title =
+            document.createElement(
+                "strong"
+            );
+
+        title.textContent =
+            `${item.quantity} × ${item.product_name}`;
+
+
+        const total =
+            document.createElement(
+                "strong"
+            );
+
+        total.textContent =
+            formatMoney(
+                item.line_total
+            );
+
+
+        header.append(
+            title,
+            total
+        );
+
+        card.append(header);
+
+
+        if (item.modifiers.length) {
+            const modifiers =
+                document.createElement(
+                    "div"
+                );
+
+            modifiers.className =
+                "sale-item-modifiers";
+
+
+            for (
+                const modifier
+                of item.modifiers
+            ) {
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+                const name =
+                    document.createElement(
+                        "span"
+                    );
+
+                name.textContent =
+                    modifier.option_name;
+
+
+                const price =
+                    document.createElement(
+                        "span"
+                    );
+
+                price.textContent =
+                    Number(
+                        modifier.price_delta
+                    )
+                        ? `+${formatMoney(
+                            modifier.price_delta
+                        )}`
+                        : "Incluido";
+
+
+                row.append(
+                    name,
+                    price
+                );
+
+                modifiers.append(row);
+            }
+
+
+            card.append(modifiers);
+        }
+
+
+        if (item.notes) {
+            const notes =
+                document.createElement(
+                    "small"
+                );
+
+            notes.className =
+                "muted";
+
+            notes.textContent =
+                item.notes;
+
+            card.append(notes);
+        }
+
+
+        return card;
+    }
+
+
+    async function openSale(orderUuid) {
+        try {
+            const sale =
+                await adminRequest(
+                    `/admin/pos/sales/${
+                        encodeURIComponent(
+                            orderUuid
+                        )
+                    }`
+                );
+
+
+            document.getElementById(
+                "sale-detail-folio"
+            ).textContent =
+                sale.folio;
+
+
+            document.getElementById(
+                "sale-detail-date"
+            ).textContent =
+                formatDate(
+                    sale.created_at_client
+                );
+
+
+            const status =
+                document.getElementById(
+                    "sale-detail-status"
+                );
+
+            status.className =
+                `badge badge-${
+                    paymentStatusClass(
+                        sale.payment_status
+                    )
+                }`;
+
+            status.textContent =
+                paymentStatusLabel(
+                    sale.payment_status
+                );
+
+
+            const meta =
+                document.getElementById(
+                    "sale-detail-meta"
+                );
+
+            meta.replaceChildren(
+                detailItem(
+                    "Sucursal",
+                    sale.branch_name
+                ),
+                detailItem(
+                    "Terminal",
+                    sale.terminal_id
+                ),
+                detailItem(
+                    "Estado pedido",
+                    orderStatusLabel(
+                        sale.status
+                    )
+                ),
+                detailItem(
+                    "UUID",
+                    sale.order_uuid
+                )
+            );
+
+
+            const items =
+                document.getElementById(
+                    "sale-detail-items"
+                );
+
+            items.replaceChildren(
+                ...sale.items.map(
+                    renderSaleItem
+                )
+            );
+
+
+            document.getElementById(
+                "sale-detail-subtotal"
+            ).textContent =
+                formatMoney(
+                    sale.subtotal
+                );
+
+
+            document.getElementById(
+                "sale-detail-total"
+            ).textContent =
+                formatMoney(
+                    sale.total
+                );
+
+
+            const payment =
+                document.getElementById(
+                    "sale-detail-payment"
+                );
+
+            if (sale.payment) {
+                payment.replaceChildren(
+                    detailItem(
+                        "Método",
+                        paymentLabel(
+                            sale.payment.method
+                        )
+                    ),
+                    detailItem(
+                        "Cobrado",
+                        formatMoney(
+                            sale.payment.amount
+                        )
+                    ),
+                    detailItem(
+                        "Recibido",
+                        sale.payment
+                            .amount_tendered
+                            != null
+                            ? formatMoney(
+                                sale.payment
+                                    .amount_tendered
+                            )
+                            : "—"
+                    ),
+                    detailItem(
+                        "Cambio",
+                        sale.payment
+                            .change_due
+                            != null
+                            ? formatMoney(
+                                sale.payment
+                                    .change_due
+                            )
+                            : "—"
+                    ),
+                    detailItem(
+                        "Referencia",
+                        sale.payment
+                            .external_reference
+                            || "—"
+                    )
+                );
+            } else {
+                payment.replaceChildren(
+                    detailItem(
+                        "Pago",
+                        "Sin información"
+                    )
+                );
+            }
+
+
+            document.getElementById(
+                "sale-dialog"
+            ).showModal();
+
+        } catch (error) {
+            showToast(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    function buildEndpoint() {
+        const params =
+            new URLSearchParams();
+
+
+        if (branchSelect.value) {
+            params.set(
+                "branch_code",
+                branchSelect.value
+            );
+        }
+
+
+        const range =
+            dateRange(
+                dateInput.value
+            );
+
+        if (range) {
+            params.set(
+                "date_from",
+                range.from
+            );
+
+            params.set(
+                "date_to",
+                range.to
+            );
+        }
+
+
+        if (paymentSelect.value) {
+            params.set(
+                "payment_method",
+                paymentSelect.value
+            );
+        }
+
+
+        params.set(
+            "limit",
+            "250"
+        );
+
+
+        return (
+            "/admin/pos/sales?" +
+            params.toString()
+        );
+    }
+
+
+    function updateFilterBadge() {
+        const parts = [];
+
+
+        if (dateInput.value) {
+            if (
+                dateInput.value ===
+                localDateString()
+            ) {
+                parts.push("Hoy");
+            } else {
+                parts.push(
+                    new Intl.DateTimeFormat(
+                        "es-MX",
+                        {
+                            dateStyle: "medium"
+                        }
+                    ).format(
+                        new Date(
+                            `${dateInput.value}T12:00:00`
+                        )
+                    )
+                );
+            }
+        } else {
+            parts.push("Todas las fechas");
+        }
+
+
+        if (branchSelect.value) {
+            parts.push(
+                branchSelect
+                    .selectedOptions[0]
+                    ?.textContent
+            );
+        }
+
+
+        if (paymentSelect.value) {
+            parts.push(
+                paymentLabel(
+                    paymentSelect.value
+                )
+            );
+        }
+
+
+        document.getElementById(
+            "sales-filter-badge"
+        ).textContent =
+            parts
+                .filter(Boolean)
+                .join(" · ");
+    }
+
+
+    async function loadSales() {
+        const refreshButton =
+            document.getElementById(
+                "refresh-sales"
+            );
+
+        setButtonLoading(
+            refreshButton,
+            true,
+            "Actualizando…"
+        );
+
+        try {
+            const response =
+                await adminRequest(
+                    buildEndpoint()
+                );
+
+            renderSummary(
+                response.summary
+            );
+
+            renderSales(
+                response.sales
+            );
+
+            updateFilterBadge();
+
+        } finally {
+            setButtonLoading(
+                refreshButton,
+                false
+            );
+        }
+    }
+
+
+    function persistBranch() {
+        if (branchSelect.value) {
+            localStorage.setItem(
+                BRANCH_STORAGE_KEY,
+                branchSelect.value
+            );
+        } else {
+            localStorage.removeItem(
+                BRANCH_STORAGE_KEY
+            );
+        }
+    }
+
+
+    branchSelect.addEventListener(
+        "change",
+        () => {
+            persistBranch();
+
+            loadSales().catch(
+                error =>
+                    showToast(
+                        error.message,
+                        "error"
+                    )
+            );
+        }
+    );
+
+
+    dateInput.addEventListener(
+        "change",
+        () => {
+            loadSales().catch(
+                error =>
+                    showToast(
+                        error.message,
+                        "error"
+                    )
+            );
+        }
+    );
+
+
+    paymentSelect.addEventListener(
+        "change",
+        () => {
+            loadSales().catch(
+                error =>
+                    showToast(
+                        error.message,
+                        "error"
+                    )
+            );
+        }
+    );
+
+
+    document.getElementById(
+        "today-button"
+    ).addEventListener(
+        "click",
+        () => {
+            dateInput.value =
+                localDateString();
+
+            loadSales().catch(
+                error =>
+                    showToast(
+                        error.message,
+                        "error"
+                    )
+            );
+        }
+    );
+
+
+    document.getElementById(
+        "clear-filters"
+    ).addEventListener(
+        "click",
+        () => {
+            branchSelect.value =
+                "";
+
+            dateInput.value =
+                "";
+
+            paymentSelect.value =
+                "";
+
+            localStorage.removeItem(
+                BRANCH_STORAGE_KEY
+            );
+
+            loadSales().catch(
+                error =>
+                    showToast(
+                        error.message,
+                        "error"
+                    )
+            );
+        }
+    );
+
+
+    document.getElementById(
+        "refresh-sales"
+    ).addEventListener(
+        "click",
+        () => {
+            loadSales().catch(
+                error =>
+                    showToast(
+                        error.message,
+                        "error"
+                    )
+            );
+        }
+    );
+
+
+    (async () => {
+        const admin =
+            await bootstrapAdmin({
+                allowedRoles: [
+                    SUPER_ADMIN
+                ]
+            });
+
+        if (!admin) return;
+
+
+        const branches =
+            await adminRequest(
+                "/branches"
+            );
+
+
+        configureBranches(
+            branches
+        );
+
+
+        dateInput.value =
+            localDateString();
+
+
+        await loadSales();
+
+    })().catch(
+        error =>
+            showToast(
+                error.message,
+                "error"
+            )
+    );
+
+})();
+</script>
+
+</body>
+</html>
