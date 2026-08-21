@@ -102,7 +102,7 @@
     </div>
     <section id="print-ticket" class="print-ticket" aria-hidden="true"><h1>CofiNet+</h1><p>Acceso WiFi</p><strong class="ticket-pin" data-ticket-pin></strong><dl><dt>Sucursal</dt><dd data-ticket-branch></dd><dt>Plan</dt><dd data-ticket-plan></dd><dt>Duración</dt><dd data-ticket-duration></dd><dt>Creado</dt><dd data-ticket-issued></dd><dt>Expira</dt><dd data-ticket-expires></dd></dl><p>Conserva este ticket durante tu sesión.</p></section>
     <section id="batch-print-area" class="batch-print-area" aria-hidden="true"><header><h1>CofiNet+</h1><p id="batch-print-heading">Accesos WiFi</p></header><div id="batch-ticket-grid" class="batch-ticket-grid"></div></section>
-    <script src="admin.js"></script>
+    <script src="admin.js?v=20260816-multibranch"></script>
     <script>
 (() => {
 
@@ -111,6 +111,7 @@
 
         let plans = [];
         let branches = [];
+        let loadedPins = [];
         let latestPin = null;
         let activeAdmin = null;
 
@@ -197,9 +198,27 @@
             }
         }
 
+        function renderSelectedPins() {
+            const branchCode = branchSelect.value;
+
+            const visiblePins = branchCode
+                ? loadedPins.filter(pin => pin.branch_code === branchCode)
+                : loadedPins;
+
+            renderPins(visiblePins);
+
+            const branch = selectedBranch();
+
+            document.getElementById("history-note").textContent =
+                branch
+                    ? `Sucursal: ${branch.name}`
+                    : "Todas las sucursales";
+        }
+
         async function loadPins() {
             const response = await adminRequest("/admin/pins");
-            renderPins(response.pins);
+            loadedPins = response.pins;
+            renderSelectedPins();
         }
 
         async function loadPage() {
@@ -228,6 +247,7 @@
             }
 
             updatePlanPreview();
+            renderSelectedPins();
 
             window.dispatchEvent(
                 new CustomEvent("cofinet:branch-changed", {
@@ -280,6 +300,6 @@
 
 })();
 </script>
-    <script src="pins-features.js"></script>
+    <script src="pins-features.js?v=20260816-multibranch"></script>
 </body>
 </html>

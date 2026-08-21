@@ -16,6 +16,8 @@
 
     let activeAdmin = null;
     let latestBatch = null;
+    let loadedBatches = [];
+    let loadedInternalCredentials = [];
     let batchSubmitting = false;
     const batchPlan = document.getElementById("batch-plan");
     const batchButton = document.getElementById("batch-generate");
@@ -140,9 +142,25 @@
         }
     }
 
+    function renderSelectedBatches() {
+        const branchCode = selectedBranchCode();
+
+        const visibleBatches = branchCode
+            ? loadedBatches.filter(batch => batch.branch_code === branchCode)
+            : loadedBatches;
+
+        renderBatches(visibleBatches);
+
+        document.getElementById("batch-history-note").textContent =
+            branchCode
+                ? `Sucursal: ${selectedBranchName()}`
+                : "Todas las sucursales";
+    }
+
     async function loadBatches() {
         const response = await adminRequest("/admin/pin-batches");
-        renderBatches(response.batches);
+        loadedBatches = response.batches;
+        renderSelectedBatches();
     }
 
     function buildTicket(ticket, { internal = false, branchName = null } = {}) {
@@ -307,9 +325,22 @@
         }
     }
 
+    function renderSelectedInternal() {
+        const branchCode = selectedBranchCode();
+
+        const visibleCredentials = branchCode
+            ? loadedInternalCredentials.filter(
+                credential => credential.branch_code === branchCode
+            )
+            : loadedInternalCredentials;
+
+        renderInternal(visibleCredentials);
+    }
+
     async function loadInternal() {
         const response = await adminRequest("/admin/internal-access");
-        renderInternal(response.credentials);
+        loadedInternalCredentials = response.credentials;
+        renderSelectedInternal();
     }
 
     async function changeInternalStatus(credential, isActive) {
@@ -333,7 +364,11 @@
         }
     }
 
-    branchSelect?.addEventListener("change", updateBatchAvailability);
+    branchSelect?.addEventListener("change", () => {
+        updateBatchAvailability();
+        renderSelectedBatches();
+        renderSelectedInternal();
+    });
     batchPlan.addEventListener("change", updateBatchAvailability);
     window.addEventListener("cofinet:branch-changed", updateBatchAvailability);
 
