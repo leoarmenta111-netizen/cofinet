@@ -12,30 +12,57 @@ class MikroTikBranchNotConfiguredError(RuntimeError):
 
 
 class MikroTikService:
-    # Temporary compatibility while branch-specific routers are configured.
-    # Tomorrow this becomes branch -> router configuration instead of a guard.
-    _LEGACY_ROUTER_BRANCH_CODES = {
-        "nuevo-vallarta",
-        "principal",
+    _BRANCH_PREFIXES = {
+        "bucerias": "MIKROTIK_BUCERIAS",
     }
 
     @classmethod
     def for_branch(cls, branch_code: str) -> "MikroTikService":
         normalized = branch_code.strip().lower()
 
-        if normalized not in cls._LEGACY_ROUTER_BRANCH_CODES:
+        # Nuevo Vallarta keeps the existing production variables.
+        if normalized in {"nuevo-vallarta", "principal"}:
+            return cls(
+                host=os.environ["MIKROTIK_HOST"],
+                username=os.environ["MIKROTIK_USERNAME"],
+                password=os.environ["MIKROTIK_PASSWORD"],
+                port=int(os.getenv("MIKROTIK_PORT", "8728")),
+            )
+
+        prefix = cls._BRANCH_PREFIXES.get(normalized)
+        if prefix is None:
             raise MikroTikBranchNotConfiguredError(
                 f"MikroTik is not configured for branch {normalized!r}"
             )
 
-        return cls()
+        try:
+            host = os.environ[f"{prefix}_HOST"]
+            username = os.environ[f"{prefix}_USERNAME"]
+            password = os.environ[f"{prefix}_PASSWORD"]
+        except KeyError as exc:
+            raise MikroTikBranchNotConfiguredError(
+                f"MikroTik environment is incomplete for branch {normalized!r}"
+            ) from exc
 
-    def __init__(self) -> None:
+        return cls(
+            host=host,
+            username=username,
+            password=password,
+            port=int(os.getenv(f"{prefix}_PORT", "8728")),
+        )
+
+    def __init__(
+        self,
+        host: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        port: int | None = None,
+    ) -> None:
         self.pool = routeros_api.RouterOsApiPool(
-            host=os.environ["MIKROTIK_HOST"],
-            username=os.environ["MIKROTIK_USERNAME"],
-            password=os.environ["MIKROTIK_PASSWORD"],
-            port=int(os.getenv("MIKROTIK_PORT", "8728")),
+            host=host or os.environ["MIKROTIK_HOST"],
+            username=username or os.environ["MIKROTIK_USERNAME"],
+            password=password or os.environ["MIKROTIK_PASSWORD"],
+            port=port if port is not None else int(os.getenv("MIKROTIK_PORT", "8728")),
             plaintext_login=True,
         )
         self.api = self.pool.get_api()
