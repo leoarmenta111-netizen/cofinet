@@ -89,9 +89,19 @@ window.CofiPosAPI = (() => {
         );
     }
 
+    function checkHealth() {
+        return request(
+            "/health",
+            {
+                timeout: 3000,
+            }
+        );
+    }
+
     return {
         request,
         getCatalog,
         createOrder,
+        checkHealth,
     };
 })();

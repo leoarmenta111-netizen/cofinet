@@ -1,94 +1,86 @@
-const CACHE_NAME =
-    "cofi-pos-shell-v4";
+const CACHE_NAME = "cofi-pos-shell-v7";
 
 const APP_SHELL = [
-    "./",
     "./index.html",
-    "./css/pos.css",
-    "./js/uuid.js",
-    "./js/db.js",
-    "./js/api.js",
-    "./js/catalog.js",
-    "./js/sync.js",
-    "./js/app.js",
+    "./css/pos.css?v=7",
+    "./js/uuid.js?v=7",
+    "./js/db.js?v=7",
+    "./js/api.js?v=7",
+    "./js/catalog.js?v=7",
+    "./js/sync.js?v=7",
+    "./js/app.js?v=7",
     "./manifest.webmanifest"
 ];
 
-self.addEventListener(
-    "install",
-    event => {
-        event.waitUntil(
-            caches
-                .open(CACHE_NAME)
-                .then(cache =>
-                    cache.addAll(APP_SHELL)
-                )
-                .then(() =>
-                    self.skipWaiting()
-                )
-        );
-    }
-);
 
-self.addEventListener(
-    "activate",
-    event => {
-        event.waitUntil(
-            caches
-                .keys()
-                .then(keys =>
-                    Promise.all(
-                        keys
-                            .filter(
-                                key =>
-                                    key !== CACHE_NAME
-                            )
-                            .map(
-                                key =>
-                                    caches.delete(key)
-                            )
-                    )
-                )
-                .then(() =>
-                    self.clients.claim()
-                )
-        );
-    }
-);
+/* =========================================================
+   INSTALL
+   ========================================================= */
 
-self.addEventListener(
-    "fetch",
-    event => {
-        const request =
-            event.request;
+self.addEventListener("install", event => {
+    event.waitUntil(
+        caches
+            .open(CACHE_NAME)
+            .then(cache => cache.addAll(APP_SHELL))
+            .then(() => self.skipWaiting())
+    );
+});
 
-        const url =
-            new URL(request.url);
 
-        if (
-            url.pathname.startsWith(
-                "/api/"
-            )
-        ) {
-            return;
-        }
+/* =========================================================
+   ACTIVATE
+   ========================================================= */
 
-        if (
-            request.mode ===
-            "navigate"
-        ) {
-            event.respondWith(
-                fetch(request)
-                    .catch(() =>
-                        caches.match(
-                            "./index.html"
+self.addEventListener("activate", event => {
+    event.waitUntil(
+        caches
+            .keys()
+            .then(keys =>
+                Promise.all(
+                    keys
+                        .filter(key =>
+                            key.startsWith("cofi-pos-shell-") &&
+                            key !== CACHE_NAME
                         )
-                    )
-            );
+                        .map(key => caches.delete(key))
+                )
+            )
+            .then(() => self.clients.claim())
+    );
+});
 
-            return;
-        }
 
+/* =========================================================
+   FETCH
+   ========================================================= */
+
+self.addEventListener("fetch", event => {
+    const request = event.request;
+    const url = new URL(request.url);
+
+    // API must never be fulfilled by application-shell cache.
+    if (url.pathname.startsWith("/api/")) {
+        return;
+    }
+
+    // Navigation:
+    // network first, cached POS shell when offline.
+    if (request.mode === "navigate") {
+        event.respondWith(
+            fetch(request)
+                .catch(() =>
+                    caches.match("./index.html")
+                )
+        );
+
+        return;
+    }
+
+    // POS static assets.
+    if (
+        url.origin === self.location.origin &&
+        url.pathname.startsWith("/pos/")
+    ) {
         event.respondWith(
             caches.match(request)
                 .then(cached => {
@@ -96,8 +88,27 @@ self.addEventListener(
                         return cached;
                     }
 
+                    // Defensive fallback for query-string
+                    // differences such as ?v=7.
+                    return caches.match(
+                        request,
+                        { ignoreSearch: true }
+                    );
+                })
+                .then(cached => {
+                    if (cached) {
+                        return cached;
+                    }
+
                     return fetch(request)
                         .then(response => {
+                            if (
+                                !response ||
+                                response.status !== 200
+                            ) {
+                                return response;
+                            }
+
                             const copy =
                                 response.clone();
 
@@ -115,4 +126,4 @@ self.addEventListener(
                 })
         );
     }
-);
+});

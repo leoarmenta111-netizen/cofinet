@@ -12,6 +12,8 @@
 
         paymentMethod: "CASH",
         paymentBusy: false,
+
+        cloudOnline: null,
     };
 
     const $ = selector =>
@@ -79,8 +81,13 @@
             state.terminalId;
     }
 
-    function updateConnectionState() {
-        const online = navigator.onLine;
+    function updateConnectionState(forcedState = null) {
+        const online =
+            forcedState === null
+                ? navigator.onLine
+                : forcedState;
+
+        state.cloudOnline = online;
 
         const container =
             $("#connection-status");
@@ -138,6 +145,10 @@
                 );
 
             state.catalog = result.catalog;
+
+            updateConnectionState(
+                result.source === "cloud"
+            );
 
             $("#branch-name").textContent =
                 state.catalog.branch.name;
@@ -1125,6 +1136,27 @@
     }
 
 
+    async function checkConnectivity() {
+        const previous =
+            state.cloudOnline;
+
+        try {
+            await window.CofiPosAPI.checkHealth();
+
+            updateConnectionState(true);
+
+            if (previous === false) {
+                await window.CofiPosSync.syncPending();
+                await updatePendingCount();
+                await loadCatalog();
+            }
+
+        } catch {
+            updateConnectionState(false);
+        }
+    }
+
+
     /* =====================================================
        SERVICE WORKER / BOOT
        ===================================================== */
@@ -1161,6 +1193,13 @@
 
             await updatePendingCount();
         }
+
+        await checkConnectivity();
+
+        setInterval(
+            checkConnectivity,
+            10000
+        );
     }
 
 
