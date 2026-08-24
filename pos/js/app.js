@@ -3,7 +3,8 @@
         branchCode: null,
         terminalId: null,
         catalog: null,
-        selectedCategoryId: null,
+        selectedCategoryId: "all",
+        searchQuery: "",
 
         cart: [],
 
@@ -14,6 +15,7 @@
         paymentBusy: false,
 
         cloudOnline: null,
+        syncing: false,
     };
 
     const $ = selector =>
@@ -95,19 +97,31 @@
         container.classList.remove(
             "is-loading",
             "is-online",
-            "is-offline"
+            "is-offline",
+            "is-syncing"
         );
 
         container.classList.add(
-            online
+            state.syncing
+                ? "is-syncing"
+                : online
                 ? "is-online"
                 : "is-offline"
         );
 
         $("#connection-label").textContent =
-            online
-                ? "ONLINE"
-                : "OFFLINE";
+            state.syncing
+                ? "Sincronizando…"
+                : online
+                    ? "En línea"
+                    : "Sin conexión";
+
+        $("#connection-detail").textContent =
+            state.syncing
+                ? "Enviando ventas pendientes"
+                : online
+                    ? "Conectado al servidor"
+                    : "Operación local activa";
 
         $("#offline-banner").hidden =
             online;
@@ -123,6 +137,32 @@
                     ? "pendiente"
                     : "pendientes"
             }`;
+
+        if (count > 0 && state.cloudOnline) {
+            $("#connection-detail").textContent =
+                `${count} ${count === 1 ? "venta pendiente" : "ventas pendientes"}`;
+        }
+    }
+
+    function setSyncing(syncing) {
+        state.syncing = syncing;
+        updateConnectionState(state.cloudOnline);
+    }
+
+    async function syncPendingWithStatus() {
+        const pending =
+            await window.CofiPosDB.countPending();
+
+        if (!pending || !state.cloudOnline) return;
+
+        setSyncing(true);
+
+        try {
+            await window.CofiPosSync.syncPending();
+            await updatePendingCount();
+        } finally {
+            setSyncing(false);
+        }
     }
 
 
@@ -187,23 +227,32 @@
         const categories =
             state.catalog?.categories || [];
 
-        if (!categories.length) {
-            state.selectedCategoryId = null;
-            return;
-        }
+        const allCount = categories.reduce(
+            (sum, category) =>
+                sum + (category.products?.length || 0),
+            0
+        );
+
+        const filters = [
+            {
+                id: "all",
+                name: "Todos",
+                products: { length: allCount },
+            },
+            ...categories,
+        ];
 
         if (
+            state.selectedCategoryId !== "all" &&
             !categories.some(
-                c =>
-                    c.id ===
-                    state.selectedCategoryId
+                category =>
+                    category.id === state.selectedCategoryId
             )
         ) {
-            state.selectedCategoryId =
-                categories[0].id;
+            state.selectedCategoryId = "all";
         }
 
-        categories.forEach(category => {
+        filters.forEach(category => {
             const button =
                 document.createElement("button");
 
@@ -220,8 +269,14 @@
                 );
             }
 
-            button.textContent =
-                category.name;
+            const label = document.createElement("span");
+            label.textContent = category.name;
+
+            const count = document.createElement("span");
+            count.className = "category-tab-count";
+            count.textContent = category.products?.length || 0;
+
+            button.append(label, count);
 
             button.addEventListener(
                 "click",
@@ -247,28 +302,54 @@
 
         grid.replaceChildren();
 
-        const category =
-            state.catalog?.categories?.find(
-                item =>
-                    item.id ===
-                    state.selectedCategoryId
-            );
+        const categories =
+            state.catalog?.categories || [];
 
-        if (
-            !category ||
-            !category.products.length
-        ) {
+        const products = (
+            state.selectedCategoryId === "all"
+                ? categories.flatMap(category =>
+                    category.products || []
+                )
+                : categories.find(
+                    item =>
+                        item.id === state.selectedCategoryId
+                )?.products || []
+        ).filter(product => {
+            if (!state.searchQuery) return true;
+
+            const haystack = [
+                product.name,
+                product.sku,
+                product.description,
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLocaleLowerCase("es-MX");
+
+            return haystack.includes(state.searchQuery);
+        });
+
+        $("#product-result-count").textContent =
+            `${products.length} ${
+                products.length === 1
+                    ? "disponible"
+                    : "disponibles"
+            }`;
+
+        if (!products.length) {
             message.hidden = false;
 
             message.textContent =
-                "No hay productos disponibles.";
+                state.searchQuery
+                    ? "No encontramos productos con esa búsqueda."
+                    : "No hay productos disponibles.";
 
             return;
         }
 
         message.hidden = true;
 
-        category.products.forEach(product => {
+        products.forEach(product => {
             const card =
                 document.createElement("button");
 
@@ -276,11 +357,39 @@
             card.className =
                 "product-card";
 
-            const name =
-                document.createElement("strong");
+            const visual =
+                document.createElement("span");
 
-            name.textContent =
-                product.name;
+            visual.className = "product-visual";
+
+            if (product.image_url) {
+                const image = document.createElement("img");
+                image.className = "product-image";
+                image.src = product.image_url;
+                image.alt = "";
+                image.loading = "lazy";
+                image.addEventListener("error", () => {
+                    image.remove();
+                    visual.append(createProductPlaceholder());
+                }, { once: true });
+                visual.append(image);
+            } else {
+                visual.append(createProductPlaceholder());
+            }
+
+            if (product.modifiers?.length) {
+                const badge = document.createElement("span");
+                badge.className = "product-badge";
+                badge.textContent = "Personalizable";
+                visual.append(badge);
+            }
+
+            const content = document.createElement("span");
+            content.className = "product-content";
+
+            const name = document.createElement("strong");
+            name.className = "product-name";
+            name.textContent = product.name;
 
             const description =
                 document.createElement("span");
@@ -290,7 +399,7 @@
 
             description.textContent =
                 product.description ||
-                "Producto CofiCenter";
+                (product.sku ? `SKU ${product.sku}` : "Producto Cofi");
 
             const price =
                 document.createElement("span");
@@ -301,24 +410,16 @@
             price.textContent =
                 money(product.price);
 
-            card.append(
-                name,
-                description,
-                price
-            );
+            const footer = document.createElement("span");
+            footer.className = "product-footer";
 
-            if (product.modifiers?.length) {
-                const hint =
-                    document.createElement("span");
+            const add = document.createElement("span");
+            add.className = "product-add";
+            add.textContent = "+";
 
-                hint.className =
-                    "product-modifier-hint";
-
-                hint.textContent =
-                    "Personalizable";
-
-                card.append(hint);
-            }
+            footer.append(price, add);
+            content.append(name, description, footer);
+            card.append(visual, content);
 
             card.addEventListener(
                 "click",
@@ -327,6 +428,14 @@
 
             grid.append(card);
         });
+    }
+
+    function createProductPlaceholder() {
+        const placeholder = document.createElement("span");
+        placeholder.className = "product-placeholder";
+        placeholder.innerHTML =
+            '<svg aria-hidden="true"><use href="#i-coffee"></use></svg>';
+        return placeholder;
     }
 
 
@@ -353,12 +462,18 @@
 
         $("#modifier-product-name")
             .textContent =
-                `${product.name} · ${money(product.price)}`;
+                product.name;
+
+        $("#modifier-base-price").textContent =
+            `Precio base ${money(product.price)}`;
 
         $("#modifier-qty")
             .textContent = "1";
 
         renderModifierGroups(product);
+        updateModifierTotal();
+
+        $("#modifier-error").hidden = true;
 
         $("#modifier-modal").hidden =
             false;
@@ -383,21 +498,33 @@
             header.className =
                 "modifier-group-title";
 
-            const title =
-                document.createElement("strong");
+            const titleBox = document.createElement("div");
 
-            title.textContent =
-                group.name;
+            const title = document.createElement("strong");
+            title.textContent = group.name;
+
+            const selection = document.createElement("small");
+            selection.textContent =
+                group.max_select === 1
+                    ? "Selecciona una opción"
+                    : `Selecciona de ${group.min_select} a ${group.max_select}`;
+
+            titleBox.append(title, selection);
 
             const rule =
                 document.createElement("span");
 
+            rule.className = "modifier-rule";
+            rule.classList.toggle(
+                "is-required",
+                group.min_select > 0
+            );
             rule.textContent =
                 group.min_select > 0
-                    ? "Requerido"
+                    ? "Obligatorio"
                     : "Opcional";
 
-            header.append(title, rule);
+            header.append(titleBox, rule);
             section.append(header);
 
             group.options.forEach(option => {
@@ -444,10 +571,19 @@
                     input.checked = true;
                 }
 
-                input.addEventListener(
-                    "change",
-                    enforceModifierLimit
-                );
+                input.addEventListener("change", event => {
+                    enforceModifierLimit(event);
+                    section
+                        .querySelectorAll(".modifier-option")
+                        .forEach(optionLabel =>
+                            optionLabel.classList.toggle(
+                                "is-selected",
+                                optionLabel.querySelector("input").checked
+                            )
+                        );
+                    $("#modifier-error").hidden = true;
+                    updateModifierTotal();
+                });
 
                 const name =
                     document.createElement("span");
@@ -483,6 +619,21 @@
 
             container.append(section);
         });
+    }
+
+    function updateModifierTotal() {
+        const product = state.modifierProduct;
+        if (!product) return;
+
+        const optionsTotal = selectedModifiers().reduce(
+            (sum, option) => sum + option.price_delta,
+            0
+        );
+
+        $("#modifier-add-total").textContent = money(
+            (Number(product.price) + optionsTotal) *
+            state.modifierQuantity
+        );
     }
 
     function enforceModifierLimit(event) {
@@ -551,17 +702,17 @@
                 ).length;
 
             if (count < group.min_select) {
-                alert(
-                    `Selecciona ${group.name}.`
-                );
+                $("#modifier-error").textContent =
+                    `Selecciona ${group.name} para continuar.`;
+                $("#modifier-error").hidden = false;
 
                 return false;
             }
 
             if (count > group.max_select) {
-                alert(
-                    `Demasiadas opciones en ${group.name}.`
-                );
+                $("#modifier-error").textContent =
+                    `Sólo puedes seleccionar ${group.max_select} en ${group.name}.`;
+                $("#modifier-error").hidden = false;
 
                 return false;
             }
@@ -656,8 +807,14 @@
             header.className =
                 "cart-item-header";
 
-            const name =
-                document.createElement("span");
+            const title = document.createElement("div");
+            title.className = "cart-item-title";
+
+            const quantityBadge = document.createElement("span");
+            quantityBadge.className = "cart-item-quantity";
+            quantityBadge.textContent = item.quantity;
+
+            const name = document.createElement("span");
 
             name.className =
                 "cart-item-name";
@@ -677,9 +834,15 @@
                     item.quantity
                 );
 
-            header.append(name, price);
+            title.append(quantityBadge, name);
+            header.append(title, price);
 
             row.append(header);
+
+            const unitPrice = document.createElement("div");
+            unitPrice.className = "cart-unit-price";
+            unitPrice.textContent = `${money(item.unit_price)} por unidad`;
+            row.append(unitPrice);
 
             if (item.modifiers.length) {
                 const modifiers =
@@ -688,14 +851,21 @@
                 modifiers.className =
                     "cart-modifiers";
 
-                modifiers.textContent =
-                    item.modifiers
-                        .map(modifier =>
-                            modifier.price_delta
-                                ? `${modifier.option_name} +${money(modifier.price_delta)}`
-                                : modifier.option_name
-                        )
-                        .join(" · ");
+                item.modifiers.forEach(modifier => {
+                    const modifierRow = document.createElement("div");
+                    modifierRow.className = "cart-modifier";
+
+                    const modifierName = document.createElement("span");
+                    modifierName.textContent = modifier.option_name;
+
+                    const modifierPrice = document.createElement("span");
+                    modifierPrice.textContent = modifier.price_delta
+                        ? `+${money(modifier.price_delta)}`
+                        : "Incluido";
+
+                    modifierRow.append(modifierName, modifierPrice);
+                    modifiers.append(modifierRow);
+                });
 
                 row.append(modifiers);
             }
@@ -765,8 +935,10 @@
             remove.className =
                 "remove-item";
 
-            remove.textContent =
-                "Eliminar";
+            remove.title = "Eliminar producto";
+            remove.setAttribute("aria-label", "Eliminar producto");
+            remove.innerHTML =
+                '<svg aria-hidden="true"><use href="#i-trash"></use></svg>';
 
             remove.addEventListener(
                 "click",
@@ -796,6 +968,9 @@
         $("#cart-total")
             .textContent =
                 money(total);
+
+        $("#checkout-total").textContent =
+            money(total);
     }
 
     function removeCartItem(lineUuid) {
@@ -826,6 +1001,9 @@
             "CASH";
 
         $("#payment-total").textContent =
+            money(cartTotal());
+
+        $("#confirm-payment-total").textContent =
             money(cartTotal());
 
         $("#cash-received").value =
@@ -1118,7 +1296,7 @@
 
         $("#success-title").textContent =
             offline
-                ? "Venta guardada offline"
+                ? "Venta guardada sin conexión"
                 : "Venta registrada";
 
         $("#success-message").textContent =
@@ -1146,8 +1324,7 @@
             updateConnectionState(true);
 
             if (previous === false) {
-                await window.CofiPosSync.syncPending();
-                await updatePendingCount();
+                await syncPendingWithStatus();
                 await loadCatalog();
             }
 
@@ -1188,10 +1365,7 @@
         await registerServiceWorker();
 
         if (navigator.onLine) {
-            await window.CofiPosSync
-                .syncPending();
-
-            await updatePendingCount();
+            await syncPendingWithStatus();
         }
 
         await checkConnectivity();
@@ -1200,6 +1374,24 @@
             checkConnectivity,
             10000
         );
+
+        updateClock();
+        setInterval(updateClock, 30000);
+    }
+
+    function updateClock() {
+        const now = new Date();
+        $("#current-time").textContent =
+            now.toLocaleTimeString("es-MX", {
+                hour: "numeric",
+                minute: "2-digit",
+            });
+        $("#current-date").textContent =
+            now.toLocaleDateString("es-MX", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+            });
     }
 
 
@@ -1212,6 +1404,14 @@
             "click",
             loadCatalog
         );
+
+    $("#product-search")
+        .addEventListener("input", event => {
+            state.searchQuery = event.currentTarget.value
+                .trim()
+                .toLocaleLowerCase("es-MX");
+            renderProducts();
+        });
 
     $("#clear-cart")
         .addEventListener(
@@ -1247,6 +1447,8 @@
                 $("#modifier-qty")
                     .textContent =
                         state.modifierQuantity;
+
+                updateModifierTotal();
             }
         );
 
@@ -1259,6 +1461,8 @@
                 $("#modifier-qty")
                     .textContent =
                         state.modifierQuantity;
+
+                updateModifierTotal();
             }
         );
 
@@ -1343,14 +1547,30 @@
         async () => {
             updateConnectionState();
 
-            await window.CofiPosSync
-                .syncPending();
-
-            await updatePendingCount();
+            await syncPendingWithStatus();
 
             await loadCatalog();
         }
     );
+
+    document.addEventListener("keydown", event => {
+        if (
+            (event.ctrlKey || event.metaKey) &&
+            event.key.toLowerCase() === "k"
+        ) {
+            event.preventDefault();
+            $("#product-search").focus();
+        }
+
+        if (event.key === "Escape") {
+            [
+                "#modifier-modal",
+                "#payment-modal",
+            ].forEach(selector => {
+                $(selector).hidden = true;
+            });
+        }
+    });
 
     boot().catch(error => {
         console.error(error);

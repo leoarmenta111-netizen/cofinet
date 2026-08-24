@@ -1,14 +1,14 @@
-const CACHE_NAME = "cofi-pos-shell-v7";
+const CACHE_NAME = "cofi-pos-shell-v8";
 
 const APP_SHELL = [
     "./index.html",
-    "./css/pos.css?v=7",
-    "./js/uuid.js?v=7",
-    "./js/db.js?v=7",
-    "./js/api.js?v=7",
-    "./js/catalog.js?v=7",
-    "./js/sync.js?v=7",
-    "./js/app.js?v=7",
+    "./css/pos.css?v=8",
+    "./js/uuid.js?v=8",
+    "./js/db.js?v=8",
+    "./js/api.js?v=8",
+    "./js/catalog.js?v=8",
+    "./js/sync.js?v=8",
+    "./js/app.js?v=8",
     "./manifest.webmanifest"
 ];
 
@@ -89,7 +89,7 @@ self.addEventListener("fetch", event => {
                     }
 
                     // Defensive fallback for query-string
-                    // differences such as ?v=7.
+                    // differences between versioned shell URLs.
                     return caches.match(
                         request,
                         { ignoreSearch: true }

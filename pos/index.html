@@ -2,420 +2,148 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width,initial-scale=1,viewport-fit=cover"
-    >
-
-    <meta name="theme-color" content="#173524">
-
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#f7f7f4">
     <title>Cofi POS</title>
-
-    <link
-        rel="manifest"
-        href="./manifest.webmanifest"
-    >
-
-    <link
-        rel="stylesheet"
-        href="./css/pos.css?v=7"
-    >
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="stylesheet" href="./css/pos.css?v=8">
 </head>
-
 <body>
+<svg class="svg-sprite" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L20 8H6"></path><circle cx="10" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"></path></symbol>
+    <symbol id="i-coffee" viewBox="0 0 24 24"><path d="M5 9h12v6a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5V9Z"></path><path d="M17 11h2a2 2 0 0 1 0 4h-2M8 3v3m4-3v3m4-3v3"></path></symbol>
+    <symbol id="i-sale" viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L20 8H6"></path><circle cx="10" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle></symbol>
+    <symbol id="i-orders" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 8h6m-6 4h6m-6 4h4"></path></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="m20 13-7 7L4 11V4h7l9 9Z"></path><circle cx="8.5" cy="8.5" r="1"></circle></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle></symbol>
+</svg>
 
 <div class="pos-shell">
-
     <header class="topbar">
-
-        <div class="brand">
-            <div class="brand-mark">C</div>
-
-            <div>
-                <strong>COFI CENTER</strong>
-                <span>Cofi POS</span>
-            </div>
+        <div class="brand" aria-label="Cofi POS">
+            <div class="brand-mark" aria-hidden="true"><span>C</span></div>
+            <div class="brand-name"><strong>Cofi</strong><b>POS</b></div>
         </div>
 
-        <div class="terminal-info">
-
-            <div
-                id="connection-status"
-                class="connection-status is-loading"
-            >
+        <div class="operation-meta">
+            <div class="meta-card branch-card">
+                <span>Sucursal</span>
+                <strong id="branch-name">Cargando sucursal…</strong>
+            </div>
+            <div class="meta-card terminal-card">
+                <span>Terminal</span>
+                <strong id="terminal-id">Terminal…</strong>
+            </div>
+            <div id="connection-status" class="connection-status is-loading" role="status" aria-live="polite">
                 <span class="status-dot"></span>
-                <span id="connection-label">Iniciando…</span>
+                <div><strong id="connection-label">Iniciando…</strong><small id="connection-detail">Comprobando conexión</small></div>
             </div>
-
-            <div class="terminal-meta">
-                <strong id="branch-name">
-                    Cargando sucursal…
-                </strong>
-
-                <span id="terminal-id">
-                    Terminal…
-                </span>
-            </div>
-
         </div>
 
+        <div class="session-meta">
+            <div class="clock-block"><svg><use href="#i-clock"></use></svg><div><strong id="current-time">--:--</strong><span id="current-date">--</span></div></div>
+            <div class="operator-block"><span class="operator-avatar">T</span><div><strong>Terminal activa</strong><span>Operación POS</span></div></div>
+        </div>
     </header>
 
-    <section
-        id="offline-banner"
-        class="offline-banner"
-        hidden
-    >
-        <div>
-            <strong>Modo offline</strong>
-            <span>
-                Las ventas se guardarán en esta terminal.
-            </span>
-        </div>
-
-        <span id="pending-count">
-            0 pendientes
-        </span>
+    <section id="offline-banner" class="offline-banner" hidden role="status">
+        <div><span class="offline-icon">!</span><p><strong>Venta sin conexión disponible</strong><span>Las ventas se guardarán en esta terminal y se sincronizarán automáticamente.</span></p></div>
+        <strong id="pending-count">0 pendientes</strong>
     </section>
 
     <main class="workspace">
-
-        <section class="catalog-panel">
-
-            <div class="catalog-header">
-                <div>
-                    <p class="eyebrow">CATÁLOGO</p>
-                    <h1>Nueva venta</h1>
-                </div>
-
-                <button
-                    id="refresh-catalog"
-                    class="secondary-button"
-                    type="button"
-                >
-                    Actualizar
-                </button>
+        <section class="catalog-panel" aria-label="Catálogo de productos">
+            <div class="catalog-tools">
+                <label class="search-box" for="product-search">
+                    <svg><use href="#i-search"></use></svg>
+                    <input id="product-search" type="search" autocomplete="off" placeholder="Buscar producto por nombre o SKU" aria-label="Buscar producto por nombre o SKU">
+                    <kbd>Ctrl K</kbd>
+                </label>
+                <button id="refresh-catalog" class="icon-button refresh-button" type="button" title="Actualizar catálogo" aria-label="Actualizar catálogo"><svg><use href="#i-refresh"></use></svg></button>
+                <span class="view-button" aria-hidden="true"><svg><use href="#i-grid"></use></svg></span>
             </div>
 
-            <nav
-                id="category-tabs"
-                class="category-tabs"
-            ></nav>
-
-            <div
-                id="catalog-message"
-                class="catalog-message"
-            >
-                Cargando catálogo…
+            <div class="catalog-heading">
+                <div><h1>Productos</h1><span id="product-result-count">0 disponibles</span></div>
             </div>
 
-            <section
-                id="product-grid"
-                class="product-grid"
-            ></section>
+            <nav id="category-tabs" class="category-tabs" aria-label="Categorías"></nav>
+            <div id="catalog-message" class="catalog-message">Cargando catálogo…</div>
+            <section id="product-grid" class="product-grid" aria-live="polite"></section>
 
+            <nav class="bottom-nav" aria-label="Módulos del punto de venta">
+                <button class="bottom-nav-item is-active" type="button"><svg><use href="#i-sale"></use></svg><span>Venta</span></button>
+                <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-orders"></use></svg><span>Órdenes</span><small>Próximamente</small></button>
+                <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-users"></use></svg><span>Clientes</span><small>Próximamente</small></button>
+                <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-tag"></use></svg><span>Promos</span><small>Próximamente</small></button>
+                <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-more"></use></svg><span>Más</span><small>Próximamente</small></button>
+            </nav>
         </section>
 
-        <aside class="order-panel">
-
+        <aside class="order-panel" aria-label="Orden actual">
             <div class="order-heading">
-                <div>
-                    <p class="eyebrow">PEDIDO</p>
-                    <h2>Venta actual</h2>
-                </div>
-
-                <button
-                    id="clear-cart"
-                    class="text-button"
-                    type="button"
-                    hidden
-                >
-                    Limpiar
-                </button>
+                <div><h2>Orden actual</h2><span class="order-type">Venta en mostrador</span></div>
+                <button id="clear-cart" class="icon-button danger-button" type="button" hidden title="Vaciar orden" aria-label="Vaciar orden"><svg><use href="#i-trash"></use></svg></button>
             </div>
 
-            <div
-                id="empty-order"
-                class="empty-order"
-            >
-                <div class="empty-icon">☕</div>
-
-                <strong>
-                    Agrega un producto
-                </strong>
-
-                <span>
-                    Toca un producto del catálogo
-                    para comenzar.
-                </span>
+            <div id="empty-order" class="empty-order">
+                <span class="empty-icon"><svg><use href="#i-coffee"></use></svg></span>
+                <strong>Tu orden está vacía</strong>
+                <span>Selecciona productos del catálogo para comenzar una venta.</span>
             </div>
-
-            <div
-                id="cart-items"
-                class="cart-items"
-            ></div>
+            <div id="cart-items" class="cart-items"></div>
 
             <div class="order-summary">
-
-                <div>
-                    <span>Subtotal</span>
-                    <strong id="cart-subtotal">
-                        $0.00
-                    </strong>
-                </div>
-
-                <div class="order-total">
-                    <span>Total</span>
-                    <strong id="cart-total">
-                        $0.00
-                    </strong>
-                </div>
-
-                <button
-                    id="checkout-button"
-                    class="checkout-button"
-                    type="button"
-                    disabled
-                >
-                    Cobrar
-                </button>
-
+                <div><span>Subtotal</span><strong id="cart-subtotal">$0.00</strong></div>
+                <div class="order-total"><span>Total</span><strong id="cart-total">$0.00</strong></div>
+                <button id="checkout-button" class="checkout-button" type="button" disabled><svg><use href="#i-cart"></use></svg><span>Cobrar</span><strong id="checkout-total">$0.00</strong></button>
+                <div class="sync-footnote"><span class="mini-status-dot"></span><span id="last-sync">Sin sincronización todavía</span></div>
+                <span id="catalog-source" class="catalog-source">Fuente: —</span>
             </div>
-
         </aside>
-
     </main>
-
-    <footer class="statusbar">
-        <span id="last-sync">
-            Sin sincronización todavía
-        </span>
-
-        <span id="catalog-source">
-            Fuente: —
-        </span>
-    </footer>
-
 </div>
 
-
-<!-- MODIFICADORES -->
-
-<div
-    id="modifier-modal"
-    class="modal-backdrop"
-    hidden
->
-    <section class="modal-card">
-
-        <div class="modal-header">
-            <div>
-                <p class="eyebrow">PERSONALIZAR</p>
-                <h2 id="modifier-product-name">
-                    Producto
-                </h2>
-            </div>
-
-            <button
-                id="modifier-close"
-                class="modal-close"
-                type="button"
-            >
-                ×
-            </button>
-        </div>
-
-        <div
-            id="modifier-groups"
-            class="modifier-groups"
-        ></div>
-
-        <div class="quantity-row">
-            <span>Cantidad</span>
-
-            <div class="quantity-control">
-                <button
-                    id="modifier-qty-minus"
-                    type="button"
-                >
-                    −
-                </button>
-
-                <strong id="modifier-qty">
-                    1
-                </strong>
-
-                <button
-                    id="modifier-qty-plus"
-                    type="button"
-                >
-                    +
-                </button>
-            </div>
-        </div>
-
-        <button
-            id="modifier-add"
-            class="checkout-button"
-            type="button"
-        >
-            Agregar al pedido
-        </button>
-
+<div id="modifier-modal" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modifier-product-name">
+        <div class="modal-header"><div><p class="eyebrow">PERSONALIZAR PRODUCTO</p><h2 id="modifier-product-name">Producto</h2><span id="modifier-base-price" class="modal-subtitle"></span></div><button id="modifier-close" class="modal-close" type="button" aria-label="Cerrar">×</button></div>
+        <div id="modifier-groups" class="modifier-groups"></div>
+        <div class="quantity-row"><div><strong>Cantidad</strong><span>Unidades para agregar</span></div><div class="quantity-control"><button id="modifier-qty-minus" type="button" aria-label="Reducir cantidad">−</button><strong id="modifier-qty">1</strong><button id="modifier-qty-plus" type="button" aria-label="Aumentar cantidad">+</button></div></div>
+        <div id="modifier-error" class="form-error" hidden></div>
+        <button id="modifier-add" class="checkout-button modal-action" type="button"><span>Agregar a la orden</span><strong id="modifier-add-total"></strong></button>
     </section>
 </div>
 
-
-<!-- COBRO -->
-
-<div
-    id="payment-modal"
-    class="modal-backdrop"
-    hidden
->
-    <section class="modal-card payment-card">
-
-        <div class="modal-header">
-            <div>
-                <p class="eyebrow">COBRO</p>
-                <h2>Confirmar venta</h2>
-            </div>
-
-            <button
-                id="payment-close"
-                class="modal-close"
-                type="button"
-            >
-                ×
-            </button>
+<div id="payment-modal" class="modal-backdrop" hidden>
+    <section class="modal-card payment-card" role="dialog" aria-modal="true" aria-labelledby="payment-heading">
+        <div class="modal-header"><div><p class="eyebrow">FINALIZAR VENTA</p><h2 id="payment-heading">Método de pago</h2><span class="modal-subtitle">Confirma el cobro antes de registrar la venta.</span></div><button id="payment-close" class="modal-close" type="button" aria-label="Cerrar">×</button></div>
+        <div class="payment-total"><span>Total a cobrar</span><strong id="payment-total">$0.00</strong></div>
+        <div class="payment-methods" role="group" aria-label="Método de pago">
+            <button class="payment-method is-active" data-method="CASH" type="button"><span class="payment-method-icon">$</span><span><strong>Efectivo</strong><small>Pago en caja</small></span></button>
+            <button class="payment-method" data-method="CARD_EXTERNAL" type="button"><span class="payment-method-icon">▣</span><span><strong>Tarjeta</strong><small>Terminal externa</small></span></button>
         </div>
-
-        <div class="payment-total">
-            <span>Total</span>
-            <strong id="payment-total">
-                $0.00
-            </strong>
-        </div>
-
-        <div class="payment-methods">
-
-            <button
-                class="payment-method is-active"
-                data-method="CASH"
-                type="button"
-            >
-                Efectivo
-            </button>
-
-            <button
-                class="payment-method"
-                data-method="CARD_EXTERNAL"
-                type="button"
-            >
-                Terminal
-            </button>
-
-        </div>
-
-        <div id="cash-fields">
-
-            <label class="field">
-                <span>Efectivo recibido</span>
-
-                <input
-                    id="cash-received"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputmode="decimal"
-                >
-            </label>
-
-            <div class="change-box">
-                <span>Cambio</span>
-                <strong id="change-due">$0.00</strong>
-            </div>
-
-        </div>
-
-        <div
-            id="card-fields"
-            hidden
-        >
-            <label class="field">
-                <span>
-                    Referencia de terminal
-                    <small>(opcional)</small>
-                </span>
-
-                <input
-                    id="card-reference"
-                    type="text"
-                    maxlength="120"
-                    placeholder="Ej. autorización / últimos dígitos"
-                >
-            </label>
-        </div>
-
-        <div
-            id="payment-error"
-            class="form-error"
-            hidden
-        ></div>
-
-        <button
-            id="confirm-payment"
-            class="checkout-button"
-            type="button"
-        >
-            Confirmar venta
-        </button>
-
+        <div id="cash-fields"><label class="field"><span>Efectivo recibido</span><div class="money-input"><b>$</b><input id="cash-received" type="number" min="0" step="0.01" inputmode="decimal"></div></label><div class="change-box"><span>Cambio</span><strong id="change-due">$0.00</strong></div></div>
+        <div id="card-fields" hidden><label class="field"><span>Referencia de terminal <small>(opcional)</small></span><input id="card-reference" type="text" maxlength="120" placeholder="Autorización o últimos dígitos"></label><p class="field-help">Confirma primero el cobro en la terminal externa.</p></div>
+        <div id="payment-error" class="form-error" hidden></div>
+        <button id="confirm-payment" class="checkout-button modal-action" type="button"><span>Confirmar cobro</span><strong id="confirm-payment-total"></strong></button>
     </section>
 </div>
 
-
-<!-- RESULTADO -->
-
-<div
-    id="success-modal"
-    class="modal-backdrop"
-    hidden
->
-    <section class="modal-card success-card">
-
-        <div class="success-icon">✓</div>
-
-        <h2 id="success-title">
-            Venta registrada
-        </h2>
-
-        <p id="success-message"></p>
-
-        <strong
-            id="success-folio"
-            class="success-folio"
-        ></strong>
-
-        <button
-            id="success-close"
-            class="checkout-button"
-            type="button"
-        >
-            Nueva venta
-        </button>
-
-    </section>
+<div id="success-modal" class="modal-backdrop" hidden>
+    <section class="modal-card success-card" role="dialog" aria-modal="true" aria-labelledby="success-title"><div class="success-icon">✓</div><h2 id="success-title">Venta registrada</h2><p id="success-message"></p><span class="folio-label">Folio</span><strong id="success-folio" class="success-folio"></strong><button id="success-close" class="checkout-button" type="button">Iniciar nueva venta</button></section>
 </div>
 
-
-<script src="./js/uuid.js?v=7"></script>
-<script src="./js/db.js?v=7"></script>
-<script src="./js/api.js?v=7"></script>
-<script src="./js/catalog.js?v=7"></script>
-<script src="./js/sync.js?v=7"></script>
-<script src="./js/app.js?v=7"></script>
-
+<script src="./js/uuid.js?v=8"></script>
+<script src="./js/db.js?v=8"></script>
+<script src="./js/api.js?v=8"></script>
+<script src="./js/catalog.js?v=8"></script>
+<script src="./js/sync.js?v=8"></script>
+<script src="./js/app.js?v=8"></script>
 </body>
 </html>
