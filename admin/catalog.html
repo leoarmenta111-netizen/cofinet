@@ -1,0 +1,3003 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+    <meta name="color-scheme" content="light">
+
+    <title>Catálogo POS | CofiCenter</title>
+
+    <link
+        rel="stylesheet"
+        href="admin.css?v=20260821-pos-catalog"
+    >
+</head>
+
+<body
+    class="auth-pending"
+    data-page="catalog"
+>
+
+<div class="app-shell protected-content">
+
+    <aside class="sidebar">
+
+        <div class="brand-lockup">
+            <span class="brand-mark">C</span>
+            <span>CofiNet+</span>
+        </div>
+
+        <nav
+            data-admin-nav
+            aria-label="Navegación principal"
+        ></nav>
+
+        <div class="sidebar-profile">
+
+            <div class="profile-row">
+
+                <span
+                    class="avatar"
+                    data-admin-initials
+                ></span>
+
+                <div class="profile-copy">
+                    <strong data-admin-name></strong>
+                    <span data-admin-role></span>
+                </div>
+
+            </div>
+
+            <button
+                class="button button-ghost logout-button"
+                type="button"
+                onclick="CofiAdmin.logoutAdmin()"
+            >
+                Cerrar sesión
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <div class="main-area">
+
+        <header class="topbar">
+
+            <button
+                class="button button-ghost menu-toggle"
+                data-menu-toggle
+                aria-expanded="false"
+            >
+                Menú
+            </button>
+
+            <span class="topbar-title">
+                Cofi POS
+            </span>
+
+            <span
+                class="muted"
+                data-admin-name
+            ></span>
+
+        </header>
+
+
+        <main class="content">
+
+            <header class="page-header">
+
+                <div>
+                    <p class="eyebrow">
+                        CONFIGURACIÓN
+                    </p>
+
+                    <h1 class="page-title">
+                        Catálogo POS
+                    </h1>
+
+                    <p class="page-description">
+                        Administra categorías, productos,
+                        precios por sucursal y modificadores.
+                    </p>
+                </div>
+
+                <button
+                    id="refresh-catalog"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Actualizar
+                </button>
+
+            </header>
+
+
+            <section class="catalog-summary">
+
+                <article class="sales-metric">
+                    <span>Categorías</span>
+                    <strong id="metric-categories">—</strong>
+                    <small>registradas</small>
+                </article>
+
+                <article class="sales-metric">
+                    <span>Productos</span>
+                    <strong id="metric-products">—</strong>
+                    <small>en catálogo</small>
+                </article>
+
+                <article class="sales-metric">
+                    <span>Modificadores</span>
+                    <strong id="metric-modifiers">—</strong>
+                    <small>grupos</small>
+                </article>
+
+                <article class="sales-metric">
+                    <span>Sucursales</span>
+                    <strong id="metric-branches">—</strong>
+                    <small>activas</small>
+                </article>
+
+            </section>
+
+
+            <div class="catalog-tabs">
+
+                <button
+                    type="button"
+                    class="catalog-tab is-active"
+                    data-tab="products"
+                >
+                    Productos
+                </button>
+
+                <button
+                    type="button"
+                    class="catalog-tab"
+                    data-tab="categories"
+                >
+                    Categorías
+                </button>
+
+                <button
+                    type="button"
+                    class="catalog-tab"
+                    data-tab="modifiers"
+                >
+                    Modificadores
+                </button>
+
+            </div>
+
+
+            <!-- ======================================
+                 PRODUCTS
+                 ====================================== -->
+
+            <section
+                id="tab-products"
+                class="catalog-tab-panel"
+            >
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <h2>Productos</h2>
+                            <small class="muted">
+                                Productos disponibles en Cofi POS.
+                            </small>
+                        </div>
+
+                        <button
+                            id="new-product"
+                            class="button button-primary"
+                            type="button"
+                        >
+                            Nuevo producto
+                        </button>
+
+                    </div>
+
+
+                    <div class="panel-body">
+
+                        <div class="catalog-toolbar">
+
+                            <div class="field">
+                                <label for="product-search">
+                                    Buscar
+                                </label>
+
+                                <input
+                                    id="product-search"
+                                    type="search"
+                                    placeholder="Nombre o SKU"
+                                >
+                            </div>
+
+                            <div class="field">
+                                <label for="product-category-filter">
+                                    Categoría
+                                </label>
+
+                                <select id="product-category-filter">
+                                    <option value="">
+                                        Todas
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label for="product-status-filter">
+                                    Estado
+                                </label>
+
+                                <select id="product-status-filter">
+                                    <option value="">
+                                        Todos
+                                    </option>
+                                    <option value="active">
+                                        Activos
+                                    </option>
+                                    <option value="inactive">
+                                        Inactivos
+                                    </option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>SKU</th>
+                                <th>Precio base</th>
+                                <th>Sucursales</th>
+                                <th>Estado</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="products-list">
+                            <tr>
+                                <td
+                                    colspan="7"
+                                    class="muted"
+                                >
+                                    Cargando…
+                                </td>
+                            </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+            </section>
+
+
+            <!-- ======================================
+                 CATEGORIES
+                 ====================================== -->
+
+            <section
+                id="tab-categories"
+                class="catalog-tab-panel"
+                hidden
+            >
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <h2>Categorías</h2>
+                            <small class="muted">
+                                Organización principal del menú del POS.
+                            </small>
+                        </div>
+
+                        <button
+                            id="new-category"
+                            class="button button-primary"
+                            type="button"
+                        >
+                            Nueva categoría
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Slug</th>
+                                <th>Orden</th>
+                                <th>Productos</th>
+                                <th>Estado</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="categories-list"></tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+            </section>
+
+
+            <!-- ======================================
+                 MODIFIERS
+                 ====================================== -->
+
+            <section
+                id="tab-modifiers"
+                class="catalog-tab-panel"
+                hidden
+            >
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <h2>Modificadores</h2>
+                            <small class="muted">
+                                Tamaños, tipos de leche, extras y otras opciones.
+                            </small>
+                        </div>
+
+                        <button
+                            id="new-modifier"
+                            class="button button-primary"
+                            type="button"
+                        >
+                            Nuevo grupo
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="modifier-groups"
+                        class="modifier-groups"
+                    ></div>
+
+                </section>
+
+            </section>
+
+
+        </main>
+
+    </div>
+
+</div>
+
+
+
+<!-- ==================================================
+     CATEGORY DIALOG
+     ================================================== -->
+
+<dialog
+    id="category-dialog"
+    class="dialog"
+>
+
+<form id="category-form">
+
+    <h2 id="category-dialog-title">
+        Nueva categoría
+    </h2>
+
+    <input
+        id="category-id"
+        type="hidden"
+    >
+
+    <div class="dialog-form">
+
+        <div class="field">
+            <label for="category-name">
+                Nombre
+            </label>
+
+            <input
+                id="category-name"
+                required
+                maxlength="120"
+                placeholder="Ej. Café"
+            >
+        </div>
+
+        <div class="field">
+            <label for="category-order">
+                Orden
+            </label>
+
+            <input
+                id="category-order"
+                type="number"
+                value="0"
+            >
+        </div>
+
+        <label class="checkbox-row field-wide">
+            <input
+                id="category-active"
+                type="checkbox"
+                checked
+            >
+            Categoría activa
+        </label>
+
+    </div>
+
+    <p
+        id="category-error"
+        class="form-error"
+    ></p>
+
+    <div class="dialog-actions">
+
+        <button
+            id="cancel-category"
+            class="button button-secondary"
+            type="button"
+        >
+            Cancelar
+        </button>
+
+        <button
+            id="save-category"
+            class="button button-primary"
+            type="submit"
+        >
+            Guardar
+        </button>
+
+    </div>
+
+</form>
+
+</dialog>
+
+
+
+<!-- ==================================================
+     PRODUCT DIALOG
+     ================================================== -->
+
+<dialog
+    id="product-dialog"
+    class="dialog dialog-large catalog-product-dialog"
+>
+
+<form id="product-form">
+
+    <h2 id="product-dialog-title">
+        Nuevo producto
+    </h2>
+
+    <input
+        id="product-id"
+        type="hidden"
+    >
+
+
+    <div class="dialog-form">
+
+        <div class="field">
+            <label for="product-name">
+                Nombre
+            </label>
+
+            <input
+                id="product-name"
+                required
+                maxlength="160"
+                placeholder="Ej. Latte"
+            >
+        </div>
+
+
+        <div class="field">
+            <label for="product-category">
+                Categoría
+            </label>
+
+            <select
+                id="product-category"
+                required
+            ></select>
+        </div>
+
+
+        <div class="field">
+            <label for="product-sku">
+                SKU
+            </label>
+
+            <input
+                id="product-sku"
+                maxlength="80"
+                placeholder="Ej. LATTE-12OZ"
+            >
+        </div>
+
+
+        <div class="field">
+            <label for="product-price">
+                Precio base
+            </label>
+
+            <input
+                id="product-price"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+            >
+        </div>
+
+
+        <div class="field field-wide">
+            <label for="product-description">
+                Descripción
+            </label>
+
+            <textarea
+                id="product-description"
+                rows="3"
+                placeholder="Descripción visible en el POS"
+            ></textarea>
+        </div>
+
+
+        <div class="field">
+            <label for="product-order">
+                Orden
+            </label>
+
+            <input
+                id="product-order"
+                type="number"
+                value="0"
+            >
+        </div>
+
+
+        <label class="checkbox-row">
+            <input
+                id="product-active"
+                type="checkbox"
+                checked
+            >
+            Producto activo
+        </label>
+
+    </div>
+
+
+    <section
+        id="product-branches-section"
+        class="catalog-editor-section"
+        hidden
+    >
+
+        <h3>Precio y disponibilidad por sucursal</h3>
+
+        <p class="muted">
+            Deja el precio vacío para utilizar el precio base.
+        </p>
+
+        <div
+            id="product-branches"
+            class="branch-settings"
+        ></div>
+
+    </section>
+
+
+    <section
+        id="product-modifiers-section"
+        class="catalog-editor-section"
+        hidden
+    >
+
+        <h3>Modificadores</h3>
+
+        <p class="muted">
+            Selecciona qué grupos aplican a este producto.
+        </p>
+
+        <div
+            id="product-modifiers"
+            class="product-modifier-selector"
+        ></div>
+
+    </section>
+
+
+    <p
+        id="product-error"
+        class="form-error"
+    ></p>
+
+
+    <div class="dialog-actions">
+
+        <button
+            id="cancel-product"
+            class="button button-secondary"
+            type="button"
+        >
+            Cancelar
+        </button>
+
+        <button
+            id="save-product"
+            class="button button-primary"
+            type="submit"
+        >
+            Guardar
+        </button>
+
+    </div>
+
+</form>
+
+</dialog>
+
+
+
+<!-- ==================================================
+     MODIFIER GROUP DIALOG
+     ================================================== -->
+
+<dialog
+    id="modifier-dialog"
+    class="dialog dialog-large"
+>
+
+<form id="modifier-form">
+
+    <h2 id="modifier-dialog-title">
+        Nuevo modificador
+    </h2>
+
+    <input
+        id="modifier-id"
+        type="hidden"
+    >
+
+
+    <div class="dialog-form">
+
+        <div class="field">
+            <label for="modifier-name">
+                Nombre
+            </label>
+
+            <input
+                id="modifier-name"
+                required
+                maxlength="120"
+                placeholder="Ej. Leche"
+            >
+        </div>
+
+
+        <div class="field">
+            <label for="modifier-order">
+                Orden
+            </label>
+
+            <input
+                id="modifier-order"
+                type="number"
+                value="0"
+            >
+        </div>
+
+
+        <div class="field">
+            <label for="modifier-min">
+                Selección mínima
+            </label>
+
+            <input
+                id="modifier-min"
+                type="number"
+                min="0"
+                value="0"
+            >
+        </div>
+
+
+        <div class="field">
+            <label for="modifier-max">
+                Selección máxima
+            </label>
+
+            <input
+                id="modifier-max"
+                type="number"
+                min="1"
+                value="1"
+            >
+        </div>
+
+
+        <label class="checkbox-row">
+            <input
+                id="modifier-required"
+                type="checkbox"
+            >
+            Selección obligatoria
+        </label>
+
+
+        <label class="checkbox-row">
+            <input
+                id="modifier-active"
+                type="checkbox"
+                checked
+            >
+            Grupo activo
+        </label>
+
+    </div>
+
+
+    <section
+        id="modifier-options-section"
+        class="catalog-editor-section"
+        hidden
+    >
+
+        <div class="catalog-section-heading">
+
+            <div>
+                <h3>Opciones</h3>
+                <p class="muted">
+                    Ej. Entera, Avena, Almendra.
+                </p>
+            </div>
+
+            <button
+                id="new-option"
+                type="button"
+                class="button button-secondary button-small"
+            >
+                Agregar opción
+            </button>
+
+        </div>
+
+        <div id="modifier-options"></div>
+
+    </section>
+
+
+    <p
+        id="modifier-error"
+        class="form-error"
+    ></p>
+
+
+    <div class="dialog-actions">
+
+        <button
+            id="cancel-modifier"
+            class="button button-secondary"
+            type="button"
+        >
+            Cancelar
+        </button>
+
+        <button
+            id="save-modifier"
+            class="button button-primary"
+            type="submit"
+        >
+            Guardar
+        </button>
+
+    </div>
+
+</form>
+
+</dialog>
+
+
+
+<!-- ==================================================
+     MODIFIER OPTION DIALOG
+     ================================================== -->
+
+<dialog
+    id="option-dialog"
+    class="dialog"
+>
+
+<form id="option-form">
+
+    <h2 id="option-dialog-title">
+        Nueva opción
+    </h2>
+
+    <input
+        id="option-id"
+        type="hidden"
+    >
+
+    <input
+        id="option-group-id"
+        type="hidden"
+    >
+
+
+    <div class="dialog-form">
+
+        <div class="field">
+            <label for="option-name">
+                Nombre
+            </label>
+
+            <input
+                id="option-name"
+                required
+                maxlength="120"
+                placeholder="Ej. Avena"
+            >
+        </div>
+
+
+        <div class="field">
+            <label for="option-price">
+                Precio adicional
+            </label>
+
+            <input
+                id="option-price"
+                type="number"
+                step="0.01"
+                value="0"
+            >
+        </div>
+
+
+        <div class="field">
+            <label for="option-order">
+                Orden
+            </label>
+
+            <input
+                id="option-order"
+                type="number"
+                value="0"
+            >
+        </div>
+
+
+        <label class="checkbox-row">
+            <input
+                id="option-active"
+                type="checkbox"
+                checked
+            >
+            Opción activa
+        </label>
+
+    </div>
+
+
+    <p
+        id="option-error"
+        class="form-error"
+    ></p>
+
+
+    <div class="dialog-actions">
+
+        <button
+            id="cancel-option"
+            class="button button-secondary"
+            type="button"
+        >
+            Cancelar
+        </button>
+
+        <button
+            id="save-option"
+            class="button button-primary"
+            type="submit"
+        >
+            Guardar
+        </button>
+
+    </div>
+
+</form>
+
+</dialog>
+
+
+
+<script src="admin.js?v=20260821-pos-catalog"></script>
+
+<script>
+(() => {
+
+    const {
+        SUPER_ADMIN,
+        adminRequest,
+        bootstrapAdmin,
+        formatMoney,
+        setButtonLoading,
+        showEmpty,
+        showToast
+    } = window.CofiAdmin;
+
+
+    let catalog = {
+        branches: [],
+        categories: [],
+        products: [],
+        modifier_groups: []
+    };
+
+
+    function activeBadge(active) {
+        const badge =
+            document.createElement("span");
+
+        badge.className =
+            `badge badge-${
+                active
+                    ? "success"
+                    : "neutral"
+            }`;
+
+        badge.textContent =
+            active
+                ? "Activo"
+                : "Inactivo";
+
+        return badge;
+    }
+
+
+    function configureMetrics() {
+        document.getElementById(
+            "metric-categories"
+        ).textContent =
+            catalog.categories.length;
+
+        document.getElementById(
+            "metric-products"
+        ).textContent =
+            catalog.products.length;
+
+        document.getElementById(
+            "metric-modifiers"
+        ).textContent =
+            catalog.modifier_groups.length;
+
+        document.getElementById(
+            "metric-branches"
+        ).textContent =
+            catalog.branches.length;
+    }
+
+
+    function categoryProductCount(categoryId) {
+        return catalog.products.filter(
+            product =>
+                product.category_id === categoryId
+        ).length;
+    }
+
+
+    function configureCategorySelects() {
+
+        const productCategory =
+            document.getElementById(
+                "product-category"
+            );
+
+        const filter =
+            document.getElementById(
+                "product-category-filter"
+            );
+
+        productCategory.replaceChildren();
+
+        filter.replaceChildren(
+            new Option(
+                "Todas",
+                ""
+            )
+        );
+
+
+        for (
+            const category
+            of catalog.categories
+        ) {
+            productCategory.add(
+                new Option(
+                    category.name,
+                    category.id
+                )
+            );
+
+            filter.add(
+                new Option(
+                    category.name,
+                    category.id
+                )
+            );
+        }
+    }
+
+
+    function renderCategories() {
+
+        const body =
+            document.getElementById(
+                "categories-list"
+            );
+
+        body.replaceChildren();
+
+
+        if (!catalog.categories.length) {
+
+            const row =
+                document.createElement("tr");
+
+            const cell =
+                document.createElement("td");
+
+            cell.colSpan = 6;
+
+            showEmpty(
+                cell,
+                "Sin categorías",
+                "Crea la primera categoría del catálogo."
+            );
+
+            row.append(cell);
+            body.append(row);
+
+            return;
+        }
+
+
+        for (
+            const category
+            of catalog.categories
+        ) {
+
+            const row =
+                document.createElement("tr");
+
+
+            const values = [
+                category.name,
+                category.slug,
+                category.sort_order,
+                categoryProductCount(
+                    category.id
+                )
+            ];
+
+
+            for (const value of values) {
+
+                const cell =
+                    document.createElement("td");
+
+                cell.textContent =
+                    value;
+
+                row.append(cell);
+            }
+
+
+            const status =
+                document.createElement("td");
+
+            status.append(
+                activeBadge(
+                    category.is_active
+                )
+            );
+
+            row.append(status);
+
+
+            const actions =
+                document.createElement("td");
+
+            const edit =
+                document.createElement(
+                    "button"
+                );
+
+            edit.type =
+                "button";
+
+            edit.className =
+                "button button-ghost button-small";
+
+            edit.textContent =
+                "Editar";
+
+            edit.addEventListener(
+                "click",
+                () =>
+                    openCategory(
+                        category
+                    )
+            );
+
+            actions.append(edit);
+            row.append(actions);
+
+            body.append(row);
+        }
+    }
+
+
+    function filteredProducts() {
+
+        const search =
+            document.getElementById(
+                "product-search"
+            ).value
+                .trim()
+                .toLowerCase();
+
+
+        const category =
+            document.getElementById(
+                "product-category-filter"
+            ).value;
+
+
+        const status =
+            document.getElementById(
+                "product-status-filter"
+            ).value;
+
+
+        return catalog.products.filter(
+            product => {
+
+                if (
+                    search &&
+                    !(
+                        product.name
+                            .toLowerCase()
+                            .includes(search)
+                        ||
+                        (
+                            product.sku || ""
+                        )
+                            .toLowerCase()
+                            .includes(search)
+                    )
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    category &&
+                    String(
+                        product.category_id
+                    ) !== category
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    status === "active" &&
+                    !product.is_active
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    status === "inactive" &&
+                    product.is_active
+                ) {
+                    return false;
+                }
+
+
+                return true;
+            }
+        );
+    }
+
+
+    function availableBranchCount(product) {
+
+        return product.branches.filter(
+            branch =>
+                branch.is_available
+        ).length;
+    }
+
+
+    function renderProducts() {
+
+        const body =
+            document.getElementById(
+                "products-list"
+            );
+
+        body.replaceChildren();
+
+
+        const products =
+            filteredProducts();
+
+
+        if (!products.length) {
+
+            const row =
+                document.createElement("tr");
+
+            const cell =
+                document.createElement("td");
+
+            cell.colSpan = 7;
+
+            showEmpty(
+                cell,
+                "Sin productos",
+                "No hay productos que coincidan con los filtros."
+            );
+
+            row.append(cell);
+            body.append(row);
+
+            return;
+        }
+
+
+        for (
+            const product
+            of products
+        ) {
+
+            const row =
+                document.createElement("tr");
+
+
+            const name =
+                document.createElement("td");
+
+            const nameStrong =
+                document.createElement("strong");
+
+            nameStrong.textContent =
+                product.name;
+
+            name.append(
+                nameStrong
+            );
+
+            if (product.description) {
+
+                const description =
+                    document.createElement("small");
+
+                description.className =
+                    "catalog-product-description";
+
+                description.textContent =
+                    product.description;
+
+                name.append(
+                    description
+                );
+            }
+
+            row.append(name);
+
+
+            const category =
+                document.createElement("td");
+
+            category.textContent =
+                product.category_name;
+
+            row.append(category);
+
+
+            const sku =
+                document.createElement("td");
+
+            sku.textContent =
+                product.sku || "—";
+
+            row.append(sku);
+
+
+            const price =
+                document.createElement("td");
+
+            price.className =
+                "sales-total-cell";
+
+            price.textContent =
+                formatMoney(
+                    product.base_price
+                );
+
+            row.append(price);
+
+
+            const branches =
+                document.createElement("td");
+
+            branches.textContent =
+                `${
+                    availableBranchCount(
+                        product
+                    )
+                } / ${
+                    catalog.branches.length
+                }`;
+
+            row.append(branches);
+
+
+            const status =
+                document.createElement("td");
+
+            status.append(
+                activeBadge(
+                    product.is_active
+                )
+            );
+
+            row.append(status);
+
+
+            const actions =
+                document.createElement("td");
+
+            const edit =
+                document.createElement(
+                    "button"
+                );
+
+            edit.type =
+                "button";
+
+            edit.className =
+                "button button-ghost button-small";
+
+            edit.textContent =
+                "Editar";
+
+            edit.addEventListener(
+                "click",
+                () =>
+                    openProduct(
+                        product
+                    )
+            );
+
+            actions.append(edit);
+            row.append(actions);
+
+
+            body.append(row);
+        }
+    }
+
+
+    function renderModifiers() {
+
+        const container =
+            document.getElementById(
+                "modifier-groups"
+            );
+
+        container.replaceChildren();
+
+
+        if (
+            !catalog.modifier_groups.length
+        ) {
+
+            showEmpty(
+                container,
+                "Sin modificadores",
+                "Crea tamaños, tipos de leche o extras."
+            );
+
+            return;
+        }
+
+
+        for (
+            const group
+            of catalog.modifier_groups
+        ) {
+
+            const card =
+                document.createElement(
+                    "article"
+                );
+
+            card.className =
+                "modifier-group-card";
+
+
+            const header =
+                document.createElement(
+                    "div"
+                );
+
+            header.className =
+                "modifier-group-header";
+
+
+            const titleWrap =
+                document.createElement(
+                    "div"
+                );
+
+            const title =
+                document.createElement(
+                    "h3"
+                );
+
+            title.textContent =
+                group.name;
+
+
+            const meta =
+                document.createElement(
+                    "small"
+                );
+
+            meta.className =
+                "muted";
+
+            meta.textContent =
+                `${
+                    group.required
+                        ? "Obligatorio"
+                        : "Opcional"
+                } · mínimo ${
+                    group.min_select
+                } · máximo ${
+                    group.max_select
+                }`;
+
+
+            titleWrap.append(
+                title,
+                meta
+            );
+
+
+            const controls =
+                document.createElement(
+                    "div"
+                );
+
+            controls.className =
+                "modifier-group-controls";
+
+
+            controls.append(
+                activeBadge(
+                    group.is_active
+                )
+            );
+
+
+            const edit =
+                document.createElement(
+                    "button"
+                );
+
+            edit.type =
+                "button";
+
+            edit.className =
+                "button button-ghost button-small";
+
+            edit.textContent =
+                "Editar";
+
+            edit.addEventListener(
+                "click",
+                () =>
+                    openModifier(
+                        group
+                    )
+            );
+
+
+            controls.append(edit);
+
+
+            header.append(
+                titleWrap,
+                controls
+            );
+
+
+            card.append(header);
+
+
+            const options =
+                document.createElement(
+                    "div"
+                );
+
+            options.className =
+                "modifier-option-list";
+
+
+            if (!group.options.length) {
+
+                const empty =
+                    document.createElement(
+                        "p"
+                    );
+
+                empty.className =
+                    "muted";
+
+                empty.textContent =
+                    "Sin opciones.";
+
+                options.append(empty);
+
+            } else {
+
+                for (
+                    const option
+                    of group.options
+                ) {
+
+                    const row =
+                        document.createElement(
+                            "div"
+                        );
+
+                    row.className =
+                        "modifier-option-row";
+
+
+                    const name =
+                        document.createElement(
+                            "span"
+                        );
+
+                    name.textContent =
+                        option.name;
+
+
+                    const price =
+                        document.createElement(
+                            "strong"
+                        );
+
+                    price.textContent =
+                        Number(
+                            option.price_delta
+                        ) === 0
+                            ? "Incluido"
+                            : `+${
+                                formatMoney(
+                                    option.price_delta
+                                )
+                            }`;
+
+
+                    row.append(
+                        name,
+                        price
+                    );
+
+                    options.append(row);
+                }
+            }
+
+
+            card.append(options);
+
+            container.append(card);
+        }
+    }
+
+
+    function renderAll() {
+
+        configureMetrics();
+
+        configureCategorySelects();
+
+        renderCategories();
+
+        renderProducts();
+
+        renderModifiers();
+    }
+
+
+    async function loadCatalog() {
+
+        catalog =
+            await adminRequest(
+                "/admin/pos/catalog"
+            );
+
+        renderAll();
+    }
+
+
+    /* ==============================================
+       CATEGORY
+       ============================================== */
+
+
+    function openCategory(
+        category = null
+    ) {
+
+        document.getElementById(
+            "category-id"
+        ).value =
+            category?.id || "";
+
+
+        document.getElementById(
+            "category-dialog-title"
+        ).textContent =
+            category
+                ? "Editar categoría"
+                : "Nueva categoría";
+
+
+        document.getElementById(
+            "category-name"
+        ).value =
+            category?.name || "";
+
+
+        document.getElementById(
+            "category-order"
+        ).value =
+            category?.sort_order ?? 0;
+
+
+        document.getElementById(
+            "category-active"
+        ).checked =
+            category?.is_active ?? true;
+
+
+        document.getElementById(
+            "category-error"
+        ).textContent =
+            "";
+
+
+        document.getElementById(
+            "category-dialog"
+        ).showModal();
+    }
+
+
+    document.getElementById(
+        "category-form"
+    ).addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+
+            const id =
+                document.getElementById(
+                    "category-id"
+                ).value;
+
+
+            const payload = {
+                name:
+                    document.getElementById(
+                        "category-name"
+                    ).value.trim(),
+
+                sort_order:
+                    Number(
+                        document.getElementById(
+                            "category-order"
+                        ).value || 0
+                    ),
+
+                is_active:
+                    document.getElementById(
+                        "category-active"
+                    ).checked
+            };
+
+
+            try {
+
+                catalog =
+                    await adminRequest(
+                        id
+                            ? `/admin/pos/catalog/categories/${id}`
+                            : "/admin/pos/catalog/categories",
+                        {
+                            method:
+                                id
+                                    ? "PATCH"
+                                    : "POST",
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                )
+                        }
+                    );
+
+
+                document.getElementById(
+                    "category-dialog"
+                ).close();
+
+
+                renderAll();
+
+                showToast(
+                    id
+                        ? "Categoría actualizada."
+                        : "Categoría creada."
+                );
+
+            } catch (error) {
+
+                document.getElementById(
+                    "category-error"
+                ).textContent =
+                    error.message;
+            }
+        }
+    );
+
+
+    /* ==============================================
+       PRODUCT
+       ============================================== */
+
+
+    function branchRow(
+        branchSetting
+    ) {
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+        row.className =
+            "branch-setting-row";
+
+        row.dataset.branchCode =
+            branchSetting.branch_code;
+
+
+        const name =
+            document.createElement(
+                "strong"
+            );
+
+        name.textContent =
+            branchSetting.branch_name;
+
+
+        const price =
+            document.createElement(
+                "input"
+            );
+
+        price.type =
+            "number";
+
+        price.step =
+            "0.01";
+
+        price.min =
+            "0";
+
+        price.placeholder =
+            `Base ${formatMoney(
+                branchSetting.effective_price
+            )}`;
+
+        price.value =
+            branchSetting.price ?? "";
+
+        price.dataset.branchPrice =
+            "1";
+
+
+        const available =
+            document.createElement(
+                "label"
+            );
+
+        available.className =
+            "checkbox-row";
+
+
+        const checkbox =
+            document.createElement(
+                "input"
+            );
+
+        checkbox.type =
+            "checkbox";
+
+        checkbox.checked =
+            branchSetting.is_available;
+
+        checkbox.dataset.branchAvailable =
+            "1";
+
+
+        available.append(
+            checkbox,
+            document.createTextNode(
+                "Disponible"
+            )
+        );
+
+
+        row.append(
+            name,
+            price,
+            available
+        );
+
+
+        return row;
+    }
+
+
+    function renderProductBranches(
+        product
+    ) {
+
+        const container =
+            document.getElementById(
+                "product-branches"
+            );
+
+        container.replaceChildren(
+            ...product.branches.map(
+                branchRow
+            )
+        );
+    }
+
+
+    function renderProductModifiers(
+        product
+    ) {
+
+        const container =
+            document.getElementById(
+                "product-modifiers"
+            );
+
+        container.replaceChildren();
+
+
+        for (
+            const group
+            of catalog.modifier_groups
+        ) {
+
+            const linked =
+                product.modifiers.some(
+                    item =>
+                        item.group_id ===
+                        group.id
+                );
+
+
+            const label =
+                document.createElement(
+                    "label"
+                );
+
+            label.className =
+                "product-modifier-option";
+
+
+            const checkbox =
+                document.createElement(
+                    "input"
+                );
+
+            checkbox.type =
+                "checkbox";
+
+            checkbox.checked =
+                linked;
+
+            checkbox.dataset.groupId =
+                group.id;
+
+
+            const copy =
+                document.createElement(
+                    "span"
+                );
+
+            copy.innerHTML =
+                `<strong>${
+                    group.name
+                }</strong><small>${
+                    group.required
+                        ? "Obligatorio"
+                        : "Opcional"
+                }</small>`;
+
+
+            label.append(
+                checkbox,
+                copy
+            );
+
+            container.append(label);
+        }
+    }
+
+
+    function openProduct(
+        product = null
+    ) {
+
+        document.getElementById(
+            "product-id"
+        ).value =
+            product?.id || "";
+
+
+        document.getElementById(
+            "product-dialog-title"
+        ).textContent =
+            product
+                ? "Editar producto"
+                : "Nuevo producto";
+
+
+        document.getElementById(
+            "product-name"
+        ).value =
+            product?.name || "";
+
+
+        document.getElementById(
+            "product-category"
+        ).value =
+            product?.category_id || (
+                catalog.categories[0]?.id
+                || ""
+            );
+
+
+        document.getElementById(
+            "product-sku"
+        ).value =
+            product?.sku || "";
+
+
+        document.getElementById(
+            "product-price"
+        ).value =
+            product?.base_price || "";
+
+
+        document.getElementById(
+            "product-description"
+        ).value =
+            product?.description || "";
+
+
+        document.getElementById(
+            "product-order"
+        ).value =
+            product?.sort_order ?? 0;
+
+
+        document.getElementById(
+            "product-active"
+        ).checked =
+            product?.is_active ?? true;
+
+
+        document.getElementById(
+            "product-error"
+        ).textContent =
+            "";
+
+
+        document.getElementById(
+            "product-branches-section"
+        ).hidden =
+            !product;
+
+
+        document.getElementById(
+            "product-modifiers-section"
+        ).hidden =
+            !product;
+
+
+        if (product) {
+            renderProductBranches(
+                product
+            );
+
+            renderProductModifiers(
+                product
+            );
+        }
+
+
+        document.getElementById(
+            "product-dialog"
+        ).showModal();
+    }
+
+
+    async function saveBranchSettings(
+        productId
+    ) {
+
+        const rows =
+            document.querySelectorAll(
+                ".branch-setting-row"
+            );
+
+
+        for (const row of rows) {
+
+            const priceInput =
+                row.querySelector(
+                    "[data-branch-price]"
+                );
+
+
+            const available =
+                row.querySelector(
+                    "[data-branch-available]"
+                );
+
+
+            catalog =
+                await adminRequest(
+                    `/admin/pos/catalog/products/${
+                        productId
+                    }/branches/${
+                        encodeURIComponent(
+                            row.dataset.branchCode
+                        )
+                    }`,
+                    {
+                        method: "PUT",
+
+                        body:
+                            JSON.stringify({
+                                price:
+                                    priceInput.value === ""
+                                        ? null
+                                        : Number(
+                                            priceInput.value
+                                        ),
+
+                                is_available:
+                                    available.checked,
+
+                                sort_order: 0
+                            })
+                    }
+                );
+        }
+    }
+
+
+    async function saveProductModifiers(
+        productId
+    ) {
+
+        const controls =
+            document.querySelectorAll(
+                "#product-modifiers input[data-group-id]"
+            );
+
+
+        for (
+            const checkbox
+            of controls
+        ) {
+
+            catalog =
+                await adminRequest(
+                    `/admin/pos/catalog/products/${
+                        productId
+                    }/modifier-groups/${
+                        checkbox.dataset.groupId
+                    }`,
+                    {
+                        method: "PUT",
+
+                        body:
+                            JSON.stringify({
+                                enabled:
+                                    checkbox.checked,
+
+                                sort_order: 0
+                            })
+                    }
+                );
+        }
+    }
+
+
+    document.getElementById(
+        "product-form"
+    ).addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+
+            const id =
+                document.getElementById(
+                    "product-id"
+                ).value;
+
+
+            const payload = {
+
+                category_id:
+                    Number(
+                        document.getElementById(
+                            "product-category"
+                        ).value
+                    ),
+
+                name:
+                    document.getElementById(
+                        "product-name"
+                    ).value.trim(),
+
+                sku:
+                    document.getElementById(
+                        "product-sku"
+                    ).value.trim()
+                    || null,
+
+                base_price:
+                    Number(
+                        document.getElementById(
+                            "product-price"
+                        ).value
+                    ),
+
+                description:
+                    document.getElementById(
+                        "product-description"
+                    ).value.trim()
+                    || null,
+
+                sort_order:
+                    Number(
+                        document.getElementById(
+                            "product-order"
+                        ).value || 0
+                    ),
+
+                is_active:
+                    document.getElementById(
+                        "product-active"
+                    ).checked
+            };
+
+
+            try {
+
+                if (!id) {
+
+                    catalog =
+                        await adminRequest(
+                            "/admin/pos/catalog/products",
+                            {
+                                method: "POST",
+
+                                body:
+                                    JSON.stringify(
+                                        payload
+                                    )
+                            }
+                        );
+
+
+                    document.getElementById(
+                        "product-dialog"
+                    ).close();
+
+
+                    renderAll();
+
+                    showToast(
+                        "Producto creado."
+                    );
+
+                    return;
+                }
+
+
+                catalog =
+                    await adminRequest(
+                        `/admin/pos/catalog/products/${id}`,
+                        {
+                            method: "PATCH",
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                )
+                        }
+                    );
+
+
+                await saveBranchSettings(
+                    id
+                );
+
+
+                await saveProductModifiers(
+                    id
+                );
+
+
+                document.getElementById(
+                    "product-dialog"
+                ).close();
+
+
+                renderAll();
+
+
+                showToast(
+                    "Producto actualizado."
+                );
+
+            } catch (error) {
+
+                document.getElementById(
+                    "product-error"
+                ).textContent =
+                    error.message;
+            }
+        }
+    );
+
+
+    /* ==============================================
+       MODIFIER GROUP
+       ============================================== */
+
+
+    function openModifier(
+        group = null
+    ) {
+
+        document.getElementById(
+            "modifier-id"
+        ).value =
+            group?.id || "";
+
+
+        document.getElementById(
+            "modifier-dialog-title"
+        ).textContent =
+            group
+                ? "Editar modificador"
+                : "Nuevo modificador";
+
+
+        document.getElementById(
+            "modifier-name"
+        ).value =
+            group?.name || "";
+
+
+        document.getElementById(
+            "modifier-order"
+        ).value =
+            group?.sort_order ?? 0;
+
+
+        document.getElementById(
+            "modifier-min"
+        ).value =
+            group?.min_select ?? 0;
+
+
+        document.getElementById(
+            "modifier-max"
+        ).value =
+            group?.max_select ?? 1;
+
+
+        document.getElementById(
+            "modifier-required"
+        ).checked =
+            group?.required ?? false;
+
+
+        document.getElementById(
+            "modifier-active"
+        ).checked =
+            group?.is_active ?? true;
+
+
+        document.getElementById(
+            "modifier-options-section"
+        ).hidden =
+            !group;
+
+
+        document.getElementById(
+            "modifier-error"
+        ).textContent =
+            "";
+
+
+        if (group) {
+            renderModifierOptions(
+                group
+            );
+        }
+
+
+        document.getElementById(
+            "modifier-dialog"
+        ).showModal();
+    }
+
+
+    function renderModifierOptions(
+        group
+    ) {
+
+        const container =
+            document.getElementById(
+                "modifier-options"
+            );
+
+        container.replaceChildren();
+
+
+        for (
+            const option
+            of group.options
+        ) {
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "modifier-editor-option";
+
+
+            const copy =
+                document.createElement(
+                    "div"
+                );
+
+            copy.innerHTML =
+                `<strong>${
+                    option.name
+                }</strong><small>${
+                    Number(
+                        option.price_delta
+                    ) === 0
+                        ? "Sin costo adicional"
+                        : `+${
+                            formatMoney(
+                                option.price_delta
+                            )
+                        }`
+                }</small>`;
+
+
+            const edit =
+                document.createElement(
+                    "button"
+                );
+
+            edit.type =
+                "button";
+
+            edit.className =
+                "button button-ghost button-small";
+
+            edit.textContent =
+                "Editar";
+
+
+            edit.addEventListener(
+                "click",
+                () =>
+                    openOption(
+                        group,
+                        option
+                    )
+            );
+
+
+            row.append(
+                copy,
+                edit
+            );
+
+
+            container.append(row);
+        }
+    }
+
+
+    document.getElementById(
+        "modifier-form"
+    ).addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+
+            const id =
+                document.getElementById(
+                    "modifier-id"
+                ).value;
+
+
+            const payload = {
+
+                name:
+                    document.getElementById(
+                        "modifier-name"
+                    ).value.trim(),
+
+                required:
+                    document.getElementById(
+                        "modifier-required"
+                    ).checked,
+
+                min_select:
+                    Number(
+                        document.getElementById(
+                            "modifier-min"
+                        ).value
+                    ),
+
+                max_select:
+                    Number(
+                        document.getElementById(
+                            "modifier-max"
+                        ).value
+                    ),
+
+                sort_order:
+                    Number(
+                        document.getElementById(
+                            "modifier-order"
+                        ).value || 0
+                    ),
+
+                is_active:
+                    document.getElementById(
+                        "modifier-active"
+                    ).checked
+            };
+
+
+            try {
+
+                catalog =
+                    await adminRequest(
+                        id
+                            ? `/admin/pos/catalog/modifier-groups/${id}`
+                            : "/admin/pos/catalog/modifier-groups",
+                        {
+                            method:
+                                id
+                                    ? "PATCH"
+                                    : "POST",
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                )
+                        }
+                    );
+
+
+                document.getElementById(
+                    "modifier-dialog"
+                ).close();
+
+
+                renderAll();
+
+
+                showToast(
+                    id
+                        ? "Modificador actualizado."
+                        : "Modificador creado."
+                );
+
+            } catch (error) {
+
+                document.getElementById(
+                    "modifier-error"
+                ).textContent =
+                    error.message;
+            }
+        }
+    );
+
+
+    /* ==============================================
+       OPTIONS
+       ============================================== */
+
+
+    function openOption(
+        group,
+        option = null
+    ) {
+
+        document.getElementById(
+            "option-id"
+        ).value =
+            option?.id || "";
+
+
+        document.getElementById(
+            "option-group-id"
+        ).value =
+            group.id;
+
+
+        document.getElementById(
+            "option-dialog-title"
+        ).textContent =
+            option
+                ? "Editar opción"
+                : "Nueva opción";
+
+
+        document.getElementById(
+            "option-name"
+        ).value =
+            option?.name || "";
+
+
+        document.getElementById(
+            "option-price"
+        ).value =
+            option?.price_delta ?? 0;
+
+
+        document.getElementById(
+            "option-order"
+        ).value =
+            option?.sort_order ?? 0;
+
+
+        document.getElementById(
+            "option-active"
+        ).checked =
+            option?.is_active ?? true;
+
+
+        document.getElementById(
+            "option-error"
+        ).textContent =
+            "";
+
+
+        document.getElementById(
+            "option-dialog"
+        ).showModal();
+    }
+
+
+    document.getElementById(
+        "option-form"
+    ).addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+
+            const id =
+                document.getElementById(
+                    "option-id"
+                ).value;
+
+
+            const groupId =
+                document.getElementById(
+                    "option-group-id"
+                ).value;
+
+
+            const payload = {
+
+                name:
+                    document.getElementById(
+                        "option-name"
+                    ).value.trim(),
+
+                price_delta:
+                    Number(
+                        document.getElementById(
+                            "option-price"
+                        ).value || 0
+                    ),
+
+                sort_order:
+                    Number(
+                        document.getElementById(
+                            "option-order"
+                        ).value || 0
+                    ),
+
+                is_active:
+                    document.getElementById(
+                        "option-active"
+                    ).checked
+            };
+
+
+            try {
+
+                catalog =
+                    await adminRequest(
+                        id
+                            ? `/admin/pos/catalog/modifier-options/${id}`
+                            : `/admin/pos/catalog/modifier-groups/${groupId}/options`,
+                        {
+                            method:
+                                id
+                                    ? "PATCH"
+                                    : "POST",
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                )
+                        }
+                    );
+
+
+                document.getElementById(
+                    "option-dialog"
+                ).close();
+
+
+                document.getElementById(
+                    "modifier-dialog"
+                ).close();
+
+
+                renderAll();
+
+
+                showToast(
+                    id
+                        ? "Opción actualizada."
+                        : "Opción creada."
+                );
+
+            } catch (error) {
+
+                document.getElementById(
+                    "option-error"
+                ).textContent =
+                    error.message;
+            }
+        }
+    );
+
+
+    /* ==============================================
+       TABS / EVENTS
+       ============================================== */
+
+
+    document.querySelectorAll(
+        ".catalog-tab"
+    ).forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    document.querySelectorAll(
+                        ".catalog-tab"
+                    ).forEach(
+                        item =>
+                            item.classList.remove(
+                                "is-active"
+                            )
+                    );
+
+
+                    button.classList.add(
+                        "is-active"
+                    );
+
+
+                    document.querySelectorAll(
+                        ".catalog-tab-panel"
+                    ).forEach(
+                        panel =>
+                            panel.hidden = true
+                    );
+
+
+                    document.getElementById(
+                        `tab-${
+                            button.dataset.tab
+                        }`
+                    ).hidden =
+                        false;
+                }
+            );
+        }
+    );
+
+
+    document.getElementById(
+        "new-category"
+    ).addEventListener(
+        "click",
+        () => openCategory()
+    );
+
+
+    document.getElementById(
+        "new-product"
+    ).addEventListener(
+        "click",
+        () => {
+
+            if (
+                !catalog.categories.length
+            ) {
+
+                showToast(
+                    "Primero crea una categoría.",
+                    "error"
+                );
+
+                return;
+            }
+
+            openProduct();
+        }
+    );
+
+
+    document.getElementById(
+        "new-modifier"
+    ).addEventListener(
+        "click",
+        () => openModifier()
+    );
+
+
+    document.getElementById(
+        "new-option"
+    ).addEventListener(
+        "click",
+        () => {
+
+            const groupId =
+                Number(
+                    document.getElementById(
+                        "modifier-id"
+                    ).value
+                );
+
+
+            const group =
+                catalog.modifier_groups.find(
+                    item =>
+                        item.id === groupId
+                );
+
+
+            if (group) {
+                openOption(group);
+            }
+        }
+    );
+
+
+    [
+        "product-search",
+        "product-category-filter",
+        "product-status-filter"
+    ].forEach(
+        id => {
+
+            document.getElementById(id)
+                .addEventListener(
+                    id === "product-search"
+                        ? "input"
+                        : "change",
+                    renderProducts
+                );
+        }
+    );
+
+
+    document.getElementById(
+        "refresh-catalog"
+    ).addEventListener(
+        "click",
+        async event => {
+
+            const button =
+                event.currentTarget;
+
+            setButtonLoading(
+                button,
+                true,
+                "Actualizando…"
+            );
+
+
+            try {
+
+                await loadCatalog();
+
+                showToast(
+                    "Catálogo actualizado."
+                );
+
+            } catch (error) {
+
+                showToast(
+                    error.message,
+                    "error"
+                );
+
+            } finally {
+
+                setButtonLoading(
+                    button,
+                    false
+                );
+            }
+        }
+    );
+
+
+    [
+        ["cancel-category", "category-dialog"],
+        ["cancel-product", "product-dialog"],
+        ["cancel-modifier", "modifier-dialog"],
+        ["cancel-option", "option-dialog"]
+    ].forEach(
+        ([buttonId, dialogId]) => {
+
+            document.getElementById(
+                buttonId
+            ).addEventListener(
+                "click",
+                () =>
+                    document.getElementById(
+                        dialogId
+                    ).close()
+            );
+        }
+    );
+
+
+    /* ==============================================
+       BOOT
+       ============================================== */
+
+
+    (async () => {
+
+        const admin =
+            await bootstrapAdmin({
+                allowedRoles: [
+                    SUPER_ADMIN
+                ]
+            });
+
+
+        if (!admin) return;
+
+
+        await loadCatalog();
+
+    })().catch(
+        error =>
+            showToast(
+                error.message,
+                "error"
+            )
+    );
+
+
+})();
+</script>
+
+</body>
+</html>
