@@ -5,6 +5,8 @@ services:
     container_name: cofinet-api
     env_file:
       - ./backend/.env
+    volumes:
+      - /opt/cofinet-data/pos-product-images:/data/pos-product-images
 
   db-init:
     env_file:
@@ -22,6 +24,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/pos-ssl.conf:/etc/nginx/conf.d/pos-ssl.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /opt/cofinet-data/pos-product-images:/usr/share/nginx/pos-product-images:ro
 
 volumes:
   postgres_data:
