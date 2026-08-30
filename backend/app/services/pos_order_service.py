@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import HTTPException, status
@@ -22,6 +23,8 @@ from app.models.pos_orders import (
 from app.schemas.pos_orders import (
     PosOrderCreate,
     PosOrderItemResponse,
+    PosOrderListResponse,
+    PosOrderStatusUpdate,
     PosOrderModifierResponse,
     PosOrderResponse,
     PosPaymentResponse,
@@ -100,6 +103,189 @@ class PosOrderService:
                 ),
             ),
         )
+
+    @staticmethod
+    def _normalize_branch_code(
+        branch_code: str,
+    ) -> str:
+        normalized = branch_code.strip().lower()
+
+        if normalized == "principal":
+            return "nuevo-vallarta"
+
+        return normalized
+
+
+    @classmethod
+    def _branch(
+        cls,
+        db: Session,
+        branch_code: str,
+    ) -> Branch:
+        normalized = cls._normalize_branch_code(
+            branch_code
+        )
+
+        branch = db.execute(
+            select(Branch).where(
+                Branch.code == normalized,
+                Branch.is_active.is_(True),
+            )
+        ).scalar_one_or_none()
+
+        if branch is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Branch not found",
+            )
+
+        return branch
+
+
+    @classmethod
+    def list_orders(
+        cls,
+        db: Session,
+        branch_code: str,
+        order_status: str | None = None,
+        from_at: datetime | None = None,
+        to_at: datetime | None = None,
+        limit: int = 100,
+    ) -> PosOrderListResponse:
+        branch = cls._branch(
+            db,
+            branch_code,
+        )
+
+        statement = (
+            select(PosOrder)
+            .where(
+                PosOrder.branch_id == branch.id
+            )
+            .order_by(
+                PosOrder.created_at_client.desc(),
+                PosOrder.id.desc(),
+            )
+            .limit(limit)
+        )
+
+        if order_status:
+            statement = statement.where(
+                PosOrder.status == order_status
+            )
+
+        if from_at is not None:
+            statement = statement.where(
+                PosOrder.created_at_client >= from_at
+            )
+
+        if to_at is not None:
+            statement = statement.where(
+                PosOrder.created_at_client < to_at
+            )
+
+        orders = (
+            db.execute(statement)
+            .scalars()
+            .all()
+        )
+
+        return PosOrderListResponse(
+            count=len(orders),
+            orders=[
+                cls._response(order)
+                for order in orders
+            ],
+        )
+
+
+    @classmethod
+    def get_order(
+        cls,
+        db: Session,
+        branch_code: str,
+        order_uuid: str,
+    ) -> PosOrderResponse:
+        branch = cls._branch(
+            db,
+            branch_code,
+        )
+
+        order = db.execute(
+            select(PosOrder).where(
+                PosOrder.order_uuid == order_uuid,
+                PosOrder.branch_id == branch.id,
+            )
+        ).scalar_one_or_none()
+
+        if order is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+
+        return cls._response(order)
+
+
+    @classmethod
+    def update_status(
+        cls,
+        db: Session,
+        order_uuid: str,
+        payload: PosOrderStatusUpdate,
+    ) -> PosOrderResponse:
+        branch = cls._branch(
+            db,
+            payload.branch_code,
+        )
+
+        order = db.execute(
+            select(PosOrder)
+            .where(
+                PosOrder.order_uuid == order_uuid,
+                PosOrder.branch_id == branch.id,
+            )
+            .with_for_update()
+        ).scalar_one_or_none()
+
+        if order is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+
+        next_status = payload.status
+
+        if order.status == next_status:
+            return cls._response(order)
+
+        allowed = {
+            "NEW": {"PREPARING"},
+            "PREPARING": {"READY"},
+            "READY": {"DELIVERED"},
+            "DELIVERED": set(),
+            "CANCELLED": set(),
+        }
+
+        if next_status not in allowed.get(
+            order.status,
+            set(),
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"Invalid order transition: "
+                    f"{order.status} -> {next_status}"
+                ),
+            )
+
+        order.status = next_status
+
+        db.commit()
+        db.refresh(order)
+
+        return cls._response(order)
+
 
     @classmethod
     def create(

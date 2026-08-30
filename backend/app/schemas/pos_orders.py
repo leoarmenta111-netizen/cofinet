@@ -76,3 +76,21 @@ class PosOrderResponse(BaseModel):
     created_at_client: datetime
     items: list[PosOrderItemResponse]
     payment: PosPaymentResponse
+
+
+class PosOrderStatusUpdate(BaseModel):
+    branch_code: str = Field(
+        min_length=1,
+        max_length=50,
+    )
+    status: Literal[
+        "NEW",
+        "PREPARING",
+        "READY",
+        "DELIVERED",
+    ]
+
+
+class PosOrderListResponse(BaseModel):
+    count: int
+    orders: list[PosOrderResponse]
