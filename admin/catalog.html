@@ -12,7 +12,7 @@
 
     <link
         rel="stylesheet"
-        href="admin.css?v=20260821-pos-catalog"
+        href="admin.css?v=20260826-product-description-v2"
     >
 </head>
 
@@ -196,13 +196,25 @@
                             </small>
                         </div>
 
-                        <button
-                            id="new-product"
-                            class="button button-primary"
-                            type="button"
-                        >
-                            Nuevo producto
-                        </button>
+                        <div class="catalog-product-actions">
+
+                            <button
+                                id="bulk-products"
+                                class="button button-secondary"
+                                type="button"
+                            >
+                                ↑ Carga masiva
+                            </button>
+
+                            <button
+                                id="new-product"
+                                class="button button-primary"
+                                type="button"
+                            >
+                                + Nuevo producto
+                            </button>
+
+                        </div>
 
                     </div>
 
@@ -491,167 +503,711 @@
 
 
 <!-- ==================================================
+     BULK PRODUCT DIALOG
+     ================================================== -->
+
+<dialog
+    id="bulk-product-dialog"
+    class="dialog bulk-product-dialog"
+>
+    <div class="bulk-product-shell">
+
+        <header class="bulk-product-header">
+
+            <div>
+                <p class="eyebrow">
+                    CATÁLOGO POS
+                </p>
+
+                <h2>
+                    Carga masiva de productos
+                </h2>
+
+                <p class="muted">
+                    Importa productos desde Excel o CSV.
+                    Nada se guardará hasta que confirmes.
+                </p>
+            </div>
+
+            <button
+                id="bulk-product-close"
+                class="product-editor-close"
+                type="button"
+                aria-label="Cerrar"
+            >
+                ×
+            </button>
+
+        </header>
+
+
+        <div class="bulk-product-body">
+
+            <section class="bulk-step">
+
+                <div class="bulk-step-number">
+                    1
+                </div>
+
+                <div class="bulk-step-content">
+
+                    <h3>
+                        Prepara tu archivo
+                    </h3>
+
+                    <p class="muted">
+                        Usa la plantilla para mantener
+                        el formato correcto.
+                    </p>
+
+                    <button
+                        id="download-bulk-template"
+                        class="button button-secondary"
+                        type="button"
+                    >
+                        ↓ Descargar plantilla CSV
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <section class="bulk-step">
+
+                <div class="bulk-step-number">
+                    2
+                </div>
+
+                <div class="bulk-step-content">
+
+                    <h3>
+                        Selecciona el archivo
+                    </h3>
+
+                    <button
+                        id="bulk-product-dropzone"
+                        class="bulk-product-dropzone"
+                        type="button"
+                    >
+                        <strong>
+                            Arrastra tu archivo aquí
+                        </strong>
+
+                        <span>
+                            o haz clic para seleccionarlo
+                        </span>
+
+                        <small>
+                            Excel .xlsx o CSV · máximo 10 MB
+                        </small>
+                    </button>
+
+                    <input
+                        id="bulk-product-file"
+                        type="file"
+                        accept=".xlsx,.csv"
+                        hidden
+                    >
+
+                    <div
+                        id="bulk-file-selected"
+                        class="bulk-file-selected"
+                        hidden
+                    >
+                        <span>✓</span>
+
+                        <div>
+                            <strong
+                                id="bulk-file-name"
+                            ></strong>
+
+                            <small>
+                                Archivo listo para validar
+                            </small>
+                        </div>
+                    </div>
+
+                    <button
+                        id="bulk-preview-button"
+                        class="button button-primary"
+                        type="button"
+                        disabled
+                    >
+                        Revisar archivo
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <section
+                id="bulk-preview-section"
+                class="bulk-preview-section"
+                hidden
+            >
+
+                <div class="bulk-preview-heading">
+
+                    <div>
+                        <h3>
+                            Vista previa
+                        </h3>
+
+                        <p class="muted">
+                            Revisa el resultado antes de importar.
+                        </p>
+                    </div>
+
+                    <div class="bulk-summary">
+
+                        <span class="bulk-summary-total">
+                            <strong id="bulk-total-count">0</strong>
+                            filas
+                        </span>
+
+                        <span class="bulk-summary-valid">
+                            <strong id="bulk-valid-count">0</strong>
+                            válidas
+                        </span>
+
+                        <span class="bulk-summary-invalid">
+                            <strong id="bulk-invalid-count">0</strong>
+                            errores
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="bulk-preview-table-wrap">
+
+                    <table class="bulk-preview-table">
+
+                        <thead>
+                        <tr>
+                            <th>Fila</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>SKU</th>
+                            <th>Precio</th>
+                            <th>Estado</th>
+                        </tr>
+                        </thead>
+
+                        <tbody id="bulk-preview-list">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <p
+                    id="bulk-product-error"
+                    class="form-error"
+                ></p>
+
+            </section>
+
+        </div>
+
+
+        <footer class="bulk-product-footer">
+
+            <button
+                id="bulk-product-cancel"
+                class="button button-secondary"
+                type="button"
+            >
+                Cancelar
+            </button>
+
+            <button
+                id="bulk-import-button"
+                class="button button-primary"
+                type="button"
+                disabled
+            >
+                Importar productos
+            </button>
+
+        </footer>
+
+    </div>
+</dialog>
+
+
+<!-- ==================================================
      PRODUCT DIALOG
      ================================================== -->
 
 <dialog
     id="product-dialog"
-    class="dialog dialog-large catalog-product-dialog"
+    class="dialog catalog-product-dialog product-editor-dialog"
 >
+<form id="product-form" class="product-editor-form">
 
-<form id="product-form">
+    <input id="product-id" type="hidden">
 
-    <h2 id="product-dialog-title">
-        Nuevo producto
-    </h2>
+    <header class="product-editor-header">
+        <div class="product-editor-heading">
+            <span class="product-editor-icon">◇</span>
 
-    <input
-        id="product-id"
-        type="hidden"
-    >
+            <div>
+                <h2 id="product-dialog-title">
+                    Nuevo producto
+                </h2>
+
+                <p>
+                    Agrega un producto al catálogo de Cofi POS.
+                </p>
+            </div>
+        </div>
+
+        <button
+            id="product-dialog-close"
+            class="product-editor-close"
+            type="button"
+            aria-label="Cerrar"
+        >
+            ×
+        </button>
+    </header>
 
 
-    <div class="dialog-form">
+    <div class="product-editor-layout">
 
-        <div class="field">
-            <label for="product-name">
-                Nombre
-            </label>
+        <div class="product-editor-main">
 
-            <input
-                id="product-name"
-                required
-                maxlength="160"
-                placeholder="Ej. Latte"
+            <!-- ==========================
+                 INFORMACION BASICA
+                 ========================== -->
+
+            <section class="product-editor-section">
+
+                <div class="product-section-title">
+                    <span class="product-section-icon">i</span>
+                    <div>
+                        <h3>Información básica</h3>
+                        <p>Datos principales visibles en el catálogo.</p>
+                    </div>
+                </div>
+
+                <div class="product-form-grid">
+
+                    <div class="field">
+                        <label for="product-name">
+                            Nombre del producto
+                            <span class="required">*</span>
+                        </label>
+
+                        <input
+                            id="product-name"
+                            required
+                            maxlength="160"
+                            placeholder="Ej. Latte"
+                            autocomplete="off"
+                        >
+                    </div>
+
+
+                    <div class="field">
+                        <label for="product-category">
+                            Categoría
+                            <span class="required">*</span>
+                        </label>
+
+                        <select
+                            id="product-category"
+                            required
+                        ></select>
+                    </div>
+
+
+                    <div class="field">
+                        <label for="product-sku">
+                            SKU
+                        </label>
+
+                        <input
+                            id="product-sku"
+                            maxlength="80"
+                            placeholder="Ej. LATTE-12OZ"
+                            autocomplete="off"
+                        >
+
+                        <small>
+                            Código interno para identificar el producto.
+                        </small>
+                    </div>
+
+
+                    <div class="field product-description-field">
+
+                        <label for="product-description">
+                            Descripción breve
+                        </label>
+
+                        <div class="product-description-control">
+
+                            <textarea
+                                id="product-description"
+                                rows="4"
+                                maxlength="160"
+                                spellcheck="true"
+                                placeholder="Ej. Café espresso con leche vaporizada."
+                            ></textarea>
+
+                        </div>
+
+                        <div class="product-description-meta">
+
+                            <span>
+                                Visible en la tarjeta del POS
+                            </span>
+
+                            <span
+                                id="product-description-count"
+                                class="product-description-count"
+                            >
+                                0 / 160
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==========================
+                 PRECIO Y DISPONIBILIDAD
+                 ========================== -->
+
+            <section class="product-editor-section">
+
+                <div class="product-section-title">
+                    <span class="product-section-icon">$</span>
+                    <div>
+                        <h3>Precio y disponibilidad</h3>
+                        <p>Define cómo aparecerá en el punto de venta.</p>
+                    </div>
+                </div>
+
+                <div class="product-price-grid">
+
+                    <div class="field">
+                        <label for="product-price">
+                            Precio base
+                            <span class="required">*</span>
+                        </label>
+
+                        <div class="product-money-input">
+                            <span>$</span>
+                            <input
+                                id="product-price"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                required
+                                placeholder="0.00"
+                            >
+                        </div>
+
+                        <small>Precio de venta predeterminado.</small>
+                    </div>
+
+
+                    <div class="field">
+                        <label for="product-order">
+                            Orden en el menú
+                        </label>
+
+                        <input
+                            id="product-order"
+                            type="number"
+                            value="0"
+                        >
+
+                        <small>Define el orden de aparición.</small>
+                    </div>
+
+
+                    <div class="field product-active-field">
+                        <label>
+                            Producto activo
+                        </label>
+
+                        <label class="product-switch-row">
+                            <input
+                                id="product-active"
+                                type="checkbox"
+                                checked
+                            >
+
+                            <span class="product-switch">
+                                <span></span>
+                            </span>
+
+                            <strong id="product-active-label">
+                                Activo
+                            </strong>
+                        </label>
+
+                        <small>Visible en el POS.</small>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==========================
+                 IMAGEN
+                 ========================== -->
+
+            <section
+                id="product-image-section"
+                class="product-editor-section product-image-section"
             >
-        </div>
+
+                <div class="product-section-title">
+                    <span class="product-section-icon">▧</span>
+                    <div>
+                        <h3>Imagen del producto</h3>
+                        <p>
+                            Una buena foto facilita identificar el producto.
+                        </p>
+                    </div>
+                </div>
 
 
-        <div class="field">
-            <label for="product-category">
-                Categoría
-            </label>
-
-            <select
-                id="product-category"
-                required
-            ></select>
-        </div>
+                <input
+                    id="product-image-file"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                >
 
 
-        <div class="field">
-            <label for="product-sku">
-                SKU
-            </label>
+                <div class="product-image-editor-v2">
 
-            <input
-                id="product-sku"
-                maxlength="80"
-                placeholder="Ej. LATTE-12OZ"
+                    <button
+                        id="product-image-dropzone"
+                        class="product-image-dropzone"
+                        type="button"
+                    >
+                        <span class="product-upload-icon">⇧</span>
+
+                        <strong>
+                            Sube una foto o arrástrala aquí
+                        </strong>
+
+                        <span>
+                            JPG, PNG o WebP · máximo 5 MB
+                        </span>
+
+                        <span class="product-upload-link">
+                            Seleccionar archivo
+                        </span>
+                    </button>
+
+
+                    <div class="product-image-mini-preview">
+
+                        <div class="product-image-preview-wrap">
+
+                            <img
+                                id="product-image-preview"
+                                class="product-image-preview"
+                                alt=""
+                                hidden
+                            >
+
+                            <div
+                                id="product-image-placeholder"
+                                class="product-image-placeholder"
+                            >
+                                <span>▧</span>
+                                <small>Sin imagen</small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="product-image-controls">
+
+                            <button
+                                id="select-product-image"
+                                class="button button-secondary button-small"
+                                type="button"
+                            >
+                                Cambiar
+                            </button>
+
+                            <button
+                                id="remove-product-image"
+                                class="button button-ghost button-small"
+                                type="button"
+                                hidden
+                            >
+                                Eliminar
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==========================
+                 CONFIGURACION AVANZADA
+                 Solo aparece al editar
+                 ========================== -->
+
+            <div
+                id="product-advanced-settings"
+                class="product-advanced-settings"
+                hidden
             >
+
+                <div class="product-advanced-heading">
+                    <div>
+                        <h3>Configuración avanzada</h3>
+                        <p>
+                            Precios por sucursal y modificadores.
+                        </p>
+                    </div>
+                </div>
+
+
+                <section
+                    id="product-branches-section"
+                    class="catalog-editor-section"
+                    hidden
+                >
+                    <h3>Precio y disponibilidad por sucursal</h3>
+
+                    <p class="muted">
+                        Deja el precio vacío para utilizar el precio base.
+                    </p>
+
+                    <div
+                        id="product-branches"
+                        class="branch-settings"
+                    ></div>
+                </section>
+
+
+                <section
+                    id="product-modifiers-section"
+                    class="catalog-editor-section"
+                    hidden
+                >
+                    <h3>Modificadores</h3>
+
+                    <p class="muted">
+                        Selecciona qué grupos aplican a este producto.
+                    </p>
+
+                    <div
+                        id="product-modifiers"
+                        class="product-modifier-selector"
+                    ></div>
+                </section>
+
+            </div>
+
+
+            <p
+                id="product-error"
+                class="form-error product-editor-error"
+            ></p>
+
         </div>
 
 
-        <div class="field">
-            <label for="product-price">
-                Precio base
-            </label>
+        <!-- ==========================
+             POS PREVIEW
+             ========================== -->
 
-            <input
-                id="product-price"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-            >
-        </div>
+        <aside class="product-preview-panel">
 
-
-        <div class="field field-wide">
-            <label for="product-description">
-                Descripción
-            </label>
-
-            <textarea
-                id="product-description"
-                rows="3"
-                placeholder="Descripción visible en el POS"
-            ></textarea>
-        </div>
+            <div class="product-preview-heading">
+                <strong>Vista previa en el POS</strong>
+                <span>
+                    Así verá el producto el personal de caja.
+                </span>
+            </div>
 
 
-        <div class="field">
-            <label for="product-order">
-                Orden
-            </label>
+            <div class="product-preview-card">
 
-            <input
-                id="product-order"
-                type="number"
-                value="0"
-            >
-        </div>
+                <div class="product-preview-image">
+
+                    <img
+                        id="product-live-image"
+                        alt=""
+                        hidden
+                    >
+
+                    <span
+                        id="product-live-placeholder"
+                        class="product-live-placeholder"
+                    >
+                        ☕
+                    </span>
+
+                </div>
 
 
-        <label class="checkbox-row">
-            <input
-                id="product-active"
-                type="checkbox"
-                checked
-            >
-            Producto activo
-        </label>
+                <strong
+                    id="product-live-name"
+                    class="product-preview-name"
+                >
+                    PRODUCTO
+                </strong>
+
+
+                <span
+                    id="product-live-description"
+                    class="product-preview-description"
+                >
+                    Descripción del producto
+                </span>
+
+
+                <strong
+                    id="product-live-price"
+                    class="product-preview-price"
+                >
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="product-preview-note">
+                <span>i</span>
+                <p>
+                    La vista previa se actualizará
+                    conforme completes el formulario.
+                </p>
+            </div>
+
+        </aside>
 
     </div>
 
 
-    <section
-        id="product-branches-section"
-        class="catalog-editor-section"
-        hidden
-    >
-
-        <h3>Precio y disponibilidad por sucursal</h3>
-
-        <p class="muted">
-            Deja el precio vacío para utilizar el precio base.
-        </p>
-
-        <div
-            id="product-branches"
-            class="branch-settings"
-        ></div>
-
-    </section>
-
-
-    <section
-        id="product-modifiers-section"
-        class="catalog-editor-section"
-        hidden
-    >
-
-        <h3>Modificadores</h3>
-
-        <p class="muted">
-            Selecciona qué grupos aplican a este producto.
-        </p>
-
-        <div
-            id="product-modifiers"
-            class="product-modifier-selector"
-        ></div>
-
-    </section>
-
-
-    <p
-        id="product-error"
-        class="form-error"
-    ></p>
-
-
-    <div class="dialog-actions">
+    <footer class="product-editor-footer">
 
         <button
             id="cancel-product"
@@ -663,18 +1219,16 @@
 
         <button
             id="save-product"
-            class="button button-primary"
+            class="button button-primary product-save-button"
             type="submit"
         >
-            Guardar
+            Guardar producto
         </button>
 
-    </div>
+    </footer>
 
 </form>
-
 </dialog>
-
 
 
 <!-- ==================================================
@@ -2002,6 +2556,969 @@
     }
 
 
+    let pendingProductImageFile = null;
+    let pendingProductImageUrl = null;
+
+
+    function formatProductPreviewPrice(value) {
+
+        const amount =
+            Number(value || 0);
+
+        return new Intl.NumberFormat(
+            "es-MX",
+            {
+                style: "currency",
+                currency: "MXN",
+                minimumFractionDigits: 2
+            }
+        ).format(
+            Number.isFinite(amount)
+                ? amount
+                : 0
+        );
+    }
+
+
+    function updateProductDescriptionCount() {
+
+        const textarea =
+            document.getElementById(
+                "product-description"
+            );
+
+        const counter =
+            document.getElementById(
+                "product-description-count"
+            );
+
+        if (!textarea || !counter) {
+            return;
+        }
+
+        const length =
+            textarea.value.length;
+
+        const maximum =
+            Number(
+                textarea.maxLength || 160
+            );
+
+        counter.textContent =
+            `${length} / ${maximum}`;
+
+        counter.classList.toggle(
+            "is-near-limit",
+            length >= 130 &&
+            length < maximum
+        );
+
+        counter.classList.toggle(
+            "is-limit",
+            length >= maximum
+        );
+    }
+
+
+    function updateProductLivePreview() {
+
+        const name =
+            document.getElementById(
+                "product-name"
+            ).value.trim();
+
+        const description =
+            document.getElementById(
+                "product-description"
+            ).value.trim();
+
+        const price =
+            document.getElementById(
+                "product-price"
+            ).value;
+
+        document.getElementById(
+            "product-live-name"
+        ).textContent =
+            name || "PRODUCTO";
+
+        document.getElementById(
+            "product-live-description"
+        ).textContent =
+            description ||
+            "Descripción del producto";
+
+        document.getElementById(
+            "product-live-price"
+        ).textContent =
+            formatProductPreviewPrice(
+                price
+            );
+
+        const active =
+            document.getElementById(
+                "product-active"
+            ).checked;
+
+        document.getElementById(
+            "product-active-label"
+        ).textContent =
+            active
+                ? "Activo"
+                : "Inactivo";
+    }
+
+
+    function setProductPreviewImage(src) {
+
+        const liveImage =
+            document.getElementById(
+                "product-live-image"
+            );
+
+        const livePlaceholder =
+            document.getElementById(
+                "product-live-placeholder"
+            );
+
+        if (src) {
+
+            liveImage.src = src;
+            liveImage.hidden = false;
+            livePlaceholder.hidden = true;
+
+        } else {
+
+            liveImage.removeAttribute(
+                "src"
+            );
+
+            liveImage.hidden = true;
+            livePlaceholder.hidden = false;
+        }
+    }
+
+
+    function previewPendingProductImage(file) {
+
+        if (
+            pendingProductImageUrl
+        ) {
+            URL.revokeObjectURL(
+                pendingProductImageUrl
+            );
+        }
+
+        pendingProductImageFile =
+            file || null;
+
+        pendingProductImageUrl =
+            file
+                ? URL.createObjectURL(file)
+                : null;
+
+
+        const preview =
+            document.getElementById(
+                "product-image-preview"
+            );
+
+        const placeholder =
+            document.getElementById(
+                "product-image-placeholder"
+            );
+
+        const remove =
+            document.getElementById(
+                "remove-product-image"
+            );
+
+
+        if (pendingProductImageUrl) {
+
+            preview.src =
+                pendingProductImageUrl;
+
+            preview.hidden =
+                false;
+
+            placeholder.hidden =
+                true;
+
+            remove.hidden =
+                false;
+
+            setProductPreviewImage(
+                pendingProductImageUrl
+            );
+
+        } else {
+
+            preview.hidden =
+                true;
+
+            preview.removeAttribute(
+                "src"
+            );
+
+            placeholder.hidden =
+                false;
+
+            remove.hidden =
+                true;
+
+            setProductPreviewImage(
+                null
+            );
+        }
+    }
+
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+
+    /* ==============================================
+       BULK PRODUCT IMPORT
+       ============================================== */
+
+    let bulkProductFile = null;
+    let bulkProductPreview = null;
+
+
+    function resetBulkProductDialog() {
+
+        bulkProductFile = null;
+        bulkProductPreview = null;
+
+        document.getElementById(
+            "bulk-product-file"
+        ).value = "";
+
+        document.getElementById(
+            "bulk-file-selected"
+        ).hidden = true;
+
+        document.getElementById(
+            "bulk-preview-section"
+        ).hidden = true;
+
+        document.getElementById(
+            "bulk-preview-button"
+        ).disabled = true;
+
+        document.getElementById(
+            "bulk-import-button"
+        ).disabled = true;
+
+        document.getElementById(
+            "bulk-product-error"
+        ).textContent = "";
+
+        document.getElementById(
+            "bulk-preview-list"
+        ).replaceChildren();
+    }
+
+
+    function openBulkProductDialog() {
+
+        resetBulkProductDialog();
+
+        document.getElementById(
+            "bulk-product-dialog"
+        ).showModal();
+    }
+
+
+    function setBulkProductFile(file) {
+
+        if (!file) {
+            return;
+        }
+
+        const lowerName =
+            file.name.toLowerCase();
+
+        if (
+            !lowerName.endsWith(".xlsx") &&
+            !lowerName.endsWith(".csv")
+        ) {
+            document.getElementById(
+                "bulk-product-error"
+            ).textContent =
+                "Selecciona un archivo XLSX o CSV.";
+
+            return;
+        }
+
+        if (
+            file.size >
+            10 * 1024 * 1024
+        ) {
+            document.getElementById(
+                "bulk-product-error"
+            ).textContent =
+                "El archivo no puede superar 10 MB.";
+
+            return;
+        }
+
+        bulkProductFile = file;
+        bulkProductPreview = null;
+
+        document.getElementById(
+            "bulk-product-error"
+        ).textContent = "";
+
+        document.getElementById(
+            "bulk-file-name"
+        ).textContent =
+            file.name;
+
+        document.getElementById(
+            "bulk-file-selected"
+        ).hidden = false;
+
+        document.getElementById(
+            "bulk-preview-section"
+        ).hidden = true;
+
+        document.getElementById(
+            "bulk-preview-button"
+        ).disabled = false;
+
+        document.getElementById(
+            "bulk-import-button"
+        ).disabled = true;
+    }
+
+
+    function renderBulkPreview(result) {
+
+        bulkProductPreview = result;
+
+        document.getElementById(
+            "bulk-preview-section"
+        ).hidden = false;
+
+        document.getElementById(
+            "bulk-total-count"
+        ).textContent =
+            result.total_rows;
+
+        document.getElementById(
+            "bulk-valid-count"
+        ).textContent =
+            result.valid_rows;
+
+        document.getElementById(
+            "bulk-invalid-count"
+        ).textContent =
+            result.invalid_rows;
+
+
+        const tbody =
+            document.getElementById(
+                "bulk-preview-list"
+            );
+
+        tbody.replaceChildren();
+
+
+        for (
+            const row
+            of result.rows
+        ) {
+
+            const tr =
+                document.createElement(
+                    "tr"
+                );
+
+            if (!row.valid) {
+                tr.classList.add(
+                    "is-invalid"
+                );
+            }
+
+
+            const statusHtml =
+                row.valid
+                    ? `
+                        <span class="bulk-row-status is-valid">
+                            ✓ Válido
+                        </span>
+                    `
+                    : `
+                        <span class="bulk-row-status is-invalid">
+                            ✕ Error
+                        </span>
+
+                        <small class="bulk-row-errors">
+                            ${
+                                row.errors
+                                    .map(
+                                        error =>
+                                            escapeHtml(error)
+                                    )
+                                    .join("<br>")
+                            }
+                        </small>
+                    `;
+
+
+            tr.innerHTML = `
+                <td>
+                    ${row.row_number}
+                </td>
+
+                <td>
+                    <strong>
+                        ${escapeHtml(row.name || "—")}
+                    </strong>
+
+                    ${
+                        row.description
+                            ? `
+                                <small class="muted">
+                                    ${escapeHtml(row.description)}
+                                </small>
+                            `
+                            : ""
+                    }
+                </td>
+
+                <td>
+                    ${escapeHtml(row.category || "—")}
+                </td>
+
+                <td>
+                    ${escapeHtml(row.sku || "—")}
+                </td>
+
+                <td>
+                    ${
+                        row.base_price !== null
+                            ? formatMoney(row.base_price)
+                            : "—"
+                    }
+                </td>
+
+                <td>
+                    ${statusHtml}
+                </td>
+            `;
+
+            tbody.append(tr);
+        }
+
+
+        document.getElementById(
+            "bulk-import-button"
+        ).disabled =
+            !result.can_import;
+
+
+        if (result.invalid_rows > 0) {
+
+            document.getElementById(
+                "bulk-product-error"
+            ).textContent =
+                "Corrige las filas con error y vuelve a subir el archivo.";
+
+        } else {
+
+            document.getElementById(
+                "bulk-product-error"
+            ).textContent = "";
+        }
+    }
+
+
+    async function previewBulkProducts() {
+
+        if (!bulkProductFile) {
+            return;
+        }
+
+        const button =
+            document.getElementById(
+                "bulk-preview-button"
+            );
+
+        const originalText =
+            button.textContent;
+
+        button.disabled = true;
+        button.textContent =
+            "Validando…";
+
+        document.getElementById(
+            "bulk-product-error"
+        ).textContent = "";
+
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "file",
+            bulkProductFile
+        );
+
+
+        try {
+
+            const result =
+                await adminRequest(
+                    "/admin/pos/catalog/products/bulk/preview",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+            renderBulkPreview(
+                result
+            );
+
+        } catch (error) {
+
+            document.getElementById(
+                "bulk-product-error"
+            ).textContent =
+                error.message;
+
+        } finally {
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                originalText;
+        }
+    }
+
+
+    async function importBulkProducts() {
+
+        if (
+            !bulkProductFile ||
+            !bulkProductPreview?.can_import
+        ) {
+            return;
+        }
+
+        const button =
+            document.getElementById(
+                "bulk-import-button"
+            );
+
+        const originalText =
+            button.textContent;
+
+        button.disabled = true;
+        button.textContent =
+            "Importando…";
+
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "file",
+            bulkProductFile
+        );
+
+
+        try {
+
+            const result =
+                await adminRequest(
+                    "/admin/pos/catalog/products/bulk/import",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+
+            catalog =
+                result.catalog;
+
+            renderAll();
+
+
+            document.getElementById(
+                "bulk-product-dialog"
+            ).close();
+
+
+            showToast(
+                `${
+                    result.created_count
+                } ${
+                    result.created_count === 1
+                        ? "producto importado"
+                        : "productos importados"
+                }.`
+            );
+
+
+        } catch (error) {
+
+            document.getElementById(
+                "bulk-product-error"
+            ).textContent =
+                error.message;
+
+            button.disabled =
+                false;
+
+        } finally {
+
+            button.textContent =
+                originalText;
+        }
+    }
+
+
+    function downloadBulkTemplate() {
+
+        const rows = [
+            [
+                "Nombre",
+                "Categoría",
+                "SKU",
+                "Precio base",
+                "Descripción",
+                "Orden",
+                "Activo"
+            ],
+            [
+                "Latte",
+                "Café caliente",
+                "LATTE-12OZ",
+                "75.00",
+                "Espresso con leche vaporizada",
+                "10",
+                "YES"
+            ]
+        ];
+
+
+        const csv =
+            "\uFEFF" +
+            rows
+                .map(
+                    row =>
+                        row
+                            .map(
+                                value =>
+                                    `"${String(value).replaceAll(
+                                        '"',
+                                        '""'
+                                    )}"`
+                            )
+                            .join(",")
+                )
+                .join("\r\n");
+
+
+        const blob =
+            new Blob(
+                [csv],
+                {
+                    type:
+                        "text/csv;charset=utf-8"
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(
+                blob
+            );
+
+
+        const link =
+            document.createElement(
+                "a"
+            );
+
+        link.href = url;
+        link.download =
+            "cofi-pos-productos.csv";
+
+        document.body.append(
+            link
+        );
+
+        link.click();
+        link.remove();
+
+        URL.revokeObjectURL(
+            url
+        );
+    }
+
+
+    document.getElementById(
+        "bulk-products"
+    ).addEventListener(
+        "click",
+        openBulkProductDialog
+    );
+
+
+    document.getElementById(
+        "bulk-product-close"
+    ).addEventListener(
+        "click",
+        () =>
+            document.getElementById(
+                "bulk-product-dialog"
+            ).close()
+    );
+
+
+    document.getElementById(
+        "bulk-product-cancel"
+    ).addEventListener(
+        "click",
+        () =>
+            document.getElementById(
+                "bulk-product-dialog"
+            ).close()
+    );
+
+
+    document.getElementById(
+        "download-bulk-template"
+    ).addEventListener(
+        "click",
+        downloadBulkTemplate
+    );
+
+
+    const bulkDropzone =
+        document.getElementById(
+            "bulk-product-dropzone"
+        );
+
+    const bulkFileInput =
+        document.getElementById(
+            "bulk-product-file"
+        );
+
+
+    bulkDropzone.addEventListener(
+        "click",
+        () =>
+            bulkFileInput.click()
+    );
+
+
+    bulkFileInput.addEventListener(
+        "change",
+        event =>
+            setBulkProductFile(
+                event.currentTarget
+                    .files?.[0]
+            )
+    );
+
+
+    bulkDropzone.addEventListener(
+        "dragover",
+        event => {
+
+            event.preventDefault();
+
+            bulkDropzone.classList.add(
+                "is-dragging"
+            );
+        }
+    );
+
+
+    bulkDropzone.addEventListener(
+        "dragleave",
+        () =>
+            bulkDropzone.classList.remove(
+                "is-dragging"
+            )
+    );
+
+
+    bulkDropzone.addEventListener(
+        "drop",
+        event => {
+
+            event.preventDefault();
+
+            bulkDropzone.classList.remove(
+                "is-dragging"
+            );
+
+            setBulkProductFile(
+                event.dataTransfer
+                    ?.files?.[0]
+            );
+        }
+    );
+
+
+    document.getElementById(
+        "bulk-preview-button"
+    ).addEventListener(
+        "click",
+        previewBulkProducts
+    );
+
+
+    document.getElementById(
+        "bulk-import-button"
+    ).addEventListener(
+        "click",
+        importBulkProducts
+    );
+
+
+    function renderProductImage(product) {
+
+        const section =
+            document.getElementById(
+                "product-image-section"
+            );
+
+        const preview =
+            document.getElementById(
+                "product-image-preview"
+            );
+
+        const placeholder =
+            document.getElementById(
+                "product-image-placeholder"
+            );
+
+        const removeButton =
+            document.getElementById(
+                "remove-product-image"
+            );
+
+        const fileInput =
+            document.getElementById(
+                "product-image-file"
+            );
+
+
+        section.hidden = false;
+
+        fileInput.value = "";
+
+
+        if (!product) {
+
+            preview.hidden = true;
+
+            preview.removeAttribute(
+                "src"
+            );
+
+            placeholder.hidden = false;
+
+            removeButton.hidden = true;
+
+            setProductPreviewImage(
+                null
+            );
+
+            return;
+        }
+
+
+        const hasImage =
+            Boolean(
+                product.image_url
+            );
+
+
+        preview.hidden =
+            !hasImage;
+
+        placeholder.hidden =
+            hasImage;
+
+        removeButton.hidden =
+            !hasImage;
+
+
+        if (hasImage) {
+
+            preview.src =
+                product.image_url;
+
+            preview.alt =
+                `Foto de ${product.name}`;
+
+            setProductPreviewImage(
+                product.image_url
+            );
+
+        } else {
+
+            preview.removeAttribute(
+                "src"
+            );
+
+            preview.alt = "";
+
+            setProductPreviewImage(
+                null
+            );
+        }
+    }
+
+
+    function currentProduct() {
+
+        const id =
+            document.getElementById(
+                "product-id"
+            ).value;
+
+        if (!id) {
+            return null;
+        }
+
+        return catalog.products.find(
+            product =>
+                String(product.id) ===
+                String(id)
+        ) || null;
+    }
+
+
+    function refreshOpenProductImage() {
+
+        const product =
+            currentProduct();
+
+        renderProductImage(
+            product
+        );
+    }
+
+
+
     function openProduct(
         product = null
     ) {
@@ -2065,10 +3582,39 @@
             product?.is_active ?? true;
 
 
+        pendingProductImageFile =
+            null;
+
+        if (pendingProductImageUrl) {
+            URL.revokeObjectURL(
+                pendingProductImageUrl
+            );
+
+            pendingProductImageUrl =
+                null;
+        }
+
+
+        document.getElementById(
+            "product-advanced-settings"
+        ).hidden =
+            !product;
+
+
+        updateProductLivePreview();
+
+        updateProductDescriptionCount();
+
+
         document.getElementById(
             "product-error"
         ).textContent =
             "";
+
+
+        renderProductImage(
+            product
+        );
 
 
         document.getElementById(
@@ -2274,6 +3820,70 @@
                         );
 
 
+                    if (
+                        pendingProductImageFile
+                    ) {
+
+                        const createdProduct =
+                            [...catalog.products]
+                                .reverse()
+                                .find(
+                                    item =>
+                                        payload.sku
+                                            ? item.sku ===
+                                                payload.sku
+                                            : (
+                                                item.name ===
+                                                    payload.name &&
+                                                Number(
+                                                    item.category_id
+                                                ) ===
+                                                    Number(
+                                                        payload.category_id
+                                                    )
+                                            )
+                                );
+
+
+                        if (createdProduct) {
+
+                            const formData =
+                                new FormData();
+
+                            formData.append(
+                                "image",
+                                pendingProductImageFile
+                            );
+
+                            catalog =
+                                await adminRequest(
+                                    `/admin/pos/catalog/products/${
+                                        createdProduct.id
+                                    }/image`,
+                                    {
+                                        method: "POST",
+                                        body: formData
+                                    }
+                                );
+                        }
+                    }
+
+
+                    pendingProductImageFile =
+                        null;
+
+                    if (
+                        pendingProductImageUrl
+                    ) {
+                        URL.revokeObjectURL(
+                            pendingProductImageUrl
+                        );
+
+                        pendingProductImageUrl =
+                            null;
+                    }
+
+
                     document.getElementById(
                         "product-dialog"
                     ).close();
@@ -2334,6 +3944,378 @@
             }
         }
     );
+
+
+    [
+        "product-name",
+        "product-description",
+        "product-price"
+    ].forEach(id => {
+
+        document.getElementById(
+            id
+        ).addEventListener(
+            "input",
+            () => {
+                updateProductLivePreview();
+
+                if (
+                    id ===
+                    "product-description"
+                ) {
+                    updateProductDescriptionCount();
+                }
+            }
+        );
+    });
+
+
+    document.getElementById(
+        "product-active"
+    ).addEventListener(
+        "change",
+        updateProductLivePreview
+    );
+
+
+    document.getElementById(
+        "product-dialog-close"
+    ).addEventListener(
+        "click",
+        () =>
+            document.getElementById(
+                "product-dialog"
+            ).close()
+    );
+
+
+    const productDropzone =
+        document.getElementById(
+            "product-image-dropzone"
+        );
+
+
+    productDropzone.addEventListener(
+        "click",
+        () =>
+            document.getElementById(
+                "product-image-file"
+            ).click()
+    );
+
+
+    productDropzone.addEventListener(
+        "dragover",
+        event => {
+            event.preventDefault();
+
+            productDropzone.classList.add(
+                "is-dragging"
+            );
+        }
+    );
+
+
+    productDropzone.addEventListener(
+        "dragleave",
+        () =>
+            productDropzone.classList.remove(
+                "is-dragging"
+            )
+    );
+
+
+    productDropzone.addEventListener(
+        "drop",
+        event => {
+            event.preventDefault();
+
+            productDropzone.classList.remove(
+                "is-dragging"
+            );
+
+            const file =
+                event.dataTransfer
+                    ?.files?.[0];
+
+            if (!file) {
+                return;
+            }
+
+            const input =
+                document.getElementById(
+                    "product-image-file"
+                );
+
+            const transfer =
+                new DataTransfer();
+
+            transfer.items.add(file);
+
+            input.files =
+                transfer.files;
+
+            input.dispatchEvent(
+                new Event(
+                    "change",
+                    {
+                        bubbles: true
+                    }
+                )
+            );
+        }
+    );
+
+
+    /* ==============================================
+       PRODUCT IMAGE
+       ============================================== */
+
+
+    document.getElementById(
+        "select-product-image"
+    ).addEventListener(
+        "click",
+        () => {
+
+            document.getElementById(
+                "product-image-file"
+            ).click();
+        }
+    );
+
+
+    document.getElementById(
+        "product-image-file"
+    ).addEventListener(
+        "change",
+        async event => {
+
+            const input =
+                event.currentTarget;
+
+            const file =
+                input.files?.[0];
+
+            const product =
+                currentProduct();
+
+
+            if (!file) {
+                return;
+            }
+
+
+            const allowed = [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ];
+
+
+            if (!allowed.includes(file.type)) {
+
+                input.value = "";
+
+                document.getElementById(
+                    "product-error"
+                ).textContent =
+                    "Selecciona una imagen JPG, PNG o WebP.";
+
+                return;
+            }
+
+
+            if (
+                file.size >
+                5 * 1024 * 1024
+            ) {
+
+                input.value = "";
+
+                document.getElementById(
+                    "product-error"
+                ).textContent =
+                    "La imagen no puede superar 5 MB.";
+
+                return;
+            }
+
+
+            if (!product) {
+
+                previewPendingProductImage(
+                    file
+                );
+
+                input.value = "";
+
+                document.getElementById(
+                    "product-error"
+                ).textContent = "";
+
+                return;
+            }
+
+
+            const button =
+                document.getElementById(
+                    "select-product-image"
+                );
+
+
+            document.getElementById(
+                "product-error"
+            ).textContent = "";
+
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "image",
+                file
+            );
+
+
+            button.disabled = true;
+
+            const originalText =
+                button.textContent;
+
+            button.textContent =
+                "Subiendo…";
+
+
+            try {
+
+                catalog =
+                    await adminRequest(
+                        `/admin/pos/catalog/products/${
+                            product.id
+                        }/image`,
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+
+                refreshOpenProductImage();
+
+                renderProducts();
+
+                showToast(
+                    "Imagen actualizada."
+                );
+
+            } catch (error) {
+
+                document.getElementById(
+                    "product-error"
+                ).textContent =
+                    error.message;
+
+            } finally {
+
+                button.disabled = false;
+
+                button.textContent =
+                    originalText;
+
+                input.value = "";
+            }
+        }
+    );
+
+
+    document.getElementById(
+        "remove-product-image"
+    ).addEventListener(
+        "click",
+        async () => {
+
+            const product =
+                currentProduct();
+
+
+            if (!product) {
+
+                pendingProductImageFile =
+                    null;
+
+                if (
+                    pendingProductImageUrl
+                ) {
+                    URL.revokeObjectURL(
+                        pendingProductImageUrl
+                    );
+
+                    pendingProductImageUrl =
+                        null;
+                }
+
+                previewPendingProductImage(
+                    null
+                );
+
+                return;
+            }
+
+
+            if (
+                !window.confirm(
+                    "¿Eliminar la imagen de este producto?"
+                )
+            ) {
+                return;
+            }
+
+
+            const button =
+                document.getElementById(
+                    "remove-product-image"
+                );
+
+
+            button.disabled = true;
+
+
+            try {
+
+                catalog =
+                    await adminRequest(
+                        `/admin/pos/catalog/products/${
+                            product.id
+                        }/image`,
+                        {
+                            method: "DELETE"
+                        }
+                    );
+
+
+                refreshOpenProductImage();
+
+                renderProducts();
+
+                showToast(
+                    "Imagen eliminada."
+                );
+
+            } catch (error) {
+
+                document.getElementById(
+                    "product-error"
+                ).textContent =
+                    error.message;
+
+            } finally {
+
+                button.disabled = false;
+            }
+        }
+    );
+
 
 
     /* ==============================================

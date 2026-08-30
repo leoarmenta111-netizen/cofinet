@@ -31,7 +31,15 @@ async function adminRequest(path, options = {}) {
     const headers = new Headers(options.headers || {});
     const token = adminToken();
     if (token) headers.set("Authorization", `Bearer ${token}`);
-    if (options.body) headers.set("Content-Type", "application/json");
+    if (
+        options.body &&
+        !(options.body instanceof FormData)
+    ) {
+        headers.set(
+            "Content-Type",
+            "application/json"
+        );
+    }
 
     let response;
     try {
