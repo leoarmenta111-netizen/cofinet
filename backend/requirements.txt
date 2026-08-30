@@ -33,3 +33,6 @@ typing-inspection==0.4.2
 typing_extensions==4.16.0
 uvicorn==0.51.0
 routeros-api
+python-multipart==0.0.20
+Pillow==11.3.0
+openpyxl==3.1.5

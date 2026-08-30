@@ -1,4 +1,10 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.auth.admin_security import require_super_admin
@@ -19,6 +25,12 @@ from app.schemas.admin_pos_catalog import (
 )
 from app.services.admin_pos_catalog_service import (
     AdminPosCatalogService,
+)
+from app.services.admin_pos_bulk_import_service import (
+    AdminPosBulkImportService,
+)
+from app.services.pos_product_image_service import (
+    PosProductImageService,
 )
 
 
@@ -69,6 +81,41 @@ def update_category(
         db,
         category_id,
         data,
+    )
+
+
+@router.post(
+    "/products/bulk/preview",
+)
+async def preview_bulk_products(
+    file: UploadFile = File(...),
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    content = await file.read()
+
+    return AdminPosBulkImportService.preview(
+        db,
+        file.filename or "productos.xlsx",
+        content,
+    )
+
+
+@router.post(
+    "/products/bulk/import",
+    status_code=status.HTTP_201_CREATED,
+)
+async def import_bulk_products(
+    file: UploadFile = File(...),
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    content = await file.read()
+
+    return AdminPosBulkImportService.import_file(
+        db,
+        file.filename or "productos.xlsx",
+        content,
     )
 
 
@@ -209,3 +256,39 @@ def update_product_modifier(
         group_id,
         data,
     )
+
+
+@router.post(
+    "/products/{product_id}/image",
+    response_model=AdminPosCatalogResponse,
+)
+async def upload_product_image(
+    product_id: int,
+    image: UploadFile = File(...),
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    await PosProductImageService.upload(
+        db,
+        product_id,
+        image,
+    )
+
+    return AdminPosCatalogService.get_catalog(db)
+
+
+@router.delete(
+    "/products/{product_id}/image",
+    response_model=AdminPosCatalogResponse,
+)
+def delete_product_image(
+    product_id: int,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    PosProductImageService.delete(
+        db,
+        product_id,
+    )
+
+    return AdminPosCatalogService.get_catalog(db)
