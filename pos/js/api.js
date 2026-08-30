@@ -89,6 +89,64 @@ window.CofiPosAPI = (() => {
         );
     }
 
+    function listOrders(
+        branchCode,
+        {
+            fromAt = null,
+            toAt = null,
+            limit = 100,
+        } = {}
+    ) {
+        const params = new URLSearchParams({
+            branch_code: branchCode,
+            limit: String(limit),
+        });
+
+        if (fromAt) {
+            params.set("from_at", fromAt);
+        }
+
+        if (toAt) {
+            params.set("to_at", toAt);
+        }
+
+        return request(
+            `/pos/orders?${params.toString()}`
+        );
+    }
+
+    function getOrder(
+        orderUuid,
+        branchCode
+    ) {
+        return request(
+            `/pos/orders/${
+                encodeURIComponent(orderUuid)
+            }?branch_code=${
+                encodeURIComponent(branchCode)
+            }`
+        );
+    }
+
+    function updateOrderStatus(
+        orderUuid,
+        branchCode,
+        status
+    ) {
+        return request(
+            `/pos/orders/${
+                encodeURIComponent(orderUuid)
+            }/status`,
+            {
+                method: "PATCH",
+                body: JSON.stringify({
+                    branch_code: branchCode,
+                    status,
+                }),
+            }
+        );
+    }
+
     function checkHealth() {
         return request(
             "/health",
@@ -102,6 +160,9 @@ window.CofiPosAPI = (() => {
         request,
         getCatalog,
         createOrder,
+        listOrders,
+        getOrder,
+        updateOrderStatus,
         checkHealth,
     };
 })();
