@@ -57,20 +57,18 @@ test(
         const sw = read("pos/sw.js");
 
         assert.ok(
+            sw.includes("SHELL_CACHE")
+        );
+
+        assert.ok(
             sw.includes(
-                'const CACHE_NAME = "cofi-pos-shell-v9"'
+                '"./js/orders-local.js"'
             )
         );
 
         assert.ok(
             sw.includes(
-                '"./js/orders-local.js?v=1"'
-            )
-        );
-
-        assert.ok(
-            sw.includes(
-                '"./js/orders.js?v=11"'
+                '"./js/orders.js"'
             )
         );
     }

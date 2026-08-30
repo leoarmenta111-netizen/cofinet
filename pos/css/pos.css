@@ -289,6 +289,38 @@ h2 { font-size: 18px; }
 
 
 /* ==================================================
+   COFICENTER BRAND LOGO
+   ================================================== */
+
+.cofi-brand-logo {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 190px;
+}
+
+.coficenter-pos-logo {
+    display: block;
+    width: auto;
+    height: 48px;
+    max-width: 190px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+@media (max-width: 900px) {
+    .cofi-brand-logo {
+        min-width: auto;
+    }
+
+    .coficenter-pos-logo {
+        height: 40px;
+        max-width: 160px;
+    }
+}
+
+
+/* ==================================================
    POS ORDERS V1
    ================================================== */
 
@@ -527,5 +559,1168 @@ h2 { font-size: 18px; }
 @media (max-width: 560px) {
     .orders-list {
         grid-template-columns: 1fr;
+    }
+}
+
+
+/* ==================================================
+   COFI POS — RESPONSIVE SYSTEM V1
+   Desktop / Tablet / Mobile
+   ================================================== */
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+.pos-shell {
+    width: 100%;
+    max-width: 100vw;
+}
+
+/* ---------- Main workspace ---------- */
+
+.workspace {
+    width: 100%;
+    min-width: 0;
+}
+
+.catalog-panel,
+.order-panel,
+.sale-view,
+.orders-view {
+    min-width: 0;
+}
+
+/* ---------- Product images ---------- */
+
+.product-visual {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    min-height: 105px;
+    max-height: 160px;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: center;
+    padding: clamp(6px, 1vw, 12px);
+}
+
+.product-placeholder {
+    width: clamp(50px, 5vw, 66px);
+    height: clamp(50px, 5vw, 66px);
+}
+
+/* ---------- Fluid product cards ---------- */
+
+.product-grid {
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(
+                clamp(140px, 14vw, 180px),
+                1fr
+            )
+        );
+
+    grid-auto-rows: auto;
+}
+
+.product-card {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.product-content {
+    min-height: 92px;
+}
+
+.product-name {
+    font-size: clamp(12px, 1vw, 14px);
+}
+
+.product-price {
+    font-size: clamp(14px, 1.1vw, 16px);
+}
+
+/* ---------- Touch friendly ---------- */
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+.bottom-nav-item,
+.category-tab,
+.order-filter,
+.payment-method {
+    touch-action: manipulation;
+}
+
+/* ---------- Modals ---------- */
+
+.modal-backdrop {
+    width: 100vw;
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.modal-card {
+    width: min(
+        560px,
+        calc(100vw - 32px)
+    );
+
+    max-width: 100%;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+}
+
+.payment-card,
+.order-detail-card {
+    width: min(
+        580px,
+        calc(100vw - 32px)
+    );
+}
+
+/* ---------- Order list ---------- */
+
+.orders-list {
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(
+                min(270px, 100%),
+                1fr
+            )
+        );
+}
+
+/* ==================================================
+   LARGE TABLETS / SMALL LAPTOPS
+   ================================================== */
+
+@media (max-width: 1180px) {
+
+    .workspace {
+        grid-template-columns:
+            minmax(0, 1.55fr)
+            minmax(330px, .95fr);
+    }
+
+    .catalog-panel {
+        padding-left: 14px;
+        padding-right: 12px;
+    }
+
+    .product-grid {
+        grid-template-columns:
+            repeat(
+                auto-fill,
+                minmax(140px, 1fr)
+            );
+    }
+
+    .product-visual {
+        max-height: 145px;
+    }
+
+    .search-box {
+        min-width: 0;
+    }
+
+    .search-box kbd {
+        display: none;
+    }
+}
+
+
+/* ==================================================
+   TABLETS
+   ================================================== */
+
+@media (max-width: 900px) {
+
+    body {
+        overflow-y: auto;
+    }
+
+    .pos-shell {
+        min-height: 100dvh;
+        height: auto;
+    }
+
+    .workspace {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+    }
+
+    .catalog-panel {
+        width: 100%;
+        min-height: auto;
+        padding:
+            14px
+            12px
+            0;
+        overflow: visible;
+    }
+
+    .sale-view {
+        min-height: auto;
+    }
+
+    .product-grid {
+        width: 100%;
+        max-height: none;
+        overflow-y: visible;
+
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+
+        gap: 10px;
+    }
+
+    .product-visual {
+        aspect-ratio: 4 / 3;
+        max-height: none;
+    }
+
+    .order-panel {
+        width: 100%;
+        min-height: 440px;
+        border-left: 0;
+        border-top: 1px solid var(--border);
+        box-shadow: none;
+    }
+
+    .workspace.orders-mode {
+        display: flex;
+    }
+
+    .workspace.orders-mode .catalog-panel {
+        min-height: calc(100dvh - 110px);
+    }
+
+    .orders-list {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+    .bottom-nav {
+        position: sticky;
+        bottom: 0;
+        z-index: 30;
+
+        width: 100%;
+        flex-basis: 64px;
+
+        border-bottom:
+            1px solid var(--border);
+
+        border-radius: 13px;
+    }
+}
+
+
+/* ==================================================
+   MOBILE
+   ================================================== */
+
+@media (max-width: 640px) {
+
+    .topbar {
+        min-height: 64px;
+        padding: 7px 10px;
+        grid-template-columns:
+            minmax(90px, 125px)
+            1fr;
+    }
+
+    .cofi-brand-logo {
+        min-width: 0;
+    }
+
+    .coficenter-pos-logo {
+        width: auto;
+        max-width: 115px;
+        height: 38px;
+    }
+
+    .operation-meta {
+        min-width: 0;
+    }
+
+    .connection-status {
+        min-width: 110px;
+    }
+
+    .connection-status small {
+        display: none;
+    }
+
+    .offline-banner {
+        padding:
+            7px
+            10px;
+    }
+
+    .offline-banner > strong {
+        display: none;
+    }
+
+    .catalog-panel {
+        padding:
+            10px
+            8px
+            0;
+    }
+
+    .catalog-tools {
+        gap: 6px;
+    }
+
+    .search-box {
+        height: 46px;
+        padding:
+            0
+            11px;
+    }
+
+    .refresh-button,
+    .view-button,
+    .icon-button {
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+    }
+
+    .view-button {
+        display: none;
+    }
+
+    .catalog-heading {
+        margin:
+            12px
+            2px
+            8px;
+    }
+
+    .catalog-heading h1 {
+        font-size: 18px;
+    }
+
+    .category-tabs {
+        gap: 6px;
+        padding-bottom: 9px;
+    }
+
+    .category-tab {
+        min-height: 36px;
+        padding:
+            0
+            12px;
+        font-size: 11px;
+    }
+
+    .product-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 8px;
+        padding-right: 0;
+    }
+
+    .product-card {
+        border-radius: 11px;
+    }
+
+    .product-visual {
+        min-height: 100px;
+        aspect-ratio: 1.2 / 1;
+    }
+
+    .product-content {
+        min-height: 88px;
+        padding:
+            9px
+            10px
+            10px;
+    }
+
+    .product-name {
+        font-size: 12px;
+    }
+
+    .product-description {
+        font-size: 9px;
+        -webkit-line-clamp: 2;
+    }
+
+    .product-price {
+        font-size: 14px;
+    }
+
+    .product-add {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* Bottom navigation */
+
+    .bottom-nav {
+        min-height: 58px;
+        flex-basis: 58px;
+        border-radius:
+            11px
+            11px
+            0
+            0;
+    }
+
+    .bottom-nav-item {
+        min-width: 0;
+        flex-direction: column;
+        gap: 2px;
+        padding: 5px 2px;
+        font-size: 9px;
+    }
+
+    .bottom-nav-item svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Current order */
+
+    .order-panel {
+        min-height: 420px;
+    }
+
+    .order-heading {
+        min-height: 70px;
+        padding:
+            12px
+            13px;
+    }
+
+    .order-heading h2 {
+        font-size: 16px;
+    }
+
+    .cart-item {
+        padding:
+            13px
+            12px;
+    }
+
+    .cart-item-name {
+        white-space: normal;
+    }
+
+    .order-summary {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .checkout-button {
+        min-height: 50px;
+    }
+
+    /* Orders module */
+
+    .orders-header {
+        min-height: 65px;
+        padding:
+            2px
+            2px
+            10px;
+    }
+
+    .orders-header h1 {
+        font-size: 18px;
+    }
+
+    .order-filters {
+        gap: 6px;
+    }
+
+    .order-filter {
+        min-height: 36px;
+        padding:
+            0
+            12px;
+        font-size: 10px;
+    }
+
+    .orders-list {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .order-list-card {
+        padding: 13px;
+    }
+
+    .order-list-items {
+        min-height: auto;
+    }
+
+    /* Modals */
+
+    .modal-backdrop {
+        padding: 8px;
+        align-items: flex-end;
+    }
+
+    .modal-card,
+    .payment-card,
+    .order-detail-card {
+        width: 100%;
+        max-width: 100%;
+        max-height:
+            calc(100dvh - 16px);
+
+        border-radius:
+            17px
+            17px
+            10px
+            10px;
+        padding: 17px;
+    }
+
+    .modal-header h2 {
+        font-size: 18px;
+    }
+
+    .payment-methods {
+        grid-template-columns: 1fr;
+    }
+
+    input,
+    textarea,
+    select {
+        font-size: 16px;
+    }
+}
+
+
+/* ==================================================
+   SMALL PHONES
+   ================================================== */
+
+@media (max-width: 390px) {
+
+    .product-grid {
+        gap: 6px;
+    }
+
+    .product-visual {
+        min-height: 90px;
+    }
+
+    .product-content {
+        padding:
+            8px
+            8px
+            9px;
+    }
+
+    .product-description {
+        display: none;
+    }
+
+    .product-name {
+        white-space: normal;
+        line-height: 1.25;
+    }
+
+    .category-tab {
+        padding:
+            0
+            10px;
+    }
+
+    .bottom-nav-item {
+        font-size: 8px;
+    }
+}
+
+
+/* ==================================================
+   LANDSCAPE MOBILE / TABLET
+   ================================================== */
+
+@media (
+    max-height: 600px
+)
+and (
+    orientation: landscape
+) {
+
+    .topbar {
+        min-height: 58px;
+    }
+
+    .product-visual {
+        max-height: 110px;
+    }
+
+    .modal-card {
+        max-height:
+            calc(100dvh - 12px);
+    }
+}
+
+
+/* ==================================================
+   TOUCH DEVICES
+   ================================================== */
+
+@media (pointer: coarse) {
+
+    button,
+    .category-tab,
+    .order-filter {
+        min-height: 42px;
+    }
+
+    .quantity-control button {
+        width: 42px;
+        height: 40px;
+    }
+
+    .remove-item {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+
+/* ==================================================
+   IPAD / TABLET VIEWPORT FIX
+   ================================================== */
+
+.pos-shell {
+    height: 100dvh;
+    min-height: 100dvh;
+}
+
+.workspace {
+    min-height: 0;
+    height: 100%;
+}
+
+/* iPad + tablets */
+@media (min-width: 641px) and (max-width: 1180px) {
+
+    body {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .pos-shell {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .workspace {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .catalog-panel {
+        min-height: 0;
+        overflow: hidden;
+
+        padding-bottom:
+            env(safe-area-inset-bottom);
+    }
+
+    .sale-view,
+    .orders-view {
+        min-height: 0;
+    }
+
+    .product-grid {
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .bottom-nav {
+        flex: 0 0 auto;
+        min-height: 66px;
+
+        position: relative;
+        bottom: auto;
+
+        padding-bottom:
+            env(safe-area-inset-bottom);
+
+        z-index: 50;
+
+        background: var(--surface);
+    }
+
+    .bottom-nav-item {
+        min-height: 64px;
+    }
+}
+
+
+/* iPad portrait */
+@media (min-width: 700px) and (max-width: 900px) {
+
+    .workspace {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .catalog-panel {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .product-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+    .bottom-nav {
+        flex-shrink: 0;
+    }
+
+    .order-panel {
+        min-height: 0;
+    }
+}
+
+
+/* iPad landscape */
+@media (min-width: 901px) and (max-width: 1180px) {
+
+    .workspace {
+        grid-template-columns:
+            minmax(0, 1.55fr)
+            minmax(330px, .85fr);
+    }
+
+    .catalog-panel {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .sale-view {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .bottom-nav {
+        flex-shrink: 0;
+    }
+}
+
+
+/* Safari safe area */
+@supports (
+    padding-bottom:
+    env(safe-area-inset-bottom)
+) {
+
+    .bottom-nav {
+        padding-bottom:
+            max(
+                4px,
+                env(safe-area-inset-bottom)
+            );
+    }
+}
+
+
+/* ==================================================
+   COFI POS — RESPONSIVE PRODUCT IMAGES V2
+   ================================================== */
+
+.product-visual {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    aspect-ratio: 4 / 3;
+    min-height: 120px;
+    max-height: 175px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #faf8f3,
+            #f0f2ed
+        );
+}
+
+.product-image {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    max-width: 100%;
+    max-height: 100%;
+
+    object-fit: contain;
+    object-position: center;
+
+    padding: clamp(
+        5px,
+        1vw,
+        12px
+    );
+
+    transform: translateZ(0);
+}
+
+/* Evita que sombras decorativas tapen la foto */
+.product-visual::after {
+    pointer-events: none;
+    z-index: 0;
+}
+
+.product-image {
+    position: relative;
+    z-index: 1;
+}
+
+/* Placeholder también escala */
+.product-placeholder {
+    width: clamp(50px, 6vw, 72px);
+    height: clamp(50px, 6vw, 72px);
+}
+
+
+/* ==================================================
+   LAPTOP / TABLET LANDSCAPE
+   ================================================== */
+
+@media (max-width: 1180px) {
+
+    .product-visual {
+        aspect-ratio: 4 / 3;
+        min-height: 115px;
+        max-height: 155px;
+    }
+
+    .product-image {
+        padding: 7px;
+    }
+}
+
+
+/* ==================================================
+   IPAD / TABLET
+   ================================================== */
+
+@media (min-width: 641px) and (max-width: 900px) {
+
+    .product-visual {
+        aspect-ratio: 1.25 / 1;
+        min-height: 125px;
+        max-height: none;
+    }
+
+    .product-image {
+        padding: 8px;
+    }
+}
+
+
+/* ==================================================
+   MOBILE
+   ================================================== */
+
+@media (max-width: 640px) {
+
+    .product-visual {
+        aspect-ratio: 1.15 / 1;
+        min-height: 105px;
+        max-height: 135px;
+    }
+
+    .product-image {
+        padding: 5px;
+    }
+}
+
+
+/* ==================================================
+   SMALL MOBILE
+   ================================================== */
+
+@media (max-width: 390px) {
+
+    .product-visual {
+        aspect-ratio: 1 / 1;
+        min-height: 95px;
+        max-height: 115px;
+    }
+
+    .product-image {
+        padding: 4px;
+    }
+}
+
+
+/* ==================================================
+   COFI POS — PRODUCT CARD LAYOUT FIX V3
+   Mantiene imagen + información siempre visibles
+   ================================================== */
+
+/* Desktop */
+.product-grid {
+    grid-auto-rows: minmax(220px, max-content);
+}
+
+.product-card {
+    width: 100%;
+    min-width: 0;
+    min-height: 220px;
+    height: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+}
+
+.product-visual {
+    width: 100%;
+
+    height: 120px;
+    min-height: 120px;
+    max-height: 120px;
+
+    flex: 0 0 120px;
+
+    aspect-ratio: auto;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+    object-position: center;
+
+    padding: 7px;
+}
+
+.product-content {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1 1 auto;
+
+    min-width: 0;
+    min-height: 96px;
+
+    padding: 10px 12px 11px;
+
+    background: var(--surface);
+}
+
+.product-name {
+    display: block;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: var(--text);
+
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.product-description {
+    display: -webkit-box;
+
+    flex: 1;
+
+    margin-top: 3px;
+
+    overflow: hidden;
+
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+
+    color: var(--muted);
+
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.product-footer {
+    margin-top: 7px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.product-price {
+    color: var(--gold-dark);
+
+    font-size: 15px;
+    font-weight: 750;
+}
+
+
+/* ==================================================
+   TABLET / IPAD
+   ================================================== */
+
+@media (min-width: 641px) and (max-width: 1180px) {
+
+    .product-grid {
+        grid-auto-rows:
+            minmax(205px, max-content);
+    }
+
+    .product-card {
+        min-height: 205px;
+    }
+
+    .product-visual {
+        height: 110px;
+        min-height: 110px;
+        max-height: 110px;
+
+        flex-basis: 110px;
+
+        aspect-ratio: auto;
+    }
+
+    .product-content {
+        min-height: 92px;
+        padding:
+            9px
+            10px
+            10px;
+    }
+}
+
+
+/* ==================================================
+   MOBILE
+   ================================================== */
+
+@media (max-width: 640px) {
+
+    .product-grid {
+        grid-auto-rows:
+            minmax(190px, max-content);
+    }
+
+    .product-card {
+        min-height: 190px;
+    }
+
+    .product-visual {
+        height: 100px;
+        min-height: 100px;
+        max-height: 100px;
+
+        flex-basis: 100px;
+
+        aspect-ratio: auto;
+    }
+
+    .product-content {
+        min-height: 88px;
+
+        padding:
+            8px
+            9px
+            9px;
+    }
+
+    .product-name {
+        font-size: 12px;
+    }
+
+    .product-price {
+        font-size: 14px;
+    }
+}
+
+
+/* ==================================================
+   SMALL MOBILE
+   ================================================== */
+
+@media (max-width: 390px) {
+
+    .product-card {
+        min-height: 178px;
+    }
+
+    .product-visual {
+        height: 96px;
+        min-height: 96px;
+        max-height: 96px;
+
+        flex-basis: 96px;
+    }
+
+    .product-description {
+        display: none;
+    }
+
+    .product-name {
+        white-space: normal;
+
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
     }
 }

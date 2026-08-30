@@ -1,17 +1,22 @@
-const CACHE_NAME = "cofi-pos-shell-v9";
+const SHELL_CACHE = "cofi-pos-shell-v15";
+const IMAGE_CACHE = "cofi-pos-images-v1";
 
 const APP_SHELL = [
     "./index.html",
-    "./css/pos.css?v=8",
-    "./js/uuid.js?v=8",
-    "./js/db.js?v=8",
-    "./js/api.js?v=8",
-    "./js/catalog.js?v=8",
-    "./js/sync.js?v=8",
-    "./js/app.js?v=8",
-    "./js/orders-local.js?v=1",
-    "./js/orders.js?v=11",
-    "./manifest.webmanifest"
+    "./css/pos.css",
+    "./js/uuid.js",
+    "./js/db.js",
+    "./js/api.js",
+    "./js/catalog.js",
+    "./js/sync.js",
+    "./js/app.js",
+    "./js/orders-local.js",
+    "./js/orders.js",
+    "./assets/coficenter-logo.png",
+    "./manifest.webmanifest",
+    "./manifest-nuevo-vallarta.webmanifest",
+    "./manifest-bucerias.webmanifest",
+    "./manifest-ixtapa.webmanifest"
 ];
 
 
@@ -22,8 +27,21 @@ const APP_SHELL = [
 self.addEventListener("install", event => {
     event.waitUntil(
         caches
-            .open(CACHE_NAME)
-            .then(cache => cache.addAll(APP_SHELL))
+            .open(SHELL_CACHE)
+            .then(cache =>
+                Promise.all(
+                    APP_SHELL.map(async url => {
+                        try {
+                            await cache.add(url);
+                        } catch (error) {
+                            console.warn(
+                                "No se pudo precachear:",
+                                url
+                            );
+                        }
+                    })
+                )
+            )
             .then(() => self.skipWaiting())
     );
 });
@@ -41,15 +59,206 @@ self.addEventListener("activate", event => {
                 Promise.all(
                     keys
                         .filter(key =>
-                            key.startsWith("cofi-pos-shell-") &&
-                            key !== CACHE_NAME
+                            (
+                                key.startsWith(
+                                    "cofi-pos-shell-"
+                                ) &&
+                                key !== SHELL_CACHE
+                            )
                         )
-                        .map(key => caches.delete(key))
+                        .map(key =>
+                            caches.delete(key)
+                        )
                 )
             )
-            .then(() => self.clients.claim())
+            .then(() =>
+                self.clients.claim()
+            )
     );
 });
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+async function navigationResponse(request) {
+    const controller =
+        new AbortController();
+
+    const timeout =
+        setTimeout(
+            () => controller.abort(),
+            4000
+        );
+
+    try {
+        const response =
+            await fetch(
+                request,
+                {
+                    signal:
+                        controller.signal
+                }
+            );
+
+        clearTimeout(timeout);
+
+        if (
+            response &&
+            response.ok
+        ) {
+            const cache =
+                await caches.open(
+                    SHELL_CACHE
+                );
+
+            await cache.put(
+                "./index.html",
+                response.clone()
+            );
+        }
+
+        return response;
+
+    } catch (error) {
+        clearTimeout(timeout);
+
+        const cached =
+            await caches.match(
+                "./index.html",
+                {
+                    ignoreSearch: true
+                }
+            );
+
+        if (cached) {
+            return cached;
+        }
+
+        return new Response(
+            `
+            <!doctype html>
+            <html lang="es">
+            <head>
+                <meta charset="utf-8">
+                <meta
+                    name="viewport"
+                    content="width=device-width,initial-scale=1"
+                >
+                <title>Cofi POS</title>
+            </head>
+            <body>
+                <h1>Cofi POS</h1>
+                <p>
+                    No hay conexión y todavía no existe
+                    una copia local del sistema.
+                </p>
+            </body>
+            </html>
+            `,
+            {
+                status: 503,
+                headers: {
+                    "Content-Type":
+                        "text/html; charset=utf-8"
+                }
+            }
+        );
+    }
+}
+
+
+/* =========================================================
+   STATIC POS ASSETS
+   ========================================================= */
+
+async function staticAssetResponse(request) {
+    const exact =
+        await caches.match(request);
+
+    if (exact) {
+        return exact;
+    }
+
+    try {
+        const response =
+            await fetch(request);
+
+        if (
+            response &&
+            response.status === 200
+        ) {
+            const cache =
+                await caches.open(
+                    SHELL_CACHE
+                );
+
+            await cache.put(
+                request,
+                response.clone()
+            );
+        }
+
+        return response;
+
+    } catch (error) {
+        return (
+            await caches.match(
+                request,
+                {
+                    ignoreSearch: true
+                }
+            )
+        ) || Response.error();
+    }
+}
+
+
+/* =========================================================
+   PRODUCT IMAGES
+   ========================================================= */
+
+async function productImageResponse(request) {
+    const cache =
+        await caches.open(
+            IMAGE_CACHE
+        );
+
+    const cached =
+        await cache.match(request);
+
+    if (cached) {
+        return cached;
+    }
+
+    try {
+        const response =
+            await fetch(request);
+
+        if (
+            response &&
+            response.ok
+        ) {
+            await cache.put(
+                request,
+                response.clone()
+            );
+        }
+
+        return response;
+
+    } catch (error) {
+        return (
+            await cache.match(
+                request,
+                {
+                    ignoreSearch: true
+                }
+            )
+        ) || Response.error();
+    }
+}
 
 
 /* =========================================================
@@ -57,75 +266,155 @@ self.addEventListener("activate", event => {
    ========================================================= */
 
 self.addEventListener("fetch", event => {
-    const request = event.request;
-    const url = new URL(request.url);
+    const request =
+        event.request;
 
-    // API must never be fulfilled by application-shell cache.
-    if (url.pathname.startsWith("/api/")) {
+    if (
+        request.method !== "GET"
+    ) {
         return;
     }
 
-    // Navigation:
-    // network first, cached POS shell when offline.
-    if (request.mode === "navigate") {
+    const url =
+        new URL(
+            request.url
+        );
+
+    /*
+     * API:
+     * nunca usar cache del Service Worker.
+     * IndexedDB maneja catálogo y ventas offline.
+     */
+    if (
+        url.pathname.startsWith(
+            "/api/"
+        )
+    ) {
+        return;
+    }
+
+    /*
+     * Navegación:
+     * red primero; shell local si no hay Internet.
+     */
+    if (
+        request.mode === "navigate"
+    ) {
         event.respondWith(
-            fetch(request)
-                .catch(() =>
-                    caches.match("./index.html")
-                )
+            navigationResponse(request)
         );
 
         return;
     }
 
-    // POS static assets.
+    /*
+     * Fotos de productos.
+     */
     if (
-        url.origin === self.location.origin &&
-        url.pathname.startsWith("/pos/")
+        url.origin ===
+            self.location.origin &&
+        url.pathname.startsWith(
+            "/media/pos-products/"
+        )
     ) {
         event.respondWith(
-            caches.match(request)
-                .then(cached => {
-                    if (cached) {
-                        return cached;
-                    }
+            productImageResponse(
+                request
+            )
+        );
 
-                    // Defensive fallback for query-string
-                    // differences between versioned shell URLs.
-                    return caches.match(
-                        request,
-                        { ignoreSearch: true }
-                    );
-                })
-                .then(cached => {
-                    if (cached) {
-                        return cached;
-                    }
+        return;
+    }
 
-                    return fetch(request)
-                        .then(response => {
-                            if (
-                                !response ||
-                                response.status !== 200
-                            ) {
-                                return response;
-                            }
-
-                            const copy =
-                                response.clone();
-
-                            caches
-                                .open(CACHE_NAME)
-                                .then(cache =>
-                                    cache.put(
-                                        request,
-                                        copy
-                                    )
-                                );
-
-                            return response;
-                        });
-                })
+    /*
+     * Archivos propios del POS.
+     */
+    if (
+        url.origin ===
+            self.location.origin &&
+        url.pathname.startsWith(
+            "/pos/"
+        )
+    ) {
+        event.respondWith(
+            staticAssetResponse(
+                request
+            )
         );
     }
 });
+
+
+/* =========================================================
+   CACHE PRODUCT IMAGES ON DEMAND
+   ========================================================= */
+
+self.addEventListener(
+    "message",
+    event => {
+        if (
+            event.data?.type !==
+            "CACHE_PRODUCT_IMAGES"
+        ) {
+            return;
+        }
+
+        const urls =
+            Array.isArray(
+                event.data.urls
+            )
+                ? event.data.urls
+                : [];
+
+        event.waitUntil(
+            caches
+                .open(IMAGE_CACHE)
+                .then(async cache => {
+                    for (
+                        const url
+                        of urls
+                    ) {
+                        try {
+                            const request =
+                                new Request(
+                                    url,
+                                    {
+                                        mode:
+                                            "same-origin"
+                                    }
+                                );
+
+                            const existing =
+                                await cache.match(
+                                    request
+                                );
+
+                            if (existing) {
+                                continue;
+                            }
+
+                            const response =
+                                await fetch(
+                                    request
+                                );
+
+                            if (
+                                response.ok
+                            ) {
+                                await cache.put(
+                                    request,
+                                    response.clone()
+                                );
+                            }
+
+                        } catch (error) {
+                            console.warn(
+                                "No se pudo cachear imagen:",
+                                url
+                            );
+                        }
+                    }
+                })
+        );
+    }
+);

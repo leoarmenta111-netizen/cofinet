@@ -53,25 +53,32 @@
                 "branch_code"
             );
 
-        if (!requestedBranch && !savedBranch) {
+        const localBranch =
+            window.localStorage.getItem(
+                "cofi_pos_branch"
+            );
+
+        state.branchCode =
+            requestedBranch ||
+            savedBranch ||
+            localBranch;
+
+        if (!state.branchCode) {
             throw new Error(
                 "Esta terminal no tiene sucursal configurada."
             );
         }
 
-        state.branchCode =
-            requestedBranch || savedBranch;
+        await window.CofiPosDB.put(
+            "meta",
+            state.branchCode,
+            "branch_code"
+        );
 
-        if (
-            requestedBranch &&
-            requestedBranch !== savedBranch
-        ) {
-            await window.CofiPosDB.put(
-                "meta",
-                requestedBranch,
-                "branch_code"
-            );
-        }
+        window.localStorage.setItem(
+            "cofi_pos_branch",
+            state.branchCode
+        );
 
         state.terminalId =
             await window.CofiPosDB
@@ -170,6 +177,40 @@
        CATALOG
        ===================================================== */
 
+    function cacheCatalogImages() {
+        if (
+            !("serviceWorker" in navigator) ||
+            !navigator.serviceWorker.controller ||
+            !state.catalog
+        ) {
+            return;
+        }
+
+        const urls =
+            (state.catalog.categories || [])
+                .flatMap(
+                    category =>
+                        category.products || []
+                )
+                .map(
+                    product =>
+                        product.image_url
+                )
+                .filter(Boolean);
+
+        if (!urls.length) {
+            return;
+        }
+
+        navigator.serviceWorker.controller
+            .postMessage({
+                type:
+                    "CACHE_PRODUCT_IMAGES",
+                urls,
+            });
+    }
+
+
     async function loadCatalog() {
         $("#catalog-message").hidden = false;
 
@@ -185,6 +226,8 @@
                 );
 
             state.catalog = result.catalog;
+
+            cacheCatalogImages();
 
             updateConnectionState(
                 result.source === "cloud"
@@ -1163,8 +1206,14 @@
             $("#confirm-payment");
 
         button.disabled = true;
-        button.textContent =
-            "Guardando…";
+
+        const buttonLabel =
+            button.querySelector("span");
+
+        if (buttonLabel) {
+            buttonLabel.textContent =
+                "Guardando…";
+        }
 
         $("#payment-error").hidden =
             true;
@@ -1270,8 +1319,14 @@
             state.paymentBusy = false;
 
             button.disabled = false;
-            button.textContent =
-                "Confirmar venta";
+
+            const buttonLabel =
+                button.querySelector("span");
+
+            if (buttonLabel) {
+                buttonLabel.textContent =
+                    "Confirmar cobro";
+            }
 
             await updatePendingCount();
         }
