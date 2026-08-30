@@ -59,6 +59,7 @@
 
     <main class="workspace">
         <section class="catalog-panel" aria-label="Catálogo de productos">
+            <div id="sale-view" class="sale-view">
             <div class="catalog-tools">
                 <label class="search-box" for="product-search">
                     <svg><use href="#i-search"></use></svg>
@@ -77,9 +78,49 @@
             <div id="catalog-message" class="catalog-message">Cargando catálogo…</div>
             <section id="product-grid" class="product-grid" aria-live="polite"></section>
 
+            </div>
+
+            <section id="orders-view" class="orders-view" hidden>
+                <div class="orders-header">
+                    <div>
+                        <p class="eyebrow">OPERACIÓN</p>
+                        <h1>Órdenes del día</h1>
+                        <span id="orders-summary">Cargando órdenes…</span>
+                    </div>
+
+                    <button
+                        id="refresh-orders"
+                        class="icon-button"
+                        type="button"
+                        title="Actualizar órdenes"
+                        aria-label="Actualizar órdenes"
+                    >
+                        <svg><use href="#i-refresh"></use></svg>
+                    </button>
+                </div>
+
+                <div id="order-filters" class="order-filters">
+                    <button type="button" data-order-filter="ALL" class="order-filter is-active">Todas</button>
+                    <button type="button" data-order-filter="NEW" class="order-filter">Nuevas</button>
+                    <button type="button" data-order-filter="PREPARING" class="order-filter">Preparando</button>
+                    <button type="button" data-order-filter="READY" class="order-filter">Listas</button>
+                    <button type="button" data-order-filter="DELIVERED" class="order-filter">Entregadas</button>
+                </div>
+
+                <div id="orders-message" class="orders-message">
+                    Cargando órdenes…
+                </div>
+
+                <div
+                    id="orders-list"
+                    class="orders-list"
+                    aria-live="polite"
+                ></div>
+            </section>
+
             <nav class="bottom-nav" aria-label="Módulos del punto de venta">
-                <button class="bottom-nav-item is-active" type="button"><svg><use href="#i-sale"></use></svg><span>Venta</span></button>
-                <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-orders"></use></svg><span>Órdenes</span><small>Próximamente</small></button>
+                <button id="nav-sale" class="bottom-nav-item is-active" type="button"><svg><use href="#i-sale"></use></svg><span>Venta</span></button>
+                <button id="nav-orders" class="bottom-nav-item" type="button"><svg><use href="#i-orders"></use></svg><span>Órdenes</span></button>
                 <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-users"></use></svg><span>Clientes</span><small>Próximamente</small></button>
                 <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-tag"></use></svg><span>Promos</span><small>Próximamente</small></button>
                 <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-more"></use></svg><span>Más</span><small>Próximamente</small></button>
@@ -139,11 +180,36 @@
     <section class="modal-card success-card" role="dialog" aria-modal="true" aria-labelledby="success-title"><div class="success-icon">✓</div><h2 id="success-title">Venta registrada</h2><p id="success-message"></p><span class="folio-label">Folio</span><strong id="success-folio" class="success-folio"></strong><button id="success-close" class="checkout-button" type="button">Iniciar nueva venta</button></section>
 </div>
 
+
+<div id="order-detail-modal" class="modal-backdrop" hidden>
+    <section class="modal-card order-detail-card" role="dialog" aria-modal="true" aria-labelledby="order-detail-folio">
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">DETALLE DE ORDEN</p>
+                <h2 id="order-detail-folio">Orden</h2>
+                <span id="order-detail-status" class="order-status-badge"></span>
+            </div>
+            <button id="order-detail-close" class="modal-close" type="button" aria-label="Cerrar">×</button>
+        </div>
+
+        <div id="order-detail-body" class="order-detail-body"></div>
+
+        <button
+            id="order-status-action"
+            class="checkout-button modal-action"
+            type="button"
+            hidden
+        ></button>
+    </section>
+</div>
+
 <script src="./js/uuid.js?v=8"></script>
 <script src="./js/db.js?v=8"></script>
 <script src="./js/api.js?v=8"></script>
 <script src="./js/catalog.js?v=8"></script>
 <script src="./js/sync.js?v=8"></script>
 <script src="./js/app.js?v=8"></script>
+<script src="./js/orders-local.js?v=1"></script>
+<script src="./js/orders.js?v=11"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "cofi-pos-shell-v8";
+const CACHE_NAME = "cofi-pos-shell-v9";
 
 const APP_SHELL = [
     "./index.html",
@@ -9,6 +9,8 @@ const APP_SHELL = [
     "./js/catalog.js?v=8",
     "./js/sync.js?v=8",
     "./js/app.js?v=8",
+    "./js/orders-local.js?v=1",
+    "./js/orders.js?v=11",
     "./manifest.webmanifest"
 ];
 
