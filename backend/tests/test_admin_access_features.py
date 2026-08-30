@@ -14,12 +14,20 @@ from app.models.admin_access import (
 from app.models.purchase import Purchase, PurchaseCreationSource, PurchaseStatus
 from app.services.mikrotik_service import MikroTikUserExistsError
 
+import pytest
+pytestmark = pytest.mark.usefixtures("default_branch")
+
 
 class RecordingMikroTik:
+    @classmethod
+    def for_branch(cls, _branch_code):
+        return cls()
+
     users: set[str] = set()
     standard_attempts: list[str] = []
     permanent_attempts: list[str] = []
     removed: list[str] = []
+    disabled_changes: list[tuple[str, bool]] = []
     fail_standard_at: set[int] = set()
 
     def __init__(self):
@@ -31,6 +39,7 @@ class RecordingMikroTik:
         cls.standard_attempts = []
         cls.permanent_attempts = []
         cls.removed = []
+        cls.disabled_changes = []
         cls.fail_standard_at = set()
 
     def create_hotspot_user_strict(self, username, **_kwargs):
@@ -46,6 +55,10 @@ class RecordingMikroTik:
         if username in self.users:
             raise MikroTikUserExistsError("exists")
         self.users.add(username)
+
+    def set_hotspot_user_disabled(self, username, disabled):
+        type(self).disabled_changes.append((username, disabled))
+        return username in self.users
 
     def remove_hotspot_user(self, username):
         self.removed.append(username)
@@ -85,6 +98,10 @@ def install_recording_mikrotik(monkeypatch):
 
 
 class OfflineMikroTik:
+    @classmethod
+    def for_branch(cls, _branch_code):
+        return cls()
+
     connection_attempts = 0
 
     def __init__(self):
@@ -343,7 +360,9 @@ def test_permanent_internal_access_is_super_only_non_revenue_and_revocable(
     assert revoked.status_code == 200
     assert revoked.json()["is_active"] is False
     assert revoked.json()["revoked_at"] is not None
-    assert pin in RecordingMikroTik.removed
+    assert (pin, True) in RecordingMikroTik.disabled_changes
+    assert pin in RecordingMikroTik.users
+    assert pin not in RecordingMikroTik.removed
 
 
 def test_internal_credentials_do_not_change_purchase_dashboard_counts(

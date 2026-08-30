@@ -10,9 +10,16 @@ from app.models.payment import Payment
 from app.models.purchase import Purchase, PurchaseCreationSource, PurchaseStatus
 from app.services.mikrotik_service import MikroTikUserExistsError
 from app.services.payment_service import PaymentService
+from app.services.branch_service import BranchService
+
+pytestmark = pytest.mark.usefixtures("default_branch")
 
 
 class RecordingMikroTik:
+    @classmethod
+    def for_branch(cls, _branch_code):
+        return cls()
+
     calls: list[dict] = []
     removed: list[str] = []
     collision_once = False
@@ -243,7 +250,10 @@ def test_mikrotik_collision_retries_without_duplicate_purchase(
 
 
 def create_pending_payment(db_session, target, amount=Decimal("25.00")):
+    branch = BranchService.get_default(db_session)
+
     purchase = Purchase(
+        branch_id=branch.id,
         plan_id=target,
         amount=amount,
         status=PurchaseStatus.PENDING,

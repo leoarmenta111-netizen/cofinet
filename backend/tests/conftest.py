@@ -21,6 +21,7 @@ from app.database.deps import get_db
 from app.database.session import Base
 from app.main import app
 from app.models.admin import Admin, AdminRole
+from app.models.branch import Branch
 from app.models.admin_access import (  # noqa: F401
     InternalHotspotCredential,
     PinBatch,
@@ -45,6 +46,20 @@ def db_session():
     with factory() as session:
         yield session
     Base.metadata.drop_all(engine)
+
+
+@pytest.fixture()
+def default_branch(db_session):
+    branch = Branch(
+        id=1,
+        name="Nuevo Vallarta",
+        code="nuevo-vallarta",
+        is_active=True,
+    )
+    db_session.add(branch)
+    db_session.commit()
+    db_session.refresh(branch)
+    return branch
 
 
 @pytest.fixture()

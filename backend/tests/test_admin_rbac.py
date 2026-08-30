@@ -1,7 +1,14 @@
 from app.models.admin import Admin, AdminRole
 
+import pytest
+pytestmark = pytest.mark.usefixtures("default_branch")
+
 
 class FakeMikroTik:
+    @classmethod
+    def for_branch(cls, _branch_code):
+        return cls()
+
     def create_hotspot_user_strict(self, **_kwargs):
         return None
 
