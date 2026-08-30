@@ -59,6 +59,21 @@ class PosOrder(Base):
         index=True,
     )
 
+    customer_id = Column(
+        Integer,
+        ForeignKey(
+            "pos_customers.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    customer = relationship(
+        "Customer",
+        foreign_keys=[customer_id],
+    )
+
     terminal_id = Column(
         String(80),
         nullable=False,

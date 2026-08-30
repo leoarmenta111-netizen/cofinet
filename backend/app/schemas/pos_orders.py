@@ -31,6 +31,7 @@ class PosOrderCreate(BaseModel):
     order_uuid: UUID
     branch_code: str = Field(min_length=1, max_length=50)
     terminal_id: str = Field(min_length=1, max_length=80)
+    customer_uuid: UUID | None = None
     created_at_client: datetime
     notes: str | None = Field(default=None, max_length=1000)
     items: list[PosOrderItemCreate] = Field(min_length=1)
@@ -66,6 +67,7 @@ class PosOrderResponse(BaseModel):
     folio: str
     branch_code: str
     terminal_id: str
+    customer_uuid: str | None = None
     status: str
     payment_status: str
     subtotal: Decimal

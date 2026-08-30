@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.branch import Branch
+from app.models.pos_customers import Customer
 from app.models.pos_catalog import (
     PosBranchProduct,
     PosModifierOption,
@@ -50,6 +51,11 @@ class PosOrderService:
             folio=order.folio,
             branch_code=order.branch.code,
             terminal_id=order.terminal_id,
+            customer_uuid=(
+                order.customer.customer_uuid
+                if order.customer is not None
+                else None
+            ),
             status=order.status,
             payment_status=order.payment_status,
             subtotal=money(order.subtotal),
@@ -111,6 +117,22 @@ class PosOrderService:
 
         if existing:
             return cls._response(existing)
+
+        customer = None
+
+        if payload.customer_uuid is not None:
+            customer = db.execute(
+                select(Customer).where(
+                    Customer.customer_uuid
+                    == str(payload.customer_uuid)
+                )
+            ).scalar_one_or_none()
+
+            if customer is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Customer not found",
+                )
 
         branch_code = payload.branch_code.strip().lower()
 
@@ -341,6 +363,11 @@ class PosOrderService:
         order = PosOrder(
             order_uuid=order_uuid,
             branch_id=branch.id,
+            customer_id=(
+                customer.id
+                if customer is not None
+                else None
+            ),
             terminal_id=payload.terminal_id,
             status="NEW",
             payment_status="PAID",
