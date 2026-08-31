@@ -225,14 +225,22 @@
         const orders =
             $("#nav-orders");
 
-        sale.classList.toggle(
+        const customers =
+            $("#nav-customers");
+
+        sale?.classList.toggle(
             "is-active",
             view === "sale"
         );
 
-        orders.classList.toggle(
+        orders?.classList.toggle(
             "is-active",
             view === "orders"
+        );
+
+        customers?.classList.toggle(
+            "is-active",
+            view === "customers"
         );
     }
 
@@ -243,9 +251,17 @@
         $("#orders-view").hidden =
             true;
 
+        const customers =
+            $("#customers-view");
+
+        if (customers) {
+            customers.hidden = true;
+        }
+
         $(".workspace")
             .classList.remove(
-                "orders-mode"
+                "orders-mode",
+                "customers-mode"
             );
 
         activateNavigation("sale");
@@ -257,6 +273,18 @@
 
         $("#orders-view").hidden =
             false;
+
+        const customers =
+            $("#customers-view");
+
+        if (customers) {
+            customers.hidden = true;
+        }
+
+        $(".workspace")
+            .classList.remove(
+                "customers-mode"
+            );
 
         $(".workspace")
             .classList.add(

@@ -1832,3 +1832,303 @@ tbody tr:hover { background: var(--admin-surface-soft); }
     }
 
 }
+
+
+/* ==================================================
+   CLIENTES CRM
+   ================================================== */
+
+.customers-crm {
+    max-width: 1500px;
+}
+
+.customer-metrics-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.customer-stat-card {
+    min-width: 0;
+    padding: 17px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: var(--surface);
+}
+
+.customer-stat-card span {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.customer-stat-card strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 18px;
+}
+
+.customers-crm-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(300px, .85fr)
+        minmax(0, 1.65fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.customers-list {
+    max-height: calc(100vh - 330px);
+    padding: 7px 12px 16px;
+    overflow-y: auto;
+}
+
+.admin-customer-search-form {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+    gap: 9px;
+    padding: 0 20px 16px;
+}
+
+.admin-customer-search-form input,
+.customer-edit-form input,
+.loyalty-adjustment-form input {
+    min-width: 0;
+    height: 42px;
+    padding: 0 11px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface);
+    color: inherit;
+    font: inherit;
+}
+
+.admin-customers-status {
+    padding: 0 20px;
+    font-size: 12px;
+}
+
+.admin-customer-list-item {
+    width: 100%;
+    display: grid;
+    gap: 4px;
+    padding: 14px 11px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 9px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-customer-list-item:hover {
+    background: var(--surface-soft);
+}
+
+.admin-customer-list-item.is-active {
+    background: var(--surface-soft);
+    box-shadow:
+        inset 3px 0 0
+        var(--gold);
+}
+
+.admin-customer-list-name {
+    font-weight: 750;
+}
+
+.admin-customer-list-phone,
+.admin-customer-list-metrics {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.customer-profile {
+    min-height: 560px;
+}
+
+.customer-profile-empty {
+    min-height: 420px;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 5px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.customer-profile-heading {
+    padding: 22px 22px 8px;
+}
+
+.customer-profile-heading h2 {
+    margin: 4px 0;
+}
+
+.customer-edit-form {
+    padding: 16px 22px 22px;
+    border-bottom: 1px solid var(--border);
+}
+
+.customer-edit-form .form-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 13px;
+    margin-bottom: 14px;
+}
+
+.customer-edit-form label {
+    display: grid;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.customer-admin-section {
+    padding: 20px 22px;
+    border-bottom: 1px solid var(--border);
+}
+
+.customer-admin-section:last-child {
+    border-bottom: 0;
+}
+
+.customer-section-heading {
+    margin-bottom: 13px;
+}
+
+.customer-section-heading h3 {
+    margin: 0 0 3px;
+}
+
+.loyalty-adjustment-form {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+    gap: 9px;
+    max-width: 380px;
+}
+
+.customer-history-list {
+    display: grid;
+}
+
+.customer-history-row {
+    min-width: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.customer-history-row:last-child {
+    border-bottom: 0;
+}
+
+.customer-history-row > div {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.customer-history-row span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.customer-history-value {
+    text-align: right;
+}
+
+.customer-points-positive {
+    color: #257a52;
+}
+
+.customer-points-negative {
+    color: #a33b3b;
+}
+
+.admin-customer-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(13, 13, 13, .52);
+    backdrop-filter: blur(4px);
+}
+
+.admin-customer-modal[hidden] {
+    display: none;
+}
+
+.admin-customer-modal-card {
+    width: min(620px, 100%);
+    padding: 24px;
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow:
+        0 28px 80px
+        rgba(0, 0, 0, .22);
+}
+
+.customer-modal-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.customer-modal-heading h2 {
+    margin-top: 4px;
+}
+
+
+@media (max-width: 1150px) {
+    .customer-metrics-grid {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+    }
+
+    .customers-crm-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .customers-list {
+        max-height: 440px;
+    }
+}
+
+
+@media (max-width: 650px) {
+    .customer-metrics-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+    .customer-edit-form .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-customer-search-form,
+    .loyalty-adjustment-form {
+        grid-template-columns: 1fr;
+    }
+}

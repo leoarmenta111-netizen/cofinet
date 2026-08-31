@@ -1,0 +1,1275 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Clientes | CofiNet+</title>
+
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+</head>
+
+<body
+    class="auth-pending"
+    data-page="customers"
+>
+
+<div class="app-shell protected-content">
+
+    <aside class="sidebar">
+
+        <div class="brand-lockup">
+            <span class="brand-mark">C</span>
+            <span>CofiNet+</span>
+        </div>
+
+        <nav
+            data-admin-nav
+            aria-label="Navegación principal"
+        ></nav>
+
+        <div class="sidebar-profile">
+
+            <div class="profile-row">
+
+                <span
+                    class="avatar"
+                    data-admin-initials
+                ></span>
+
+                <div class="profile-copy">
+                    <strong data-admin-name></strong>
+                    <span data-admin-role></span>
+                </div>
+
+            </div>
+
+            <button
+                class="button button-ghost logout-button"
+                type="button"
+                onclick="CofiAdmin.logoutAdmin()"
+            >
+                Cerrar sesión
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <div class="main-area">
+
+        <header class="topbar">
+
+            <button
+                class="button button-ghost menu-toggle"
+                data-menu-toggle
+                aria-expanded="false"
+            >
+                Menú
+            </button>
+
+            <span class="topbar-title">
+                Clientes POS
+            </span>
+
+            <span
+                class="muted"
+                data-admin-name
+            ></span>
+
+        </header>
+
+
+        <main class="content customers-crm">
+
+            <header class="page-header">
+
+                <div>
+                    <p class="eyebrow">
+                        CRM
+                    </p>
+
+                    <h1 class="page-title">
+                        Clientes
+                    </h1>
+
+                    <p class="page-description">
+                        Consulta actividad, visitas,
+                        gasto, compras y recompensas
+                        de cada cliente.
+                    </p>
+                </div>
+
+                <button
+                    id="new-admin-customer"
+                    class="button button-primary"
+                    type="button"
+                >
+                    Nuevo cliente
+                </button>
+
+            </header>
+
+
+            <section class="customer-metrics-grid">
+
+                <article class="customer-stat-card">
+                    <span>Puntos</span>
+                    <strong id="metric-points">
+                        —
+                    </strong>
+                </article>
+
+                <article class="customer-stat-card">
+                    <span>Visitas</span>
+                    <strong id="metric-visits">
+                        —
+                    </strong>
+                </article>
+
+                <article class="customer-stat-card">
+                    <span>Gasto total</span>
+                    <strong id="metric-spend">
+                        —
+                    </strong>
+                </article>
+
+                <article class="customer-stat-card">
+                    <span>Última compra</span>
+                    <strong id="metric-last-purchase">
+                        —
+                    </strong>
+                </article>
+
+                <article class="customer-stat-card">
+                    <span>Última actividad</span>
+                    <strong id="metric-last-activity">
+                        —
+                    </strong>
+                </article>
+
+            </section>
+
+
+            <div class="customers-crm-layout">
+
+                <section
+                    class="panel customers-directory-panel"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+                            <h2>Directorio</h2>
+
+                            <p class="muted">
+                                Busca por nombre o teléfono.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <form
+                        id="admin-customer-search-form"
+                        class="admin-customer-search-form"
+                    >
+
+                        <input
+                            id="customer-search"
+                            type="search"
+                            autocomplete="off"
+                            placeholder="Nombre o teléfono"
+                        >
+
+                        <button
+                            class="button button-secondary"
+                            type="submit"
+                        >
+                            Buscar
+                        </button>
+
+                    </form>
+
+
+                    <p
+                        id="customers-status"
+                        class="muted admin-customers-status"
+                    >
+                        Cargando clientes…
+                    </p>
+
+
+                    <div
+                        id="customers-list"
+                        class="customers-list"
+                    ></div>
+
+                </section>
+
+
+                <section
+                    id="customer-profile"
+                    class="panel customer-profile"
+                >
+
+                    <div
+                        id="customer-profile-empty"
+                        class="customer-profile-empty"
+                    >
+                        <strong>
+                            Selecciona un cliente
+                        </strong>
+
+                        <span>
+                            Aquí aparecerá su perfil,
+                            compras y recompensas.
+                        </span>
+                    </div>
+
+
+                    <div
+                        id="customer-profile-content"
+                        hidden
+                    >
+
+                        <div class="customer-profile-heading">
+
+                            <div>
+
+                                <p class="eyebrow">
+                                    Perfil del cliente
+                                </p>
+
+                                <h2 id="profile-name"></h2>
+
+                                <span
+                                    id="profile-phone"
+                                    class="muted"
+                                ></span>
+
+                            </div>
+
+                        </div>
+
+
+                        <form
+                            id="customer-edit-form"
+                            class="customer-edit-form"
+                        >
+
+                            <div class="form-grid">
+
+                                <label>
+                                    Nombre
+
+                                    <input
+                                        id="edit-name"
+                                        name="name"
+                                        required
+                                    >
+                                </label>
+
+                                <label>
+                                    Teléfono
+
+                                    <input
+                                        id="edit-phone"
+                                        name="phone"
+                                        required
+                                    >
+                                </label>
+
+                                <label>
+                                    Email
+
+                                    <input
+                                        id="edit-email"
+                                        name="email"
+                                        type="email"
+                                    >
+                                </label>
+
+                                <label>
+                                    Cumpleaños
+
+                                    <input
+                                        id="edit-birthday"
+                                        name="birthday"
+                                        type="date"
+                                    >
+                                </label>
+
+                            </div>
+
+                            <button
+                                class="button button-secondary"
+                                type="submit"
+                            >
+                                Guardar cambios
+                            </button>
+
+                        </form>
+
+
+                        <section class="customer-admin-section">
+
+                            <div class="customer-section-heading">
+                                <h3>
+                                    Recompensas
+                                </h3>
+
+                                <p class="muted">
+                                    Ajuste manual de puntos.
+                                </p>
+                            </div>
+
+
+                            <form
+                                id="loyalty-adjustment-form"
+                                class="loyalty-adjustment-form"
+                            >
+
+                                <input
+                                    id="loyalty-points"
+                                    name="points"
+                                    type="number"
+                                    placeholder="+10 o -10"
+                                    required
+                                >
+
+                                <button
+                                    class="button button-secondary"
+                                    type="submit"
+                                >
+                                    Aplicar
+                                </button>
+
+                            </form>
+
+                        </section>
+
+
+                        <section class="customer-admin-section">
+
+                            <div class="customer-section-heading">
+                                <h3>
+                                    Historial de compras
+                                </h3>
+                            </div>
+
+                            <div
+                                id="customer-orders"
+                                class="customer-history-list"
+                            ></div>
+
+                        </section>
+
+
+                        <section class="customer-admin-section">
+
+                            <div class="customer-section-heading">
+                                <h3>
+                                    Historial de puntos
+                                </h3>
+                            </div>
+
+                            <div
+                                id="customer-loyalty-history"
+                                class="customer-history-list"
+                            ></div>
+
+                        </section>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<div
+    id="new-customer-modal"
+    class="admin-customer-modal"
+    hidden
+>
+
+    <section class="admin-customer-modal-card">
+
+        <div class="customer-modal-heading">
+
+            <div>
+                <p class="eyebrow">
+                    CRM
+                </p>
+
+                <h2>
+                    Nuevo cliente
+                </h2>
+            </div>
+
+            <button
+                id="close-admin-customer"
+                class="button button-ghost"
+                type="button"
+            >
+                Cerrar
+            </button>
+
+        </div>
+
+
+        <form
+            id="admin-customer-create-form"
+            class="customer-edit-form"
+        >
+
+            <div class="form-grid">
+
+                <label>
+                    Nombre
+
+                    <input
+                        name="name"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Teléfono
+
+                    <input
+                        name="phone"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Email
+
+                    <input
+                        name="email"
+                        type="email"
+                    >
+                </label>
+
+                <label>
+                    Cumpleaños
+
+                    <input
+                        name="birthday"
+                        type="date"
+                    >
+                </label>
+
+            </div>
+
+            <button
+                class="button button-primary"
+                type="submit"
+            >
+                Crear cliente
+            </button>
+
+        </form>
+
+    </section>
+
+</div>
+
+
+<script src="admin.js"></script>
+
+<script>
+(() => {
+    let selectedCustomerUuid = null;
+
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll(
+                '"',
+                "&quot;"
+            );
+    }
+
+
+    function crmMoney(value) {
+        return new Intl.NumberFormat(
+            "es-MX",
+            {
+                style: "currency",
+                currency: "MXN",
+            }
+        ).format(
+            Number(value || 0)
+        );
+    }
+
+
+    function crmDate(value) {
+        if (!value) {
+            return "—";
+        }
+
+        const date =
+            new Date(value);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "—";
+        }
+
+        return new Intl.DateTimeFormat(
+            "es-MX",
+            {
+                dateStyle: "medium",
+                timeStyle: "short",
+            }
+        ).format(date);
+    }
+
+
+    function setStatus(message) {
+        document
+            .getElementById(
+                "customers-status"
+            )
+            .textContent =
+                message;
+    }
+
+
+    function renderCustomers(customers) {
+        const container =
+            document.getElementById(
+                "customers-list"
+            );
+
+        container.replaceChildren();
+
+        if (!customers.length) {
+            setStatus(
+                "No encontramos clientes."
+            );
+
+            return;
+        }
+
+        setStatus(
+            `${customers.length} cliente${
+                customers.length === 1
+                    ? ""
+                    : "s"
+            }`
+        );
+
+
+        customers.forEach(customer => {
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.className =
+                "admin-customer-list-item";
+
+            button.dataset.uuid =
+                customer.customer_uuid;
+
+
+            button.innerHTML = `
+                <span class="admin-customer-list-name">
+                    ${escapeHtml(customer.name)}
+                </span>
+
+                <span class="admin-customer-list-phone">
+                    ${escapeHtml(customer.phone)}
+                </span>
+
+                <span class="admin-customer-list-metrics">
+                    ${customer.visits || 0} visitas
+                    ·
+                    ${crmMoney(customer.total_spent)}
+                </span>
+            `;
+
+
+            button.addEventListener(
+                "click",
+                () => {
+                    loadProfile(
+                        customer.customer_uuid
+                    );
+                }
+            );
+
+
+            container.append(button);
+        });
+    }
+
+
+    async function loadCustomers(
+        query = ""
+    ) {
+        setStatus(
+            "Cargando clientes…"
+        );
+
+        try {
+            const customers =
+                await adminRequest(
+                    "/admin/pos/customers?q="
+                    + encodeURIComponent(query)
+                );
+
+            renderCustomers(
+                Array.isArray(customers)
+                    ? customers
+                    : []
+            );
+
+        } catch (error) {
+            setStatus(
+                error.message ||
+                "No fue posible cargar clientes."
+            );
+        }
+    }
+
+
+    function renderMetrics(customer) {
+        document
+            .getElementById(
+                "metric-points"
+            )
+            .textContent =
+                customer.loyalty_points || 0;
+
+        document
+            .getElementById(
+                "metric-visits"
+            )
+            .textContent =
+                customer.visits || 0;
+
+        document
+            .getElementById(
+                "metric-spend"
+            )
+            .textContent =
+                crmMoney(
+                    customer.total_spent
+                );
+
+        document
+            .getElementById(
+                "metric-last-purchase"
+            )
+            .textContent =
+                crmDate(
+                    customer.last_purchase_at
+                );
+
+        document
+            .getElementById(
+                "metric-last-activity"
+            )
+            .textContent =
+                crmDate(
+                    customer.last_activity_at
+                );
+    }
+
+
+    function renderOrders(customer) {
+        const container =
+            document.getElementById(
+                "customer-orders"
+            );
+
+        container.replaceChildren();
+
+        if (!customer.orders?.length) {
+            container.innerHTML =
+                '<p class="muted">Sin compras registradas.</p>';
+
+            return;
+        }
+
+
+        customer.orders.forEach(order => {
+            const row =
+                document.createElement(
+                    "article"
+                );
+
+            row.className =
+                "customer-history-row";
+
+
+            row.innerHTML = `
+                <div>
+                    <strong>
+                        ${escapeHtml(
+                            order.folio || "Orden"
+                        )}
+                    </strong>
+
+                    <span>
+                        ${escapeHtml(
+                            order.branch_code || "—"
+                        )}
+                        ·
+                        ${crmDate(
+                            order.created_at_client
+                        )}
+                    </span>
+                </div>
+
+                <div class="customer-history-value">
+                    <strong>
+                        ${crmMoney(order.total)}
+                    </strong>
+
+                    <span>
+                        ${escapeHtml(order.status)}
+                    </span>
+                </div>
+            `;
+
+
+            container.append(row);
+        });
+    }
+
+
+    function renderLoyalty(customer) {
+        const container =
+            document.getElementById(
+                "customer-loyalty-history"
+            );
+
+        container.replaceChildren();
+
+
+        if (
+            !customer
+                .loyalty_history
+                ?.length
+        ) {
+            container.innerHTML =
+                '<p class="muted">Sin movimientos de puntos.</p>';
+
+            return;
+        }
+
+
+        customer
+            .loyalty_history
+            .forEach(entry => {
+                const row =
+                    document.createElement(
+                        "article"
+                    );
+
+                row.className =
+                    "customer-history-row";
+
+
+                const points =
+                    Number(
+                        entry.points || 0
+                    );
+
+
+                row.innerHTML = `
+                    <div>
+                        <strong>
+                            ${escapeHtml(
+                                entry.entry_type
+                            )}
+                        </strong>
+
+                        <span>
+                            ${crmDate(
+                                entry.created_at
+                            )}
+                        </span>
+                    </div>
+
+                    <div class="customer-history-value">
+                        <strong class="${
+                            points >= 0
+                                ? "customer-points-positive"
+                                : "customer-points-negative"
+                        }">
+                            ${
+                                points > 0
+                                    ? "+"
+                                    : ""
+                            }${points}
+                        </strong>
+
+                        <span>
+                            Puntos
+                        </span>
+                    </div>
+                `;
+
+
+                container.append(row);
+            });
+    }
+
+
+    function renderProfile(customer) {
+        document
+            .getElementById(
+                "customer-profile-empty"
+            )
+            .hidden =
+                true;
+
+        document
+            .getElementById(
+                "customer-profile-content"
+            )
+            .hidden =
+                false;
+
+
+        document
+            .getElementById(
+                "profile-name"
+            )
+            .textContent =
+                customer.name;
+
+
+        document
+            .getElementById(
+                "profile-phone"
+            )
+            .textContent =
+                customer.phone;
+
+
+        document
+            .getElementById(
+                "edit-name"
+            )
+            .value =
+                customer.name || "";
+
+
+        document
+            .getElementById(
+                "edit-phone"
+            )
+            .value =
+                customer.phone || "";
+
+
+        document
+            .getElementById(
+                "edit-email"
+            )
+            .value =
+                customer.email || "";
+
+
+        document
+            .getElementById(
+                "edit-birthday"
+            )
+            .value =
+                customer.birthday || "";
+
+
+        renderMetrics(customer);
+        renderOrders(customer);
+        renderLoyalty(customer);
+    }
+
+
+    async function loadProfile(
+        customerUuid
+    ) {
+        selectedCustomerUuid =
+            customerUuid;
+
+
+        document
+            .querySelectorAll(
+                ".admin-customer-list-item"
+            )
+            .forEach(item => {
+                item.classList.toggle(
+                    "is-active",
+                    item.dataset.uuid
+                        === customerUuid
+                );
+            });
+
+
+        try {
+            const customer =
+                await adminRequest(
+                    `/admin/pos/customers/${
+                        encodeURIComponent(
+                            customerUuid
+                        )
+                    }/profile`
+                );
+
+            renderProfile(customer);
+
+        } catch (error) {
+            showToast(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    document
+        .getElementById(
+            "admin-customer-search-form"
+        )
+        .addEventListener(
+            "submit",
+            event => {
+                event.preventDefault();
+
+                loadCustomers(
+                    document
+                        .getElementById(
+                            "customer-search"
+                        )
+                        .value
+                        .trim()
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "customer-edit-form"
+        )
+        .addEventListener(
+            "submit",
+            async event => {
+                event.preventDefault();
+
+                if (!selectedCustomerUuid) {
+                    return;
+                }
+
+
+                const data =
+                    new FormData(
+                        event.currentTarget
+                    );
+
+
+                try {
+                    await adminRequest(
+                        `/admin/pos/customers/${
+                            encodeURIComponent(
+                                selectedCustomerUuid
+                            )
+                        }`,
+                        {
+                            method: "PATCH",
+
+                            body:
+                                JSON.stringify({
+                                    name:
+                                        data.get(
+                                            "name"
+                                        ),
+
+                                    phone:
+                                        data.get(
+                                            "phone"
+                                        ),
+
+                                    email:
+                                        data.get(
+                                            "email"
+                                        ) || null,
+
+                                    birthday:
+                                        data.get(
+                                            "birthday"
+                                        ) || null,
+                                }),
+                        }
+                    );
+
+
+                    showToast(
+                        "Cliente actualizado.",
+                        "success"
+                    );
+
+
+                    await loadProfile(
+                        selectedCustomerUuid
+                    );
+
+
+                    await loadCustomers(
+                        document
+                            .getElementById(
+                                "customer-search"
+                            )
+                            .value
+                            .trim()
+                    );
+
+                } catch (error) {
+                    showToast(
+                        error.message,
+                        "error"
+                    );
+                }
+            }
+        );
+
+
+    document
+        .getElementById(
+            "loyalty-adjustment-form"
+        )
+        .addEventListener(
+            "submit",
+            async event => {
+                event.preventDefault();
+
+                if (!selectedCustomerUuid) {
+                    return;
+                }
+
+
+                const points =
+                    Number(
+                        document
+                            .getElementById(
+                                "loyalty-points"
+                            )
+                            .value
+                    );
+
+
+                try {
+                    await adminRequest(
+                        `/admin/pos/customers/${
+                            encodeURIComponent(
+                                selectedCustomerUuid
+                            )
+                        }/loyalty-adjustments`,
+                        {
+                            method: "POST",
+
+                            body:
+                                JSON.stringify({
+                                    points,
+                                }),
+                        }
+                    );
+
+
+                    event.currentTarget
+                        .reset();
+
+
+                    showToast(
+                        "Puntos actualizados.",
+                        "success"
+                    );
+
+
+                    await loadProfile(
+                        selectedCustomerUuid
+                    );
+
+                } catch (error) {
+                    showToast(
+                        error.message,
+                        "error"
+                    );
+                }
+            }
+        );
+
+
+    const modal =
+        document.getElementById(
+            "new-customer-modal"
+        );
+
+
+    document
+        .getElementById(
+            "new-admin-customer"
+        )
+        .addEventListener(
+            "click",
+            () => {
+                modal.hidden =
+                    false;
+
+                modal
+                    .querySelector(
+                        'input[name="name"]'
+                    )
+                    ?.focus();
+            }
+        );
+
+
+    document
+        .getElementById(
+            "close-admin-customer"
+        )
+        .addEventListener(
+            "click",
+            () => {
+                modal.hidden =
+                    true;
+            }
+        );
+
+
+    document
+        .getElementById(
+            "admin-customer-create-form"
+        )
+        .addEventListener(
+            "submit",
+            async event => {
+                event.preventDefault();
+
+
+                const form =
+                    event.currentTarget;
+
+
+                const data =
+                    new FormData(form);
+
+
+                try {
+                    const customer =
+                        await adminRequest(
+                            "/admin/pos/customers",
+                            {
+                                method: "POST",
+
+                                body:
+                                    JSON.stringify({
+                                        name:
+                                            data.get(
+                                                "name"
+                                            ),
+
+                                        phone:
+                                            data.get(
+                                                "phone"
+                                            ),
+
+                                        email:
+                                            data.get(
+                                                "email"
+                                            ) || null,
+
+                                        birthday:
+                                            data.get(
+                                                "birthday"
+                                            ) || null,
+                                    }),
+                            }
+                        );
+
+
+                    form.reset();
+
+                    modal.hidden =
+                        true;
+
+
+                    showToast(
+                        "Cliente creado.",
+                        "success"
+                    );
+
+
+                    await loadCustomers("");
+
+
+                    await loadProfile(
+                        customer.customer_uuid
+                    );
+
+                } catch (error) {
+                    showToast(
+                        error.message,
+                        "error"
+                    );
+                }
+            }
+        );
+
+
+    async function start() {
+        const admin =
+            await bootstrapAdmin({
+                allowedRoles: [
+                    SUPER_ADMIN,
+                ],
+            });
+
+
+        if (!admin) {
+            return;
+        }
+
+
+        await loadCustomers("");
+    }
+
+
+    start();
+})();
+</script>
+
+</body>
+</html>

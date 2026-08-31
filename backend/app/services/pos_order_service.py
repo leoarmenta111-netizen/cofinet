@@ -546,6 +546,11 @@ class PosOrderService:
                 amount_tendered - total
             )
 
+        if customer is not None:
+            customer.last_activity_at = (
+                payload.created_at_client
+            )
+
         order = PosOrder(
             order_uuid=order_uuid,
             branch_id=branch.id,

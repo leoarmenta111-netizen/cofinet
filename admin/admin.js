@@ -118,6 +118,7 @@ function renderAdminChrome(admin) {
             ["pins", "pins.html", "PINs de efectivo"],
             ["payments", "payments.html", "Payments"],
             ["sales", "sales.html", "Ventas POS"],
+            ["customers", "customers.html", "Clientes"],
             ["catalog", "catalog.html", "Catálogo POS"],
             ["plans", "plans.html", "Planes"],
             ["administrators", "administrators.html", "Administradores"]

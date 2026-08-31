@@ -147,6 +147,45 @@ window.CofiPosAPI = (() => {
         );
     }
 
+    function searchCustomers(
+        query = ""
+    ) {
+        const params =
+            new URLSearchParams();
+
+        params.set(
+            "q",
+            String(query || "").trim()
+        );
+
+        return request(
+            `/pos/customers?${params.toString()}`
+        );
+    }
+
+
+    function createCustomer(payload) {
+        return request(
+            "/pos/customers",
+            {
+                method: "POST",
+                body: JSON.stringify(payload),
+            }
+        );
+    }
+
+
+    function getCustomer(customerUuid) {
+        return request(
+            `/pos/customers/${
+                encodeURIComponent(
+                    customerUuid
+                )
+            }`
+        );
+    }
+
+
     function checkHealth() {
         return request(
             "/health",
@@ -163,6 +202,9 @@ window.CofiPosAPI = (() => {
         listOrders,
         getOrder,
         updateOrderStatus,
+        searchCustomers,
+        createCustomer,
+        getCustomer,
         checkHealth,
     };
 })();

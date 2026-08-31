@@ -153,10 +153,170 @@
                 ></div>
             </section>
 
+            <section
+                id="customers-view"
+                class="customers-view"
+                hidden
+                aria-label="Clientes"
+            >
+                <div class="customers-header">
+                    <div>
+                        <span class="customers-eyebrow">
+                            CRM de mostrador
+                        </span>
+                        <h2>Clientes</h2>
+                        <p>
+                            Busca por nombre o teléfono,
+                            consulta su actividad y
+                            selecciónalo para la venta.
+                        </p>
+                    </div>
+
+                    <button
+                        id="new-customer-button"
+                        class="customer-primary-button"
+                        type="button"
+                    >
+                        + Nuevo cliente
+                    </button>
+                </div>
+
+                <div class="customers-layout">
+
+                    <section class="customers-directory">
+
+                        <form
+                            id="customer-search-form"
+                            class="customer-search-form"
+                        >
+                            <label
+                                class="customer-search-box"
+                                for="customer-search"
+                            >
+                                <svg>
+                                    <use href="#i-search"></use>
+                                </svg>
+
+                                <input
+                                    id="customer-search"
+                                    type="search"
+                                    autocomplete="off"
+                                    placeholder="Nombre o teléfono"
+                                >
+                            </label>
+
+                            <button
+                                type="submit"
+                                class="customer-search-button"
+                            >
+                                Buscar
+                            </button>
+                        </form>
+
+                        <p
+                            id="customers-message"
+                            class="customers-message"
+                        >
+                            Busca un cliente o consulta
+                            los registros recientes.
+                        </p>
+
+                        <div
+                            id="customer-results"
+                            class="customer-results"
+                            aria-live="polite"
+                        ></div>
+                    </section>
+
+
+                    <aside
+                        id="customer-create-panel"
+                        class="customer-create-panel"
+                        hidden
+                    >
+                        <div class="customer-create-heading">
+                            <div>
+                                <span>Registro rápido</span>
+                                <h3>Nuevo cliente</h3>
+                            </div>
+
+                            <button
+                                id="customer-create-close"
+                                type="button"
+                                class="customer-close-button"
+                                aria-label="Cerrar"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <form
+                            id="customer-create-form"
+                            class="customer-create-form"
+                        >
+                            <label>
+                                Nombre
+                                <input
+                                    id="new-customer-name"
+                                    name="name"
+                                    required
+                                    maxlength="160"
+                                    autocomplete="name"
+                                >
+                            </label>
+
+                            <label>
+                                Teléfono
+                                <input
+                                    id="new-customer-phone"
+                                    name="phone"
+                                    required
+                                    inputmode="tel"
+                                    autocomplete="tel"
+                                >
+                            </label>
+
+                            <label>
+                                Email
+                                <input
+                                    id="new-customer-email"
+                                    name="email"
+                                    type="email"
+                                    autocomplete="email"
+                                >
+                            </label>
+
+                            <label>
+                                Cumpleaños
+                                <input
+                                    id="new-customer-birthday"
+                                    name="birthday"
+                                    type="date"
+                                >
+                            </label>
+
+                            <p
+                                id="customer-create-error"
+                                class="customer-create-error"
+                                hidden
+                            ></p>
+
+                            <button
+                                type="submit"
+                                class="customer-save-button"
+                            >
+                                Guardar y seleccionar
+                            </button>
+                        </form>
+                    </aside>
+
+                </div>
+            </section>
+
             <nav class="bottom-nav" aria-label="Módulos del punto de venta">
                 <button id="nav-sale" class="bottom-nav-item is-active" type="button"><svg><use href="#i-sale"></use></svg><span>Venta</span></button>
                 <button id="nav-orders" class="bottom-nav-item" type="button"><svg><use href="#i-orders"></use></svg><span>Órdenes</span></button>
-                <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-users"></use></svg><span>Clientes</span><small>Próximamente</small></button>
+                <button id="nav-customers" class="bottom-nav-item" type="button"><svg><use href="#i-users"></use></svg><span>Clientes</span></button>
                 <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-tag"></use></svg><span>Promos</span><small>Próximamente</small></button>
                 <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-more"></use></svg><span>Más</span><small>Próximamente</small></button>
             </nav>
@@ -167,6 +327,106 @@
                 <div><h2>Orden actual</h2><span class="order-type">Venta en mostrador</span></div>
                 <button id="clear-cart" class="icon-button danger-button" type="button" hidden title="Vaciar orden" aria-label="Vaciar orden"><svg><use href="#i-trash"></use></svg></button>
             </div>
+
+            <section
+                id="sale-customer-section"
+                class="sale-customer-section"
+            >
+                <div class="sale-customer-heading">
+                    <span>Cliente</span>
+
+                    <button
+                        id="open-customers-from-sale"
+                        type="button"
+                        class="customer-link-button"
+                    >
+                        Buscar / cambiar
+                    </button>
+                </div>
+
+                <div
+                    id="no-selected-customer"
+                    class="no-selected-customer"
+                >
+                    <div class="customer-avatar-small">
+                        <svg>
+                            <use href="#i-users"></use>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <strong>Venta sin cliente</strong>
+                        <span>
+                            Puedes asociar esta venta
+                            a un cliente.
+                        </span>
+                    </div>
+                </div>
+
+                <article
+                    id="selected-customer-card"
+                    class="selected-customer-card"
+                    hidden
+                >
+                    <div class="selected-customer-top">
+                        <div class="customer-avatar">
+                            <svg>
+                                <use href="#i-users"></use>
+                            </svg>
+                        </div>
+
+                        <div class="selected-customer-identity">
+                            <strong
+                                id="selected-customer-name"
+                            ></strong>
+
+                            <span
+                                id="selected-customer-phone"
+                            ></span>
+                        </div>
+
+                        <button
+                            id="remove-selected-customer"
+                            type="button"
+                            class="customer-remove-button"
+                            title="Quitar cliente"
+                            aria-label="Quitar cliente"
+                        >
+                            ×
+                        </button>
+                    </div>
+
+                    <div class="customer-metrics">
+                        <div>
+                            <span>Puntos</span>
+                            <strong
+                                id="selected-customer-points"
+                            >0</strong>
+                        </div>
+
+                        <div>
+                            <span>Visitas</span>
+                            <strong
+                                id="selected-customer-visits"
+                            >0</strong>
+                        </div>
+
+                        <div>
+                            <span>Gasto</span>
+                            <strong
+                                id="selected-customer-spend"
+                            >$0</strong>
+                        </div>
+                    </div>
+
+                    <div class="customer-last-purchase">
+                        <span>Última compra</span>
+                        <strong
+                            id="selected-customer-last-purchase"
+                        >—</strong>
+                    </div>
+                </article>
+            </section>
 
             <div id="empty-order" class="empty-order">
                 <span class="empty-icon"><svg><use href="#i-coffee"></use></svg></span>

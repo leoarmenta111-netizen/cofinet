@@ -6,6 +6,10 @@
         selectedCategoryId: "all",
         searchQuery: "",
 
+        selectedCustomer: null,
+        customerResults: [],
+        customersBusy: false,
+
         cart: [],
 
         modifierProduct: null,
@@ -1120,6 +1124,11 @@
             terminal_id:
                 state.terminalId,
 
+            customer_uuid:
+                state.selectedCustomer
+                    ? state.selectedCustomer.customer_uuid
+                    : null,
+
             created_at_client:
                 now,
 
@@ -1369,6 +1378,606 @@
     }
 
 
+    function customerDate(value) {
+        if (!value) {
+            return "Sin compras";
+        }
+
+        const parsed =
+            new Date(value);
+
+        if (
+            Number.isNaN(
+                parsed.getTime()
+            )
+        ) {
+            return "—";
+        }
+
+        return parsed.toLocaleDateString(
+            "es-MX",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+            }
+        );
+    }
+
+
+    function renderSelectedCustomer() {
+        const customer =
+            state.selectedCustomer;
+
+        const empty =
+            $("#no-selected-customer");
+
+        const card =
+            $("#selected-customer-card");
+
+        if (!empty || !card) {
+            return;
+        }
+
+        empty.hidden =
+            Boolean(customer);
+
+        card.hidden =
+            !customer;
+
+        if (!customer) {
+            return;
+        }
+
+        $("#selected-customer-name")
+            .textContent =
+                customer.name || "Cliente";
+
+        $("#selected-customer-phone")
+            .textContent =
+                customer.phone || "—";
+
+        $("#selected-customer-points")
+            .textContent =
+                String(
+                    customer.loyalty_points || 0
+                );
+
+        $("#selected-customer-visits")
+            .textContent =
+                String(
+                    customer.visits || 0
+                );
+
+        $("#selected-customer-spend")
+            .textContent =
+                money(
+                    customer.total_spent || 0
+                );
+
+        $("#selected-customer-last-purchase")
+            .textContent =
+                customerDate(
+                    customer.last_purchase_at
+                );
+    }
+
+
+    function showSaleFromCustomers() {
+        const sale =
+            $("#sale-view");
+
+        const orders =
+            $("#orders-view");
+
+        const customers =
+            $("#customers-view");
+
+        if (sale) {
+            sale.hidden = false;
+        }
+
+        if (orders) {
+            orders.hidden = true;
+        }
+
+        if (customers) {
+            customers.hidden = true;
+        }
+
+        $(".workspace")
+            ?.classList.remove(
+                "orders-mode",
+                "customers-mode"
+            );
+
+        $("#nav-sale")
+            ?.classList.add(
+                "is-active"
+            );
+
+        $("#nav-orders")
+            ?.classList.remove(
+                "is-active"
+            );
+
+        $("#nav-customers")
+            ?.classList.remove(
+                "is-active"
+            );
+    }
+
+
+    function clearSelectedCustomer() {
+        state.selectedCustomer =
+            null;
+
+        renderSelectedCustomer();
+    }
+
+
+    function selectCustomer(customer) {
+        state.selectedCustomer =
+            customer || null;
+
+        renderSelectedCustomer();
+
+        showSaleFromCustomers();
+    }
+
+
+    function renderCustomerResults() {
+        const container =
+            $("#customer-results");
+
+        const message =
+            $("#customers-message");
+
+        if (!container) {
+            return;
+        }
+
+        container.replaceChildren();
+
+        if (
+            !state.customerResults.length
+        ) {
+            if (message) {
+                message.hidden = false;
+                message.textContent =
+                    "No encontramos clientes con esa búsqueda.";
+            }
+
+            return;
+        }
+
+        if (message) {
+            message.hidden = true;
+        }
+
+        state.customerResults
+            .forEach(customer => {
+                const card =
+                    document.createElement(
+                        "article"
+                    );
+
+                card.className =
+                    "customer-card";
+
+
+                const top =
+                    document.createElement(
+                        "div"
+                    );
+
+                top.className =
+                    "customer-card-top";
+
+
+                const identity =
+                    document.createElement(
+                        "div"
+                    );
+
+                identity.className =
+                    "customer-card-identity";
+
+
+                const name =
+                    document.createElement(
+                        "strong"
+                    );
+
+                name.textContent =
+                    customer.name;
+
+
+                const phone =
+                    document.createElement(
+                        "span"
+                    );
+
+                phone.textContent =
+                    customer.phone;
+
+
+                identity.append(
+                    name,
+                    phone
+                );
+
+
+                const choose =
+                    document.createElement(
+                        "button"
+                    );
+
+                choose.type =
+                    "button";
+
+                choose.className =
+                    "customer-select-button";
+
+                choose.textContent =
+                    "Seleccionar";
+
+                choose.addEventListener(
+                    "click",
+                    () => {
+                        selectCustomer(
+                            customer
+                        );
+                    }
+                );
+
+
+                top.append(
+                    identity,
+                    choose
+                );
+
+
+                const metrics =
+                    document.createElement(
+                        "div"
+                    );
+
+                metrics.className =
+                    "customer-metrics customer-card-metrics";
+
+
+                const values = [
+                    [
+                        "Puntos",
+                        customer.loyalty_points || 0,
+                    ],
+                    [
+                        "Visitas",
+                        customer.visits || 0,
+                    ],
+                    [
+                        "Gasto",
+                        money(
+                            customer.total_spent || 0
+                        ),
+                    ],
+                ];
+
+
+                values.forEach(
+                    ([label, value]) => {
+                        const item =
+                            document.createElement(
+                                "div"
+                            );
+
+                        const small =
+                            document.createElement(
+                                "span"
+                            );
+
+                        small.textContent =
+                            label;
+
+                        const strong =
+                            document.createElement(
+                                "strong"
+                            );
+
+                        strong.textContent =
+                            String(value);
+
+                        item.append(
+                            small,
+                            strong
+                        );
+
+                        metrics.append(
+                            item
+                        );
+                    }
+                );
+
+
+                const last =
+                    document.createElement(
+                        "div"
+                    );
+
+                last.className =
+                    "customer-card-last";
+
+
+                const lastLabel =
+                    document.createElement(
+                        "span"
+                    );
+
+                lastLabel.textContent =
+                    "Última compra";
+
+
+                const lastValue =
+                    document.createElement(
+                        "strong"
+                    );
+
+                lastValue.textContent =
+                    customerDate(
+                        customer.last_purchase_at
+                    );
+
+
+                last.append(
+                    lastLabel,
+                    lastValue
+                );
+
+
+                card.append(
+                    top,
+                    metrics,
+                    last
+                );
+
+                container.append(
+                    card
+                );
+            });
+    }
+
+
+    async function searchCustomers(
+        query = ""
+    ) {
+        const message =
+            $("#customers-message");
+
+        if (!navigator.onLine) {
+            if (message) {
+                message.hidden = false;
+                message.textContent =
+                    "Clientes requiere conexión";
+            }
+
+            return;
+        }
+
+        if (state.customersBusy) {
+            return;
+        }
+
+        state.customersBusy = true;
+
+        if (message) {
+            message.hidden = false;
+            message.textContent =
+                "Buscando clientes…";
+        }
+
+        try {
+            const response =
+                await window
+                    .CofiPosAPI
+                    .searchCustomers(
+                        query
+                    );
+
+            state.customerResults =
+                Array.isArray(response)
+                    ? response
+                    : [];
+
+            renderCustomerResults();
+
+        } catch (error) {
+            state.customerResults = [];
+
+            if (message) {
+                message.hidden = false;
+
+                message.textContent =
+                    error.isHttpError
+                        ? (
+                            error.message ||
+                            "No fue posible cargar clientes."
+                        )
+                        : "Clientes requiere conexión";
+            }
+
+        } finally {
+            state.customersBusy =
+                false;
+        }
+    }
+
+
+    async function showCustomers() {
+        const sale =
+            $("#sale-view");
+
+        const orders =
+            $("#orders-view");
+
+        const customers =
+            $("#customers-view");
+
+        if (sale) {
+            sale.hidden = true;
+        }
+
+        if (orders) {
+            orders.hidden = true;
+        }
+
+        if (customers) {
+            customers.hidden = false;
+        }
+
+        $(".workspace")
+            ?.classList.remove(
+                "orders-mode"
+            );
+
+        $(".workspace")
+            ?.classList.add(
+                "customers-mode"
+            );
+
+        $("#nav-sale")
+            ?.classList.remove(
+                "is-active"
+            );
+
+        $("#nav-orders")
+            ?.classList.remove(
+                "is-active"
+            );
+
+        $("#nav-customers")
+            ?.classList.add(
+                "is-active"
+            );
+
+
+        const search =
+            $("#customer-search");
+
+        search?.focus();
+
+        await searchCustomers(
+            search?.value || ""
+        );
+    }
+
+
+    async function createCustomerFromForm(
+        event
+    ) {
+        event.preventDefault();
+
+        const form =
+            event.currentTarget;
+
+        const error =
+            $("#customer-create-error");
+
+        if (error) {
+            error.hidden = true;
+        }
+
+        if (!navigator.onLine) {
+            if (error) {
+                error.hidden = false;
+                error.textContent =
+                    "Clientes requiere conexión";
+            }
+
+            return;
+        }
+
+        const data =
+            new FormData(form);
+
+        const payload = {
+            name:
+                String(
+                    data.get("name") || ""
+                ).trim(),
+
+            phone:
+                String(
+                    data.get("phone") || ""
+                ).trim(),
+
+            email:
+                String(
+                    data.get("email") || ""
+                ).trim() || null,
+
+            birthday:
+                String(
+                    data.get("birthday") || ""
+                ).trim() || null,
+        };
+
+
+        const button =
+            form.querySelector(
+                'button[type="submit"]'
+            );
+
+        const originalLabel =
+            button?.textContent;
+
+
+        if (button) {
+            button.disabled = true;
+            button.textContent =
+                "Guardando…";
+        }
+
+
+        try {
+            const customer =
+                await window
+                    .CofiPosAPI
+                    .createCustomer(
+                        payload
+                    );
+
+            form.reset();
+
+            const panel =
+                $("#customer-create-panel");
+
+            if (panel) {
+                panel.hidden = true;
+            }
+
+            selectCustomer(
+                customer
+            );
+
+        } catch (requestError) {
+            if (error) {
+                error.hidden = false;
+                error.textContent =
+                    requestError.message ||
+                    "No fue posible guardar el cliente.";
+            }
+
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.textContent =
+                    originalLabel;
+            }
+        }
+    }
+
+
     async function checkConnectivity() {
         const previous =
             state.cloudOnline;
@@ -1586,8 +2195,86 @@
             () => {
                 $("#success-modal").hidden =
                     true;
+
+                clearSelectedCustomer();
             }
         );
+
+    $("#nav-customers")
+        ?.addEventListener(
+            "click",
+            showCustomers
+        );
+
+
+    $("#open-customers-from-sale")
+        ?.addEventListener(
+            "click",
+            showCustomers
+        );
+
+
+    $("#remove-selected-customer")
+        ?.addEventListener(
+            "click",
+            clearSelectedCustomer
+        );
+
+
+    $("#customer-search-form")
+        ?.addEventListener(
+            "submit",
+            event => {
+                event.preventDefault();
+
+                searchCustomers(
+                    $("#customer-search")
+                        ?.value || ""
+                );
+            }
+        );
+
+
+    $("#new-customer-button")
+        ?.addEventListener(
+            "click",
+            () => {
+                const panel =
+                    $("#customer-create-panel");
+
+                if (panel) {
+                    panel.hidden = false;
+                }
+
+                $("#new-customer-name")
+                    ?.focus();
+            }
+        );
+
+
+    $("#customer-create-close")
+        ?.addEventListener(
+            "click",
+            () => {
+                const panel =
+                    $("#customer-create-panel");
+
+                if (panel) {
+                    panel.hidden = true;
+                }
+            }
+        );
+
+
+    $("#customer-create-form")
+        ?.addEventListener(
+            "submit",
+            createCustomerFromForm
+        );
+
+
+    renderSelectedCustomer();
+
 
     window.addEventListener(
         "offline",
