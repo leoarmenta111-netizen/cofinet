@@ -2124,3 +2124,40 @@ and (
         grid-template-columns: 1fr;
     }
 }
+
+
+/* ==================================================
+   CLIENTES - SCROLL FIX
+   ================================================== */
+
+.customers-view {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.customer-create-panel {
+    max-height: calc(100dvh - 280px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+}
+
+.customer-save-button {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    width: 100%;
+    margin-top: 4px;
+    box-shadow:
+        0 -12px 18px 8px
+        var(--surface);
+}
+
+@media (max-width: 900px) {
+    .customer-create-panel {
+        max-height: none;
+        overflow-y: visible;
+    }
+}
