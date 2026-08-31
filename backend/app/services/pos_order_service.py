@@ -1,3 +1,4 @@
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
@@ -8,7 +9,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.branch import Branch
-from app.models.pos_customers import Customer
+from app.models.pos_customers import (
+    Customer,
+    LoyaltyLedgerEntry,
+)
 from app.models.pos_catalog import (
     PosBranchProduct,
     PosModifierOption,
@@ -32,6 +36,18 @@ from app.schemas.pos_orders import (
 
 
 CENT = Decimal("0.01")
+LOYALTY_MXN_PER_POINT = Decimal("10.00")
+
+
+def loyalty_points_for_total(value) -> int:
+    total = Decimal(str(value))
+
+    if total <= 0:
+        return 0
+
+    return int(
+        total // LOYALTY_MXN_PER_POINT
+    )
 
 
 def money(value) -> Decimal:
@@ -640,6 +656,27 @@ class PosOrderService:
         )
 
         db.add(payment)
+
+        loyalty_points = (
+            loyalty_points_for_total(total)
+            if customer is not None
+            else 0
+        )
+
+        if loyalty_points > 0:
+            db.add(
+                LoyaltyLedgerEntry(
+                    entry_uuid=str(uuid.uuid4()),
+                    customer_id=customer.id,
+                    points=loyalty_points,
+                    entry_type="EARN",
+                    order_uuid=order_uuid,
+                    branch_id=branch.id,
+                    idempotency_key=(
+                        f"SALE_EARN:{order_uuid}"
+                    ),
+                )
+            )
 
         try:
             db.commit()

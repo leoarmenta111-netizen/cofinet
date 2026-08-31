@@ -583,3 +583,157 @@ def test_admin_customer_list_includes_metrics(
         data[0]["last_purchase_at"]
         is not None
     )
+
+
+
+def test_paid_order_automatically_earns_loyalty_points(
+    db_session,
+):
+    from decimal import Decimal
+
+    from app.models.pos_customers import (
+        LoyaltyLedgerEntry,
+    )
+
+    branch, product = seed_catalog(
+        db_session
+    )
+
+    customer = make_customer(
+        db_session,
+        name="Cliente Auto Loyalty",
+        phone="3225551212",
+    )
+
+    payload = make_order_payload(
+        branch,
+        product,
+        customer_uuid=customer.customer_uuid,
+    )
+
+    response = PosOrderService.create(
+        db_session,
+        payload,
+    )
+
+    assert Decimal(
+        str(response.total)
+    ) == Decimal("50.00")
+
+    entries = (
+        db_session.query(
+            LoyaltyLedgerEntry
+        )
+        .filter(
+            LoyaltyLedgerEntry.order_uuid
+            == str(payload.order_uuid),
+            LoyaltyLedgerEntry.entry_type
+            == "EARN",
+        )
+        .all()
+    )
+
+    assert len(entries) == 1
+    assert entries[0].points == 5
+    assert (
+        entries[0].idempotency_key
+        == f"SALE_EARN:{payload.order_uuid}"
+    )
+
+
+
+def test_loyalty_rule_295_earns_29_points():
+    from app.services.pos_order_service import (
+        loyalty_points_for_total,
+    )
+
+    assert loyalty_points_for_total("295.00") == 29
+    assert loyalty_points_for_total("299.99") == 29
+    assert loyalty_points_for_total("9.99") == 0
+    assert loyalty_points_for_total("10.00") == 1
+
+
+def test_repeated_order_does_not_duplicate_loyalty(
+    db_session,
+):
+    from app.models.pos_customers import (
+        LoyaltyLedgerEntry,
+    )
+
+    branch, product = seed_catalog(
+        db_session
+    )
+
+    customer = make_customer(
+        db_session,
+        name="Cliente Loyalty Idempotente",
+        phone="3225551313",
+    )
+
+    payload = make_order_payload(
+        branch,
+        product,
+        customer_uuid=customer.customer_uuid,
+    )
+
+    PosOrderService.create(
+        db_session,
+        payload,
+    )
+
+    PosOrderService.create(
+        db_session,
+        payload,
+    )
+
+    entries = (
+        db_session.query(
+            LoyaltyLedgerEntry
+        )
+        .filter(
+            LoyaltyLedgerEntry.order_uuid
+            == str(payload.order_uuid),
+            LoyaltyLedgerEntry.entry_type
+            == "EARN",
+        )
+        .all()
+    )
+
+    assert len(entries) == 1
+    assert entries[0].points == 5
+
+
+def test_order_without_customer_does_not_earn_loyalty(
+    db_session,
+):
+    from app.models.pos_customers import (
+        LoyaltyLedgerEntry,
+    )
+
+    branch, product = seed_catalog(
+        db_session
+    )
+
+    payload = make_order_payload(
+        branch,
+        product,
+        customer_uuid=None,
+    )
+
+    PosOrderService.create(
+        db_session,
+        payload,
+    )
+
+    entries = (
+        db_session.query(
+            LoyaltyLedgerEntry
+        )
+        .filter(
+            LoyaltyLedgerEntry.order_uuid
+            == str(payload.order_uuid)
+        )
+        .all()
+    )
+
+    assert entries == []
