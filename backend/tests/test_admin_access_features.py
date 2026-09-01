@@ -383,3 +383,35 @@ def test_internal_credentials_do_not_change_purchase_dashboard_counts(
     after = client.get("/admin/dashboard", headers=super_headers).json()
     assert after == before
     assert db_session.scalar(select(func.count(PinBatch.id))) == 0
+
+
+
+def test_legacy_batch_ticket_allows_null_dates():
+    from decimal import Decimal
+    from types import SimpleNamespace
+
+    from app.services.admin_access_query_service import (
+        AdminAccessQueryService,
+    )
+
+    purchase = SimpleNamespace(
+        id=999,
+        pin_code="123456",
+        plan=SimpleNamespace(
+            name="Legacy Plan",
+            duration_minutes=60,
+        ),
+        amount=Decimal("50.00"),
+        issued_at=None,
+        expires_at=None,
+    )
+
+    ticket = (
+        AdminAccessQueryService.batch_ticket(
+            purchase
+        )
+    )
+
+    assert ticket.pin == "123456"
+    assert ticket.issued_at is None
+    assert ticket.expires_at is None

@@ -21,8 +21,8 @@ class PinBatchTicket(BaseModel):
     plan_name: str
     duration_minutes: int
     amount: Decimal
-    issued_at: datetime
-    expires_at: datetime
+    issued_at: datetime | None = None
+    expires_at: datetime | None = None
 
 
 class PinBatchPrintableTicket(BaseModel):
@@ -30,8 +30,8 @@ class PinBatchPrintableTicket(BaseModel):
     plan_name: str
     duration_minutes: int
     amount: Decimal
-    issued_at: datetime
-    expires_at: datetime
+    issued_at: datetime | None = None
+    expires_at: datetime | None = None
 
 
 class PinBatchFailureResponse(BaseModel):
