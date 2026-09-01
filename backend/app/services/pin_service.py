@@ -1,10 +1,14 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.purchase import Purchase, PurchaseStatus
+from app.models.purchase import (
+    Purchase,
+    PurchaseCreationSource,
+    PurchaseStatus,
+)
 from app.schemas.pin import PinValidationResponse
 from app.services.purchase_service import PurchaseService
 
@@ -36,9 +40,53 @@ class PinService:
                 detail="PIN expired",
             )
 
+        # Legacy admin-batch PINs were created before activation
+        # timestamps were stored. Start their validity window on
+        # first portal validation and never reset it afterward.
+        if (
+            purchase.status == PurchaseStatus.PAID
+            and purchase.creation_source
+            == PurchaseCreationSource.ADMIN_BATCH
+            and purchase.issued_at is None
+            and purchase.expires_at is None
+        ):
+            activated_at = datetime.now(UTC)
+            expires_at = activated_at + timedelta(
+                minutes=purchase.plan.duration_minutes
+            )
+
+            try:
+                db.execute(
+                    update(Purchase)
+                    .where(
+                        Purchase.id == purchase.id,
+                        Purchase.status
+                        == PurchaseStatus.PAID,
+                        Purchase.creation_source
+                        == PurchaseCreationSource.ADMIN_BATCH,
+                        Purchase.issued_at.is_(None),
+                        Purchase.expires_at.is_(None),
+                    )
+                    .values(
+                        issued_at=activated_at,
+                        expires_at=expires_at,
+                    )
+                )
+                db.commit()
+                db.refresh(purchase)
+            except Exception as exc:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Could not activate PIN",
+                ) from exc
+
         # A paid purchase with a future expiry is the application's existing
         # definition of an active purchase (also used by the admin dashboard).
-        if purchase.status != PurchaseStatus.PAID or purchase.expires_at is None:
+        if (
+            purchase.status != PurchaseStatus.PAID
+            or purchase.expires_at is None
+        ):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="PIN inactive",

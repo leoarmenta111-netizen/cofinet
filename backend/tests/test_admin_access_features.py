@@ -415,3 +415,88 @@ def test_legacy_batch_ticket_allows_null_dates():
     assert ticket.pin == "123456"
     assert ticket.issued_at is None
     assert ticket.expires_at is None
+
+
+
+def test_legacy_batch_pin_activates_on_first_validation(
+    client,
+    db_session,
+    super_headers,
+    monkeypatch,
+):
+    from datetime import timedelta
+    from uuid import uuid4
+
+    from sqlalchemy import select
+
+    from app.models.purchase import Purchase
+
+    install_recording_mikrotik(monkeypatch)
+
+    monkeypatch.setattr(
+        "app.services.admin_access_service."
+        "AdminAccessService._generate_pin",
+        deterministic_pins(880000),
+    )
+
+    plan = client.get("/plans").json()[0]
+
+    created = client.post(
+        "/admin/pin-batches",
+        headers=super_headers,
+        json={
+            "plan_id": plan["id"],
+            "quantity": 1,
+            "request_id": str(uuid4()),
+        },
+    )
+
+    assert created.status_code == 201
+
+    pin = created.json()["pins"][0]["pin"]
+
+    purchase = db_session.execute(
+        select(Purchase).where(
+            Purchase.pin_code == pin
+        )
+    ).scalar_one()
+
+    # Simula un PIN de lote histórico.
+    purchase.issued_at = None
+    purchase.expires_at = None
+    db_session.commit()
+
+    first = client.post(
+        "/pins/validate",
+        json={"pin": pin},
+    )
+
+    assert first.status_code == 200
+
+    db_session.refresh(purchase)
+
+    assert purchase.issued_at is not None
+    assert purchase.expires_at is not None
+
+    issued_at = purchase.issued_at
+    expires_at = purchase.expires_at
+
+    assert (
+        expires_at - issued_at
+        == timedelta(
+            minutes=purchase.plan.duration_minutes
+        )
+    )
+
+    # Una segunda validación NO reinicia el reloj.
+    second = client.post(
+        "/pins/validate",
+        json={"pin": pin},
+    )
+
+    assert second.status_code == 200
+
+    db_session.refresh(purchase)
+
+    assert purchase.issued_at == issued_at
+    assert purchase.expires_at == expires_at
