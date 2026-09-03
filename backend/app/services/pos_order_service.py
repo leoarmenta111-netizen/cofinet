@@ -1,6 +1,6 @@
 import uuid
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import HTTPException, status
@@ -33,7 +33,12 @@ from app.schemas.pos_orders import (
     PosOrderModifierResponse,
     PosOrderResponse,
     PosOrderStationResponse,
+    PosOrderStationStatusResponse,
+    PosOrderStationStatusUpdate,
     PosPaymentResponse,
+    PosStationFeedResponse,
+    PosStationOrderItemResponse,
+    PosStationOrderResponse,
 )
 
 
@@ -213,6 +218,201 @@ class PosOrderService:
 
         return branch
 
+
+    @classmethod
+    def list_station_orders(
+        cls,
+        db: Session,
+        branch_code: str,
+        station: str,
+    ) -> PosStationFeedResponse:
+        branch = cls._branch(
+            db,
+            branch_code,
+        )
+
+        station_states = (
+            db.execute(
+                select(PosOrderStation)
+                .join(
+                    PosOrder,
+                    PosOrder.id
+                    == PosOrderStation.order_id,
+                )
+                .where(
+                    PosOrder.branch_id == branch.id,
+                    PosOrderStation.station == station,
+                )
+                .order_by(
+                    PosOrder.created_at_client.asc(),
+                    PosOrder.id.asc(),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        orders = []
+
+        for station_state in station_states:
+            order = station_state.order
+
+            station_items = [
+                item
+                for item in order.items
+                if item.preparation_station == station
+            ]
+
+            orders.append(
+                PosStationOrderResponse(
+                    order_uuid=order.order_uuid,
+                    folio=order.folio,
+                    branch_code=order.branch.code,
+                    station_status=(
+                        station_state.status
+                    ),
+                    created_at_client=(
+                        order.created_at_client
+                    ),
+                    notes=order.notes,
+                    items=[
+                        PosStationOrderItemResponse(
+                            product_id=item.product_id,
+                            product_name=(
+                                item.product_name
+                            ),
+                            preparation_station=(
+                                item.preparation_station
+                            ),
+                            quantity=item.quantity,
+                            notes=item.notes,
+                            unit_price=money(
+                                item.unit_price
+                            ),
+                            line_total=money(
+                                item.line_total
+                            ),
+                            modifiers=[
+                                PosOrderModifierResponse(
+                                    group_name=(
+                                        modifier.group_name
+                                    ),
+                                    option_name=(
+                                        modifier.option_name
+                                    ),
+                                    price_delta=money(
+                                        modifier.price_delta
+                                    ),
+                                )
+                                for modifier
+                                in item.modifiers
+                            ],
+                        )
+                        for item in station_items
+                    ],
+                )
+            )
+
+        return PosStationFeedResponse(
+            station=station,
+            count=len(orders),
+            orders=orders,
+        )
+
+    @classmethod
+    def update_station_status(
+        cls,
+        db: Session,
+        order_uuid: str,
+        station: str,
+        payload: PosOrderStationStatusUpdate,
+    ) -> PosOrderStationStatusResponse:
+        branch = cls._branch(
+            db,
+            payload.branch_code,
+        )
+
+        order = db.execute(
+            select(PosOrder)
+            .where(
+                PosOrder.order_uuid == order_uuid,
+                PosOrder.branch_id == branch.id,
+            )
+            .with_for_update()
+        ).scalar_one_or_none()
+
+        if order is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+
+        station_state = next(
+            (
+                row
+                for row in order.station_states
+                if row.station == station
+            ),
+            None,
+        )
+
+        if station_state is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order station not found",
+            )
+
+        next_status = payload.status
+
+        if station_state.status != next_status:
+            allowed = {
+                "NEW": {"PREPARING"},
+                "PREPARING": {"READY"},
+                "READY": set(),
+            }
+
+            if next_status not in allowed.get(
+                station_state.status,
+                set(),
+            ):
+                raise HTTPException(
+                    status_code=(
+                        status.HTTP_409_CONFLICT
+                    ),
+                    detail=(
+                        "Invalid station transition: "
+                        f"{station_state.status} "
+                        f"-> {next_status}"
+                    ),
+                )
+
+            now = datetime.now(timezone.utc)
+
+            if next_status == "PREPARING":
+                if station_state.started_at is None:
+                    station_state.started_at = now
+
+            if next_status == "READY":
+                station_state.ready_at = now
+
+            station_state.status = next_status
+
+            cls._recalculate_preparation_status(
+                order
+            )
+
+            db.commit()
+            db.refresh(order)
+            db.refresh(station_state)
+
+        return PosOrderStationStatusResponse(
+            order_uuid=order.order_uuid,
+            station=station_state.station,
+            status=station_state.status,
+            order_status=order.status,
+            started_at=station_state.started_at,
+            ready_at=station_state.ready_at,
+        )
 
     @classmethod
     def list_orders(

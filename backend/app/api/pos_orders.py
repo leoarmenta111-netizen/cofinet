@@ -9,7 +9,10 @@ from app.schemas.pos_orders import (
     PosOrderCreate,
     PosOrderListResponse,
     PosOrderResponse,
+    PosOrderStationStatusResponse,
+    PosOrderStationStatusUpdate,
     PosOrderStatusUpdate,
+    PosStationFeedResponse,
 )
 from app.services.pos_order_service import (
     PosOrderService,
@@ -72,6 +75,49 @@ def list_pos_orders(
         from_at=from_at,
         to_at=to_at,
         limit=limit,
+    )
+
+
+@router.get(
+    "/stations/{station}",
+    response_model=PosStationFeedResponse,
+)
+def list_station_orders(
+    station: Literal[
+        "KITCHEN",
+        "BAR",
+    ],
+    branch_code: str = Query(
+        min_length=1,
+        max_length=50,
+    ),
+    db: Session = Depends(get_db),
+) -> PosStationFeedResponse:
+    return PosOrderService.list_station_orders(
+        db=db,
+        branch_code=branch_code,
+        station=station,
+    )
+
+
+@router.patch(
+    "/{order_uuid}/stations/{station}",
+    response_model=PosOrderStationStatusResponse,
+)
+def update_station_status(
+    order_uuid: str,
+    station: Literal[
+        "KITCHEN",
+        "BAR",
+    ],
+    payload: PosOrderStationStatusUpdate,
+    db: Session = Depends(get_db),
+) -> PosOrderStationStatusResponse:
+    return PosOrderService.update_station_status(
+        db=db,
+        order_uuid=order_uuid,
+        station=station,
+        payload=payload,
     )
 
 

@@ -98,6 +98,71 @@ class PosOrderResponse(BaseModel):
     payment: PosPaymentResponse
 
 
+class PosStationOrderItemResponse(BaseModel):
+    product_id: int | None
+    product_name: str
+    preparation_station: Literal[
+        "KITCHEN",
+        "BAR",
+    ]
+    quantity: int
+    notes: str | None
+    unit_price: Decimal
+    line_total: Decimal
+    modifiers: list[PosOrderModifierResponse]
+
+
+class PosStationOrderResponse(BaseModel):
+    order_uuid: str
+    folio: str
+    branch_code: str
+    station_status: Literal[
+        "NEW",
+        "PREPARING",
+        "READY",
+    ]
+    created_at_client: datetime
+    notes: str | None
+    items: list[PosStationOrderItemResponse]
+
+
+class PosStationFeedResponse(BaseModel):
+    station: Literal[
+        "KITCHEN",
+        "BAR",
+    ]
+    count: int
+    orders: list[PosStationOrderResponse]
+
+
+class PosOrderStationStatusUpdate(BaseModel):
+    branch_code: str = Field(
+        min_length=1,
+        max_length=50,
+    )
+    status: Literal[
+        "NEW",
+        "PREPARING",
+        "READY",
+    ]
+
+
+class PosOrderStationStatusResponse(BaseModel):
+    order_uuid: str
+    station: Literal[
+        "KITCHEN",
+        "BAR",
+    ]
+    status: Literal[
+        "NEW",
+        "PREPARING",
+        "READY",
+    ]
+    order_status: str
+    started_at: datetime | None
+    ready_at: datetime | None
+
+
 class PosOrderStatusUpdate(BaseModel):
     branch_code: str = Field(
         min_length=1,
