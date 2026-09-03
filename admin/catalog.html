@@ -823,6 +823,34 @@
                             id="product-category"
                             required
                         ></select>
+
+                        <div class="field">
+                            <label for="product-preparation-station">
+                                Estación de preparación
+                            </label>
+
+                            <select
+                                id="product-preparation-station"
+                            >
+                                <option value="NONE">
+                                    Sin preparación
+                                </option>
+
+                                <option value="KITCHEN">
+                                    Cocina
+                                </option>
+
+                                <option value="BAR">
+                                    Barra
+                                </option>
+                            </select>
+
+                            <small class="muted">
+                                Define a qué pantalla se envía
+                                este producto al venderse.
+                            </small>
+                        </div>
+
                     </div>
 
 
@@ -3575,6 +3603,14 @@
         ).value =
             product?.sort_order ?? 0;
 
+        document.getElementById(
+            "product-preparation-station"
+        ).value =
+            product?.preparation_station
+            ?? "NONE";
+
+
+
 
         document.getElementById(
             "product-active"
@@ -3795,9 +3831,28 @@
                         ).value || 0
                     ),
 
-                is_active:
+                preparation_station:
+
+
                     document.getElementById(
+
+
+                        "product-preparation-station"
+
+
+                    ).value,
+
+
+
+                is_active:
+
+
+                    document.getElementById(
+
+
                         "product-active"
+
+
                     ).checked
             };
 
