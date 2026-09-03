@@ -712,6 +712,126 @@
     }
 
 
+    function preparationStationLabel(
+        station
+    ) {
+        const labels = {
+            KITCHEN: "Cocina",
+            BAR: "Barra",
+        };
+
+        return labels[station] || station;
+    }
+
+
+    function preparationStatusLabel(
+        status
+    ) {
+        const labels = {
+            NEW: "Nueva",
+            PREPARING: "Preparando",
+            READY: "Lista",
+        };
+
+        return labels[status] || status;
+    }
+
+
+    function renderPreparationProgress(
+        order
+    ) {
+        const stations =
+            Array.isArray(order.stations)
+                ? order.stations.filter(
+                    station =>
+                        station.station ===
+                            "KITCHEN" ||
+                        station.station ===
+                            "BAR"
+                )
+                : [];
+
+        if (!stations.length) {
+            return null;
+        }
+
+        const section =
+            document.createElement(
+                "section"
+            );
+
+        section.className =
+            "order-preparation";
+
+        const title =
+            document.createElement(
+                "h3"
+            );
+
+        title.className =
+            "order-preparation-title";
+
+        title.textContent =
+            "Preparación";
+
+        section.append(title);
+
+        stations.forEach(
+            station => {
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+                row.className =
+                    "order-preparation-station";
+
+                row.dataset.status =
+                    station.status;
+
+                const name =
+                    document.createElement(
+                        "span"
+                    );
+
+                name.className =
+                    "order-preparation-name";
+
+                name.textContent =
+                    preparationStationLabel(
+                        station.station
+                    );
+
+                const status =
+                    document.createElement(
+                        "span"
+                    );
+
+                status.className =
+                    "order-preparation-status";
+
+                status.dataset.status =
+                    station.status;
+
+                status.textContent =
+                    preparationStatusLabel(
+                        station.status
+                    );
+
+                row.append(
+                    name,
+                    status
+                );
+
+                section.append(row);
+            }
+        );
+
+        return section;
+    }
+
+
     function renderOrderDetail(order) {
         $("#order-detail-folio")
             .textContent =
@@ -842,6 +962,17 @@
             });
 
         body.append(items);
+
+        const preparation =
+            renderPreparationProgress(
+                order
+            );
+
+        if (preparation) {
+            body.append(
+                preparation
+            );
+        }
 
         const summary =
             document.createElement(

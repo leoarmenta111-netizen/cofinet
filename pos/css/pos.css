@@ -2161,3 +2161,70 @@ and (
         overflow-y: visible;
     }
 }
+
+/* ==================================================
+   COFICENTER ORDER PREPARATION PROGRESS
+   ================================================== */
+
+.order-preparation {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #e0e3dc;
+    border-radius: 14px;
+    background: #f8f9f5;
+}
+
+.order-preparation-title {
+    margin: 0 0 10px;
+    color: #31372f;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.order-preparation-station {
+    min-height: 42px;
+    padding: 9px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-top: 1px solid #e5e7e1;
+}
+
+.order-preparation-station:first-of-type {
+    border-top: 0;
+}
+
+.order-preparation-name {
+    color: #343b31;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.order-preparation-status {
+    min-width: 92px;
+    padding: 6px 9px;
+    border-radius: 999px;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .035em;
+    text-transform: uppercase;
+}
+
+.order-preparation-status[data-status="NEW"] {
+    background: #e9eff5;
+    color: #4b6c8d;
+}
+
+.order-preparation-status[data-status="PREPARING"] {
+    background: #f7ecdd;
+    color: #9a6226;
+}
+
+.order-preparation-status[data-status="READY"] {
+    background: #e8f1e7;
+    color: #47724e;
+}
