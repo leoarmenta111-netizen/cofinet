@@ -144,6 +144,7 @@ class PosCatalogService:
                 sku=product.sku,
                 price=Decimal(effective_price),
                 image_url=product.image_url,
+                preparation_station=product.preparation_station,
                 sort_order=effective_sort_order,
                 modifiers=modifier_groups,
             )

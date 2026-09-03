@@ -197,6 +197,7 @@ class AdminPosCatalogService:
                 "sku": product.sku,
                 "base_price": Decimal(product.base_price),
                 "image_url": product.image_url,
+                "preparation_station": product.preparation_station,
                 "sort_order": product.sort_order,
                 "is_active": product.is_active,
                 "branches": branch_rows,
@@ -319,6 +320,7 @@ class AdminPosCatalogService:
             sku=(data.sku.strip() if data.sku else None),
             base_price=data.base_price,
             image_url=data.image_url,
+            preparation_station=data.preparation_station,
             sort_order=data.sort_order,
             is_active=data.is_active,
         )

@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -33,6 +34,11 @@ class PosCatalogProductResponse(BaseModel):
     sku: str | None
     price: Decimal
     image_url: str | None
+    preparation_station: Literal[
+        "KITCHEN",
+        "BAR",
+        "NONE",
+    ]
     sort_order: int
     modifiers: list[PosModifierGroupResponse]
 

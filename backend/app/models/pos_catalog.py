@@ -87,6 +87,10 @@ class PosProduct(Base):
             "base_price >= 0",
             name="ck_pos_products_base_price_nonnegative",
         ),
+        CheckConstraint(
+            "preparation_station IN ('KITCHEN','BAR','NONE')",
+            name="ck_pos_products_preparation_station",
+        ),
     )
 
     id = Column(
@@ -128,6 +132,14 @@ class PosProduct(Base):
     image_url = Column(
         String(500),
         nullable=True,
+    )
+
+    preparation_station = Column(
+        String(16),
+        nullable=False,
+        default="NONE",
+        server_default="NONE",
+        index=True,
     )
 
     sort_order = Column(

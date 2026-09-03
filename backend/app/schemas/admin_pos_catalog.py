@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -24,6 +25,11 @@ class AdminPosProductCreate(BaseModel):
     sku: str | None = Field(default=None, max_length=80)
     base_price: Decimal = Field(ge=0)
     image_url: str | None = Field(default=None, max_length=500)
+    preparation_station: Literal[
+        "KITCHEN",
+        "BAR",
+        "NONE",
+    ] = "NONE"
     sort_order: int = 0
     is_active: bool = True
 
@@ -35,6 +41,11 @@ class AdminPosProductUpdate(BaseModel):
     sku: str | None = Field(default=None, max_length=80)
     base_price: Decimal | None = Field(default=None, ge=0)
     image_url: str | None = Field(default=None, max_length=500)
+    preparation_station: Literal[
+        "KITCHEN",
+        "BAR",
+        "NONE",
+    ] | None = None
     sort_order: int | None = None
     is_active: bool | None = None
 
@@ -134,6 +145,11 @@ class AdminPosProductResponse(BaseModel):
     sku: str | None
     base_price: Decimal
     image_url: str | None
+    preparation_station: Literal[
+        "KITCHEN",
+        "BAR",
+        "NONE",
+    ]
     sort_order: int
     is_active: bool
     branches: list[AdminPosBranchSettingResponse]
