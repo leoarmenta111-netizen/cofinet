@@ -47,10 +47,29 @@ class PosOrderModifierResponse(BaseModel):
 class PosOrderItemResponse(BaseModel):
     product_id: int | None
     product_name: str
+    preparation_station: Literal[
+        "KITCHEN",
+        "BAR",
+        "NONE",
+    ]
     quantity: int
     unit_price: Decimal
     line_total: Decimal
     modifiers: list[PosOrderModifierResponse]
+
+
+class PosOrderStationResponse(BaseModel):
+    station: Literal[
+        "KITCHEN",
+        "BAR",
+    ]
+    status: Literal[
+        "NEW",
+        "PREPARING",
+        "READY",
+    ]
+    started_at: datetime | None
+    ready_at: datetime | None
 
 
 class PosPaymentResponse(BaseModel):
@@ -75,6 +94,7 @@ class PosOrderResponse(BaseModel):
     currency: str
     created_at_client: datetime
     items: list[PosOrderItemResponse]
+    stations: list[PosOrderStationResponse]
     payment: PosPaymentResponse
 
 

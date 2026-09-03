@@ -22,6 +22,7 @@ from app.models.pos_orders import (
     PosOrder,
     PosOrderItem,
     PosOrderItemModifier,
+    PosOrderStation,
     PosPayment,
 )
 from app.schemas.pos_orders import (
@@ -31,6 +32,7 @@ from app.schemas.pos_orders import (
     PosOrderStatusUpdate,
     PosOrderModifierResponse,
     PosOrderResponse,
+    PosOrderStationResponse,
     PosPaymentResponse,
 )
 
@@ -85,6 +87,9 @@ class PosOrderService:
                 PosOrderItemResponse(
                     product_id=item.product_id,
                     product_name=item.product_name,
+                    preparation_station=(
+                        item.preparation_station
+                    ),
                     quantity=item.quantity,
                     unit_price=money(item.unit_price),
                     line_total=money(item.line_total),
@@ -100,6 +105,18 @@ class PosOrderService:
                     ],
                 )
                 for item in order.items
+            ],
+            stations=[
+                PosOrderStationResponse(
+                    station=station_state.station,
+                    status=station_state.status,
+                    started_at=station_state.started_at,
+                    ready_at=station_state.ready_at,
+                )
+                for station_state in sorted(
+                    order.station_states,
+                    key=lambda row: row.station,
+                )
             ],
             payment=PosPaymentResponse(
                 method=payment.method,
@@ -119,6 +136,45 @@ class PosOrderService:
                 ),
             ),
         )
+
+    @staticmethod
+    def _recalculate_preparation_status(
+        order: PosOrder,
+    ) -> None:
+        # Terminal states are controlled at whole-order level.
+        # Station progress must never reopen them.
+        if order.status in {
+            "DELIVERED",
+            "CANCELLED",
+        }:
+            return
+
+        station_states = list(
+            order.station_states
+        )
+
+        # No Kitchen/Bar work is required.
+        if not station_states:
+            order.status = "READY"
+            return
+
+        statuses = {
+            row.status
+            for row in station_states
+        }
+
+        if statuses == {"NEW"}:
+            order.status = "NEW"
+            return
+
+        if statuses == {"READY"}:
+            order.status = "READY"
+            return
+
+        # Any partial/mixed progress is PREPARING:
+        # NEW + READY, NEW + PREPARING,
+        # PREPARING + READY, etc.
+        order.status = "PREPARING"
 
     @staticmethod
     def _normalize_branch_code(
@@ -603,6 +659,9 @@ class PosOrderService:
                 order_id=order.id,
                 product_id=calculated["product"].id,
                 product_name=calculated["product"].name,
+                preparation_station=(
+                    calculated["product"].preparation_station
+                ),
                 quantity=calculated["quantity"],
                 unit_base_price=calculated["base_price"],
                 unit_modifier_total=calculated[
@@ -637,6 +696,37 @@ class PosOrderService:
                         ],
                     )
                 )
+
+        required_stations = {
+            calculated[
+                "product"
+            ].preparation_station
+            for calculated in calculated_items
+            if calculated[
+                "product"
+            ].preparation_station
+            in {
+                "KITCHEN",
+                "BAR",
+            }
+        }
+
+        for station_name in sorted(
+            required_stations
+        ):
+            db.add(
+                PosOrderStation(
+                    order=order,
+                    station=station_name,
+                    status="NEW",
+                )
+            )
+
+        db.flush()
+
+        cls._recalculate_preparation_status(
+            order
+        )
 
         payment = PosPayment(
             payment_uuid=str(

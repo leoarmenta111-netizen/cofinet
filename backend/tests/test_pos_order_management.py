@@ -35,6 +35,7 @@ def seed_catalog(db):
         category_id=category.id,
         name=f"Americano {suffix}",
         base_price=Decimal("50.00"),
+        preparation_station="BAR",
         is_active=True,
     )
 

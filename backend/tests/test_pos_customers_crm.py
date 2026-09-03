@@ -526,7 +526,7 @@ def test_admin_profile_contains_purchase_history(
     )
 
     assert latest["branch_code"] == branch.code
-    assert latest["status"] == "NEW"
+    assert latest["status"] == "READY"
 
     assert Decimal(
         str(latest["total"])
