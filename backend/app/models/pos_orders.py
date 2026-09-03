@@ -156,6 +156,89 @@ class PosOrder(Base):
         cascade="all, delete-orphan",
     )
 
+    station_states = relationship(
+        "PosOrderStation",
+        back_populates="order",
+        cascade="all, delete-orphan",
+    )
+
+
+class PosOrderStation(Base):
+    __tablename__ = "pos_order_stations"
+    __table_args__ = (
+        UniqueConstraint(
+            "order_id",
+            "station",
+            name="uq_pos_order_stations_order_station",
+        ),
+        CheckConstraint(
+            "station IN ('KITCHEN','BAR')",
+            name="ck_pos_order_stations_station",
+        ),
+        CheckConstraint(
+            "status IN ('NEW','PREPARING','READY')",
+            name="ck_pos_order_stations_status",
+        ),
+    )
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
+
+    order_id = Column(
+        Integer,
+        ForeignKey(
+            "pos_orders.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    station = Column(
+        String(16),
+        nullable=False,
+        index=True,
+    )
+
+    status = Column(
+        String(24),
+        nullable=False,
+        default="NEW",
+        server_default="NEW",
+        index=True,
+    )
+
+    started_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    ready_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    order = relationship(
+        "PosOrder",
+        back_populates="station_states",
+    )
+
 
 class PosOrderItem(Base):
     __tablename__ = "pos_order_items"
@@ -171,6 +254,10 @@ class PosOrderItem(Base):
         CheckConstraint(
             "line_total >= 0",
             name="ck_pos_order_items_line_total_nonnegative",
+        ),
+        CheckConstraint(
+            "preparation_station IN ('KITCHEN','BAR','NONE')",
+            name="ck_pos_order_items_preparation_station",
         ),
     )
 
@@ -193,6 +280,14 @@ class PosOrderItem(Base):
     product_name = Column(
         String(160),
         nullable=False,
+    )
+
+    preparation_station = Column(
+        String(16),
+        nullable=False,
+        default="NONE",
+        server_default="NONE",
+        index=True,
     )
 
     quantity = Column(
