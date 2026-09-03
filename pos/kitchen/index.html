@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+    <meta
+        name="theme-color"
+        content="#f4f2eb"
+    >
+
+    <title>Cocina | CofiCenter</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/station.css?v=1"
+    >
+</head>
+
+<body data-station="KITCHEN">
+
+<div class="station-app">
+
+    <header class="station-header">
+
+        <div class="station-brand">
+            <img
+                class="station-logo"
+                src="../assets/coficenter-logo.png"
+                alt="CofiCenter"
+                onerror="this.style.display='none'"
+            >
+
+            <div class="station-brand-copy">
+                <span class="station-eyebrow">
+                    CofiCenter · Preparación
+                </span>
+
+                <h1
+                    id="station-name"
+                    class="station-title"
+                >
+                    Cocina
+                </h1>
+            </div>
+        </div>
+
+        <div class="station-header-meta">
+            <span
+                id="station-branch"
+                class="station-branch"
+            ></span>
+
+            <span
+                id="station-connection"
+                class="station-connection"
+            >
+                Conectando…
+            </span>
+        </div>
+
+    </header>
+
+    <section class="station-summary">
+        <span>
+            Órdenes:
+            <strong id="station-total">0</strong>
+        </span>
+
+        <span id="station-updated">
+            Esperando actualización…
+        </span>
+    </section>
+
+    <main class="station-board">
+
+        <section
+            class="station-column"
+            data-column="NEW"
+        >
+            <header class="station-column-header">
+                <div class="station-column-title">
+                    <span class="station-dot"></span>
+                    Nuevas
+                </div>
+
+                <span class="station-column-count">
+                    0
+                </span>
+            </header>
+
+            <div class="station-column-list"></div>
+        </section>
+
+        <section
+            class="station-column"
+            data-column="PREPARING"
+        >
+            <header class="station-column-header">
+                <div class="station-column-title">
+                    <span class="station-dot"></span>
+                    Preparando
+                </div>
+
+                <span class="station-column-count">
+                    0
+                </span>
+            </header>
+
+            <div class="station-column-list"></div>
+        </section>
+
+        <section
+            class="station-column"
+            data-column="READY"
+        >
+            <header class="station-column-header">
+                <div class="station-column-title">
+                    <span class="station-dot"></span>
+                    Listas
+                </div>
+
+                <span class="station-column-count">
+                    0
+                </span>
+            </header>
+
+            <div class="station-column-list"></div>
+        </section>
+
+    </main>
+
+</div>
+
+<script src="../js/api.js?v=11"></script>
+<script src="../js/station.js?v=1"></script>
+
+</body>
+</html>

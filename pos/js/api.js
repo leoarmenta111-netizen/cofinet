@@ -147,6 +147,76 @@ window.CofiPosAPI = (() => {
         );
     }
 
+    function listStationOrders(
+
+        station,
+
+        branchCode
+
+    ) {
+
+        return request(
+
+            `/pos/orders/stations/${
+
+                encodeURIComponent(station)
+
+            }?branch_code=${
+
+                encodeURIComponent(branchCode)
+
+            }`
+
+        );
+
+    }
+
+
+
+    function updateStationStatus(
+
+        orderUuid,
+
+        station,
+
+        branchCode,
+
+        status
+
+    ) {
+
+        return request(
+
+            `/pos/orders/${
+
+                encodeURIComponent(orderUuid)
+
+            }/stations/${
+
+                encodeURIComponent(station)
+
+            }`,
+
+            {
+
+                method: "PATCH",
+
+                body: JSON.stringify({
+
+                    branch_code: branchCode,
+
+                    status,
+
+                }),
+
+            }
+
+        );
+
+    }
+
+
+
     function searchCustomers(
         query = ""
     ) {
@@ -202,6 +272,8 @@ window.CofiPosAPI = (() => {
         listOrders,
         getOrder,
         updateOrderStatus,
+        listStationOrders,
+        updateStationStatus,
         searchCustomers,
         createCustomer,
         getCustomer,
