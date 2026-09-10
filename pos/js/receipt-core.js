@@ -230,21 +230,47 @@
 
         return modifiers
             .filter(
-                (modifier) =>
+                modifier =>
                     modifier.customer_visible === true
             )
-            .map(
-                (modifier) => ({
-                    name: String(
-                        modifier.name || ""
-                    ),
-                    price_delta:
-                        centsToMoney(
-                            modifier.price_delta_cents ?? 0,
-                            "modifier.price_delta_cents"
+            .map(modifier => {
+                const priceDeltaCents =
+                    modifier.price_delta_cents ?? 0;
+
+                requireNonnegativeCents(
+                    priceDeltaCents,
+                    "modifier.price_delta_cents"
+                );
+
+                return {
+                    modifier_group_id:
+                        modifier.modifier_group_id ??
+                        modifier.group_id ??
+                        null,
+
+                    modifier_option_id:
+                        modifier.modifier_option_id ??
+                        modifier.option_id ??
+                        null,
+
+                    group_name:
+                        modifier.group_name == null
+                            ? null
+                            : String(
+                                modifier.group_name
+                            ),
+
+                    option_name:
+                        String(
+                            modifier.option_name ??
+                            modifier.name ??
+                            ""
                         ),
-                })
-            );
+
+                    price_delta_cents:
+                        priceDeltaCents,
+                };
+            });
     }
 
     function buildItems(items) {
@@ -255,23 +281,26 @@
         }
 
         return items.map(
-            (item) => ({
+            item => ({
                 product_id:
                     item.product_id,
-                name:
-                    String(item.name || ""),
+
+                product_name:
+                    String(
+                        item.product_name ??
+                        item.name ??
+                        ""
+                    ),
+
                 quantity:
                     item.quantity,
-                unit_price:
-                    centsToMoney(
-                        item.unit_price_cents,
-                        "item.unit_price_cents"
-                    ),
-                line_total:
-                    centsToMoney(
-                        item.line_total_cents,
-                        "item.line_total_cents"
-                    ),
+
+                unit_price_cents:
+                    item.unit_price_cents,
+
+                line_total_cents:
+                    item.line_total_cents,
+
                 modifiers:
                     buildModifiers(
                         item.modifiers
@@ -290,6 +319,15 @@
             );
         }
 
+        const business =
+            input.business || {};
+
+        const branch =
+            input.branch || {};
+
+        const terminal =
+            input.terminal || {};
+
         const totals =
             input.totals || {};
 
@@ -298,91 +336,130 @@
 
         const snapshot = {
             schema_version: 1,
+
             order_uuid:
                 input.order_uuid,
+
             folio:
                 input.folio,
+
             sold_at:
                 input.sold_at,
+
             currency:
                 input.currency,
-            business:
-                detachedClone(
-                    input.business
-                ),
-            branch:
-                detachedClone(
-                    input.branch
-                ),
-            terminal:
-                detachedClone(
-                    input.terminal
-                ),
+
+            business: {
+                business_name:
+                    String(
+                        business.business_name ??
+                        business.name ??
+                        ""
+                    ),
+
+                logo_ref:
+                    business.logo_ref ??
+                    null,
+
+                phone:
+                    business.phone ??
+                    null,
+
+                web_social:
+                    business.web_social ??
+                    null,
+
+                footer_message:
+                    business.footer_message ??
+                    null,
+            },
+
+            branch: {
+                branch_code:
+                    String(
+                        branch.branch_code ??
+                        branch.code ??
+                        ""
+                    ),
+
+                branch_name:
+                    String(
+                        branch.branch_name ??
+                        branch.name ??
+                        ""
+                    ),
+
+                address:
+                    branch.address ??
+                    null,
+
+                phone:
+                    branch.phone ??
+                    null,
+            },
+
+            terminal: {
+                terminal_id:
+                    String(
+                        terminal.terminal_id ??
+                        terminal.id ??
+                        ""
+                    ),
+            },
+
             customer:
                 buildCustomer(
                     input.customer
                 ),
+
             items:
                 buildItems(
                     input.items
                 ),
+
             totals: {
-                subtotal:
-                    centsToMoney(
-                        totals.subtotal_cents,
-                        "totals.subtotal_cents"
-                    ),
-                discount:
-                    centsToMoney(
-                        totals.discount_cents ?? 0,
-                        "totals.discount_cents"
-                    ),
+                subtotal_cents:
+                    totals.subtotal_cents,
+
+                discount_cents:
+                    totals.discount_cents ?? 0,
+
                 tax_mode:
                     String(
                         totals.tax_mode || ""
                     ).toUpperCase(),
+
                 tax_rate:
                     String(
                         totals.tax_rate
                     ),
-                tax:
-                    centsToMoney(
-                        totals.tax_cents,
-                        "totals.tax_cents"
-                    ),
-                tip:
-                    centsToMoney(
-                        totals.tip_cents,
-                        "totals.tip_cents"
-                    ),
-                total:
-                    centsToMoney(
-                        totals.total_cents,
-                        "totals.total_cents"
-                    ),
+
+                tax_cents:
+                    totals.tax_cents,
+
+                tip_cents:
+                    totals.tip_cents,
+
+                total_cents:
+                    totals.total_cents,
             },
+
             payment: {
                 method:
-                    payment.method,
-                amount:
-                    centsToMoney(
-                        payment.amount_cents,
-                        "payment.amount_cents"
-                    ),
-                amount_tendered:
-                    payment.method === "CASH"
-                        ? centsToMoney(
-                            payment.amount_tendered_cents,
-                            "payment.amount_tendered_cents"
-                        )
-                        : null,
-                change_due:
-                    payment.method === "CASH"
-                        ? centsToMoney(
-                            payment.change_due_cents,
-                            "payment.change_due_cents"
-                        )
-                        : null,
+                    String(
+                        payment.method || ""
+                    ).toUpperCase(),
+
+                amount_cents:
+                    payment.amount_cents,
+
+                amount_tendered_cents:
+                    payment.amount_tendered_cents ??
+                    null,
+
+                change_due_cents:
+                    payment.change_due_cents ??
+                    null,
             },
         };
 
@@ -453,6 +530,21 @@
 
         if (
             !Number.isInteger(
+                item.product_id
+            )
+        ) {
+            throw new Error(
+                "item product_id must be an integer"
+            );
+        }
+
+        requireText(
+            item.product_name,
+            "item.product_name"
+        );
+
+        if (
+            !Number.isInteger(
                 item.quantity
             ) ||
             item.quantity <= 0
@@ -462,36 +554,33 @@
             );
         }
 
-        requireText(
-            item.name,
-            "item.name"
+        requireNonnegativeCents(
+            item.unit_price_cents,
+            "item.unit_price_cents"
         );
 
-        const unitPriceCents =
-            moneyToCents(
-                item.unit_price,
-                "item.unit_price"
-            );
-
-        const lineTotalCents =
-            moneyToCents(
-                item.line_total,
-                "item.line_total"
-            );
+        requireNonnegativeCents(
+            item.line_total_cents,
+            "item.line_total_cents"
+        );
 
         if (
-            unitPriceCents *
-                item.quantity !==
-            lineTotalCents
+            item.line_total_cents !==
+            item.unit_price_cents *
+                item.quantity
         ) {
             throw new Error(
-                "Inconsistent item line total"
+                "Inconsistent receipt line total"
             );
         }
 
-        if (!Array.isArray(item.modifiers)) {
+        if (
+            !Array.isArray(
+                item.modifiers
+            )
+        ) {
             throw new Error(
-                "item.modifiers must be an array"
+                "item modifiers must be an array"
             );
         }
 
@@ -499,18 +588,51 @@
             const modifier
             of item.modifiers
         ) {
+            if (
+                !modifier ||
+                typeof modifier !== "object"
+            ) {
+                throw new Error(
+                    "Invalid receipt modifier"
+                );
+            }
+
+            if (
+                modifier.modifier_group_id !== null &&
+                modifier.modifier_group_id !== undefined &&
+                !Number.isInteger(
+                    modifier.modifier_group_id
+                )
+            ) {
+                throw new Error(
+                    "Invalid modifier_group_id"
+                );
+            }
+
+            if (
+                modifier.modifier_option_id !== null &&
+                modifier.modifier_option_id !== undefined &&
+                !Number.isInteger(
+                    modifier.modifier_option_id
+                )
+            ) {
+                throw new Error(
+                    "Invalid modifier_option_id"
+                );
+            }
+
             requireText(
-                modifier.name,
-                "modifier.name"
+                modifier.option_name,
+                "modifier.option_name"
             );
 
-            moneyToCents(
-                modifier.price_delta,
-                "modifier.price_delta"
+            requireNonnegativeCents(
+                modifier.price_delta_cents,
+                "modifier.price_delta_cents"
             );
         }
 
-        return lineTotalCents;
+        return item.line_total_cents;
     }
 
     function validateSnapshot(snapshot) {
@@ -551,31 +673,65 @@
             "currency"
         );
 
-        if (!snapshot.business) {
+        if (
+            !snapshot.business ||
+            typeof snapshot.business !== "object"
+        ) {
             throw new Error(
                 "business is required"
             );
         }
 
-        if (!snapshot.branch) {
+        requireText(
+            snapshot.business.business_name,
+            "business.business_name"
+        );
+
+        if (
+            !snapshot.branch ||
+            typeof snapshot.branch !== "object"
+        ) {
             throw new Error(
                 "branch is required"
             );
         }
 
-        if (!snapshot.terminal) {
+        requireText(
+            snapshot.branch.branch_code,
+            "branch.branch_code"
+        );
+
+        requireText(
+            snapshot.branch.branch_name,
+            "branch.branch_name"
+        );
+
+        if (
+            !snapshot.terminal ||
+            typeof snapshot.terminal !== "object"
+        ) {
             throw new Error(
                 "terminal is required"
             );
         }
 
+        requireText(
+            snapshot.terminal.terminal_id,
+            "terminal.terminal_id"
+        );
+
         validateCustomer(
             snapshot.customer
         );
 
-        if (!Array.isArray(snapshot.items)) {
+        if (
+            !Array.isArray(
+                snapshot.items
+            ) ||
+            snapshot.items.length === 0
+        ) {
             throw new Error(
-                "items must be an array"
+                "items must be a non-empty array"
             );
         }
 
@@ -615,42 +771,37 @@
             );
         }
 
-        const subtotalCents =
-            moneyToCents(
-                totals.subtotal,
-                "totals.subtotal"
-            );
+        requireNonnegativeCents(
+            totals.subtotal_cents,
+            "totals.subtotal_cents"
+        );
 
-        const discountCents =
-            moneyToCents(
-                totals.discount,
-                "totals.discount"
-            );
+        requireNonnegativeCents(
+            totals.discount_cents,
+            "totals.discount_cents"
+        );
 
-        const taxCents =
-            moneyToCents(
-                totals.tax,
-                "totals.tax"
-            );
+        requireNonnegativeCents(
+            totals.tax_cents,
+            "totals.tax_cents"
+        );
 
-        const tipCents =
-            moneyToCents(
-                totals.tip,
-                "totals.tip"
-            );
+        requireNonnegativeCents(
+            totals.tip_cents,
+            "totals.tip_cents"
+        );
 
-        const totalCents =
-            moneyToCents(
-                totals.total,
-                "totals.total"
-            );
+        requireNonnegativeCents(
+            totals.total_cents,
+            "totals.total_cents"
+        );
 
         parseRate(
             totals.tax_rate
         );
 
         if (
-            subtotalCents !==
+            totals.subtotal_cents !==
             itemSubtotalCents
         ) {
             throw new Error(
@@ -661,18 +812,24 @@
         const calculated =
             calculateTax({
                 merchandiseCents:
-                    subtotalCents,
-                discountCents,
+                    totals.subtotal_cents,
+
+                discountCents:
+                    totals.discount_cents,
+
                 taxMode:
                     totals.tax_mode,
+
                 taxRate:
                     totals.tax_rate,
-                tipCents,
+
+                tipCents:
+                    totals.tip_cents,
             });
 
         if (
             calculated.taxCents !==
-            taxCents
+            totals.tax_cents
         ) {
             throw new Error(
                 "Inconsistent receipt tax"
@@ -681,7 +838,7 @@
 
         if (
             calculated.totalCents !==
-            totalCents
+            totals.total_cents
         ) {
             throw new Error(
                 "Inconsistent receipt total"
@@ -700,57 +857,62 @@
             );
         }
 
-        requireText(
-            payment.method,
-            "payment.method"
-        );
-
-        const paymentAmountCents =
-            moneyToCents(
-                payment.amount,
-                "payment.amount"
-            );
-
         if (
-            paymentAmountCents !==
-            totalCents
+            ![
+                "CASH",
+                "CARD_EXTERNAL",
+            ].includes(
+                payment.method
+            )
         ) {
             throw new Error(
-                "Payment amount does not match receipt total"
+                "Unsupported payment method"
+            );
+        }
+
+        requireNonnegativeCents(
+            payment.amount_cents,
+            "payment.amount_cents"
+        );
+
+        if (
+            payment.amount_cents !==
+            totals.total_cents
+        ) {
+            throw new Error(
+                "Inconsistent receipt payment amount"
             );
         }
 
         if (
             payment.method === "CASH"
         ) {
-            const tenderedCents =
-                moneyToCents(
-                    payment.amount_tendered,
-                    "payment.amount_tendered"
-                );
+            requireNonnegativeCents(
+                payment.amount_tendered_cents,
+                "payment.amount_tendered_cents"
+            );
 
-            const changeCents =
-                moneyToCents(
-                    payment.change_due,
-                    "payment.change_due"
-                );
+            requireNonnegativeCents(
+                payment.change_due_cents,
+                "payment.change_due_cents"
+            );
 
             if (
-                tenderedCents <
-                paymentAmountCents
+                payment.amount_tendered_cents <
+                payment.amount_cents
             ) {
                 throw new Error(
-                    "Cash tendered is insufficient"
+                    "Insufficient receipt cash"
                 );
             }
 
             if (
-                tenderedCents -
-                    paymentAmountCents !==
-                changeCents
+                payment.change_due_cents !==
+                payment.amount_tendered_cents -
+                    payment.amount_cents
             ) {
                 throw new Error(
-                    "Inconsistent cash change"
+                    "Inconsistent receipt change"
                 );
             }
         }

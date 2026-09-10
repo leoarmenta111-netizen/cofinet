@@ -241,46 +241,55 @@ test("snapshot congela los datos visibles del recibo", () => {
 
     assert.equal(snapshot.items.length, 1);
     assert.equal(snapshot.items[0].product_id, 101);
-    assert.equal(snapshot.items[0].name, "Orden de tacos");
+    assert.equal(
+        snapshot.items[0].product_name,
+        "Orden de tacos"
+    );
     assert.equal(snapshot.items[0].quantity, 2);
-    assert.equal(snapshot.items[0].unit_price, "40.00");
-    assert.equal(snapshot.items[0].line_total, "80.00");
-
-    assert.deepEqual(
-        snapshot.items[0].modifiers,
-        [
-            {
-                name: "Queso extra",
-                price_delta: "5.00",
-            },
-        ]
+    assert.equal(
+        snapshot.items[0].unit_price_cents,
+        4000
+    );
+    assert.equal(
+        snapshot.items[0].line_total_cents,
+        8000
     );
 
     assert.equal(
-        "preparation_notes" in snapshot.items[0],
+        snapshot.items[0].modifiers.length,
+        1
+    );
+
+    assert.equal(
+        snapshot.items[0]
+            .modifiers[0]
+            .option_name,
+        "Queso extra"
+    );
+
+    assert.equal(
+        snapshot.items[0]
+            .modifiers[0]
+            .price_delta_cents,
+        500
+    );
+
+    assert.equal(
+        "preparation_notes" in
+            snapshot.items[0],
         false
-    );
-
-    assert.deepEqual(
-        snapshot.business,
-        input.business
-    );
-
-    assert.deepEqual(
-        snapshot.branch,
-        input.branch
     );
 
     assert.deepEqual(
         snapshot.totals,
         {
-            subtotal: "80.00",
-            discount: "0.00",
+            subtotal_cents: 8000,
+            discount_cents: 0,
             tax_mode: "ADDED",
             tax_rate: "0.1600",
-            tax: "12.80",
-            tip: "5.00",
-            total: "97.80",
+            tax_cents: 1280,
+            tip_cents: 500,
+            total_cents: 9780,
         }
     );
 
@@ -288,9 +297,9 @@ test("snapshot congela los datos visibles del recibo", () => {
         snapshot.payment,
         {
             method: "CASH",
-            amount: "97.80",
-            amount_tendered: "100.00",
-            change_due: "2.20",
+            amount_cents: 9780,
+            amount_tendered_cents: 10000,
+            change_due_cents: 220,
         }
     );
 
@@ -298,6 +307,7 @@ test("snapshot congela los datos visibles del recibo", () => {
         validateSnapshot(snapshot);
     });
 });
+
 
 test("snapshot queda separado de mutaciones posteriores", () => {
     const input = baseSnapshotInput();
@@ -307,27 +317,50 @@ test("snapshot queda separado de mutaciones posteriores", () => {
     input.branch.name = "CAMBIADO";
     input.customer.name = "CAMBIADO";
     input.items[0].name = "CAMBIADO";
-    input.items[0].modifiers[0].name = "CAMBIADO";
+    input.items[0].modifiers[0].name =
+        "CAMBIADO";
     input.totals.total_cents = 1;
-    input.payment.method = "CARD_EXTERNAL";
+    input.payment.method =
+        "CARD_EXTERNAL";
 
-    assert.equal(snapshot.business.name, "CofiCenter");
     assert.equal(
-        snapshot.branch.name,
+        snapshot.business.business_name,
+        "CofiCenter"
+    );
+
+    assert.equal(
+        snapshot.branch.branch_name,
         "CofiCenter Nuevo Vallarta"
     );
-    assert.equal(snapshot.customer.name, "Ana Perez");
+
     assert.equal(
-        snapshot.items[0].name,
+        snapshot.customer.name,
+        "Ana Perez"
+    );
+
+    assert.equal(
+        snapshot.items[0].product_name,
         "Orden de tacos"
     );
+
     assert.equal(
-        snapshot.items[0].modifiers[0].name,
+        snapshot.items[0]
+            .modifiers[0]
+            .option_name,
         "Queso extra"
     );
-    assert.equal(snapshot.totals.total, "97.80");
-    assert.equal(snapshot.payment.method, "CASH");
+
+    assert.equal(
+        snapshot.totals.total_cents,
+        9780
+    );
+
+    assert.equal(
+        snapshot.payment.method,
+        "CASH"
+    );
 });
+
 
 test("snapshot admite customer null", () => {
     const input = baseSnapshotInput();
@@ -335,45 +368,170 @@ test("snapshot admite customer null", () => {
 
     const snapshot = buildSnapshot(input);
 
-    assert.equal(snapshot.customer, null);
+    assert.equal(
+        snapshot.customer,
+        null
+    );
 });
 
+
 test("validateSnapshot rechaza snapshots inconsistentes", () => {
-    const valid = buildSnapshot(baseSnapshotInput());
+    const valid =
+        buildSnapshot(
+            baseSnapshotInput()
+        );
 
     const wrongVersion = clone(valid);
     wrongVersion.schema_version = 2;
-    assert.throws(() => validateSnapshot(wrongVersion));
+    assert.throws(
+        () =>
+            validateSnapshot(
+                wrongVersion
+            )
+    );
 
     const missingUuid = clone(valid);
     delete missingUuid.order_uuid;
-    assert.throws(() => validateSnapshot(missingUuid));
+    assert.throws(
+        () =>
+            validateSnapshot(
+                missingUuid
+            )
+    );
 
     const missingFolio = clone(valid);
     delete missingFolio.folio;
-    assert.throws(() => validateSnapshot(missingFolio));
+    assert.throws(
+        () =>
+            validateSnapshot(
+                missingFolio
+            )
+    );
 
     const negativeMoney = clone(valid);
-    negativeMoney.totals.tip = "-1.00";
-    assert.throws(() => validateSnapshot(negativeMoney));
+    negativeMoney.totals.tip_cents = -1;
+    assert.throws(
+        () =>
+            validateSnapshot(
+                negativeMoney
+            )
+    );
 
     const wrongLine = clone(valid);
-    wrongLine.items[0].line_total = "79.99";
-    assert.throws(() => validateSnapshot(wrongLine));
+    wrongLine.items[0]
+        .line_total_cents = 7999;
+    assert.throws(
+        () =>
+            validateSnapshot(
+                wrongLine
+            )
+    );
 
     const wrongSubtotal = clone(valid);
-    wrongSubtotal.totals.subtotal = "79.00";
-    assert.throws(() => validateSnapshot(wrongSubtotal));
+    wrongSubtotal.totals
+        .subtotal_cents = 7900;
+    assert.throws(
+        () =>
+            validateSnapshot(
+                wrongSubtotal
+            )
+    );
 
     const wrongTotal = clone(valid);
-    wrongTotal.totals.total = "1.00";
-    assert.throws(() => validateSnapshot(wrongTotal));
+    wrongTotal.totals.total_cents = 100;
+    assert.throws(
+        () =>
+            validateSnapshot(
+                wrongTotal
+            )
+    );
 
     const wrongMode = clone(valid);
-    wrongMode.totals.tax_mode = "INVALID";
-    assert.throws(() => validateSnapshot(wrongMode));
+    wrongMode.totals.tax_mode =
+        "INVALID";
+    assert.throws(
+        () =>
+            validateSnapshot(
+                wrongMode
+            )
+    );
 
     const leakedCustomer = clone(valid);
-    leakedCustomer.customer.phone = "3220000000";
-    assert.throws(() => validateSnapshot(leakedCustomer));
+    leakedCustomer.customer.phone =
+        "3220000000";
+    assert.throws(
+        () =>
+            validateSnapshot(
+                leakedCustomer
+            )
+    );
+});
+
+
+test("snapshot usa contrato canonico compatible con backend", () => {
+    const snapshot = buildSnapshot(baseSnapshotInput());
+
+    assert.equal(snapshot.schema_version, 1);
+
+    assert.equal(
+        snapshot.business.business_name,
+        "CofiCenter"
+    );
+
+    assert.equal(
+        snapshot.branch.branch_code,
+        "nuevo-vallarta"
+    );
+
+    assert.equal(
+        snapshot.branch.branch_name,
+        "CofiCenter Nuevo Vallarta"
+    );
+
+    assert.deepEqual(
+        snapshot.items[0],
+        {
+            product_id: 101,
+            product_name: "Orden de tacos",
+            quantity: 2,
+            unit_price_cents: 4000,
+            line_total_cents: 8000,
+            modifiers: [
+                {
+                    modifier_group_id: null,
+                    modifier_option_id: null,
+                    group_name: null,
+                    option_name: "Queso extra",
+                    price_delta_cents: 500,
+                },
+            ],
+        }
+    );
+
+    assert.deepEqual(
+        snapshot.totals,
+        {
+            subtotal_cents: 8000,
+            discount_cents: 0,
+            tax_mode: "ADDED",
+            tax_rate: "0.1600",
+            tax_cents: 1280,
+            tip_cents: 500,
+            total_cents: 9780,
+        }
+    );
+
+    assert.deepEqual(
+        snapshot.payment,
+        {
+            method: "CASH",
+            amount_cents: 9780,
+            amount_tendered_cents: 10000,
+            change_due_cents: 220,
+        }
+    );
+
+    assert.doesNotThrow(() => {
+        validateSnapshot(snapshot);
+    });
 });
