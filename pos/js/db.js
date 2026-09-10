@@ -1,6 +1,6 @@
 window.CofiPosDB = (() => {
     const DB_NAME = "cofi_pos_local";
-    const DB_VERSION = 2;
+    const DB_VERSION = 3;
 
     let dbPromise = null;
 
@@ -60,6 +60,13 @@ window.CofiPosDB = (() => {
                         { unique: false }
                     );
                 }
+
+                if (!db.objectStoreNames.contains("receipts")) {
+                    db.createObjectStore(
+                        "receipts",
+                        { keyPath: "order_uuid" }
+                    );
+                }
             };
 
             request.onsuccess = () => resolve(request.result);
@@ -109,6 +116,118 @@ window.CofiPosDB = (() => {
             request.onerror = () => reject(request.error);
         });
     }
+
+    async function getReceipt(orderUuid) {
+        const receipt = await get(
+            "receipts",
+            orderUuid
+        );
+
+        return receipt ?? null;
+    }
+
+
+    async function getLocalOrder(orderUuid) {
+        return get(
+            "local_orders",
+            orderUuid
+        );
+    }
+
+
+    async function finalizePaidSale(record) {
+        const db = await open();
+
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(
+                [
+                    "local_orders",
+                    "receipts",
+                    "sync_queue",
+                ],
+                "readwrite"
+            );
+
+            let settled = false;
+
+            function rejectOnce(error) {
+                if (settled) {
+                    return;
+                }
+
+                settled = true;
+
+                reject(
+                    error ||
+                    tx.error ||
+                    new Error(
+                        "Failed to finalize paid sale"
+                    )
+                );
+            }
+
+            tx.oncomplete = () => {
+                if (settled) {
+                    return;
+                }
+
+                settled = true;
+                resolve(record);
+            };
+
+            tx.onerror = () => {
+                rejectOnce(
+                    tx.error ||
+                    new Error(
+                        "Paid sale transaction failed"
+                    )
+                );
+            };
+
+            tx.onabort = () => {
+                rejectOnce(
+                    tx.error ||
+                    new Error(
+                        "Paid sale transaction aborted"
+                    )
+                );
+            };
+
+            const requests = [
+                tx
+                    .objectStore("local_orders")
+                    .put(record.local_order),
+
+                tx
+                    .objectStore("receipts")
+                    .put(record.receipt_snapshot),
+
+                tx
+                    .objectStore("sync_queue")
+                    .put(record.sync_event),
+            ];
+
+            for (const request of requests) {
+                request.onerror = () => {
+                    const error =
+                        request.error ||
+                        tx.error ||
+                        new Error(
+                            "Paid sale write failed"
+                        );
+
+                    try {
+                        tx.abort();
+                    } catch {
+                        // Transaction may already be aborting.
+                    }
+
+                    rejectOnce(error);
+                };
+            }
+        });
+    }
+
 
     async function countPending() {
         const db = await open();
@@ -200,6 +319,9 @@ window.CofiPosDB = (() => {
         get,
         put,
         getAll,
+        getReceipt,
+        getLocalOrder,
+        finalizePaidSale,
         countPending,
         getPendingEvents,
         getOrCreateTerminalId,

@@ -88,13 +88,18 @@
             const payload =
                 localOrder?.payload || {};
 
+            const receiptSnapshot =
+                localOrder?.receipt_snapshot ||
+                payload.receipt_snapshot ||
+                null;
+
             const products =
                 catalogProducts(
                     catalog
                 );
 
 
-            const items =
+            const legacyItems =
                 (payload.items || [])
                     .map(item => {
 
@@ -206,6 +211,68 @@
                     });
 
 
+            const receiptItems =
+                (receiptSnapshot?.items || [])
+                    .map(item => ({
+                        product_id:
+                            item.product_id,
+
+                        product_name:
+                            item.product_name,
+
+                        quantity:
+                            Math.max(
+                                1,
+                                number(
+                                    item.quantity
+                                )
+                            ),
+
+                        unit_price:
+                            number(
+                                item.unit_price_cents
+                            ) / 100,
+
+                        line_total:
+                            number(
+                                item.line_total_cents
+                            ) / 100,
+
+                        modifiers:
+                            (item.modifiers || [])
+                                .map(
+                                    modifier => ({
+                                        option_id:
+                                            modifier
+                                                .modifier_option_id,
+
+                                        option_name:
+                                            modifier
+                                                .option_name,
+
+                                        group_name:
+                                            modifier
+                                                .group_name ||
+                                            null,
+
+                                        price_delta:
+                                            number(
+                                                modifier
+                                                    .price_delta_cents
+                                            ) / 100,
+                                    })
+                                ),
+
+                        notes: null,
+                    }));
+
+
+            const items =
+                receiptSnapshot
+                    ? receiptItems
+                    : legacyItems;
+
+
             const calculatedTotal =
                 items.reduce(
                     (
@@ -241,6 +308,9 @@
                     uuid,
 
                 folio:
+                    receiptSnapshot?.folio ||
+                    payload.folio ||
+                    localOrder?.folio ||
                     `LOCAL-${
                         String(uuid || "")
                             .replace(
@@ -280,6 +350,9 @@
                 payment:
                     payload.payment ||
                     null,
+
+                receipt_snapshot:
+                    receiptSnapshot,
 
                 notes:
                     payload.notes ||
