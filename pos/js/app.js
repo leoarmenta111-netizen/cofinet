@@ -963,6 +963,104 @@
         );
     }
 
+    /* =====================================================
+       MOBILE ORDER ACTIONS V1
+       ===================================================== */
+
+    function closeMobileOrderDrawer() {
+        $(".workspace")
+            ?.classList.remove(
+                "mobile-order-open"
+            );
+
+        document.body.classList.remove(
+            "mobile-order-drawer-open"
+        );
+
+        $("#mobile-order-view")
+            ?.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+    }
+
+
+    function openMobileOrderDrawer() {
+        if (!state.cart.length) return;
+
+        $(".workspace")
+            ?.classList.add(
+                "mobile-order-open"
+            );
+
+        document.body.classList.add(
+            "mobile-order-drawer-open"
+        );
+
+        $("#mobile-order-view")
+            ?.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+    }
+
+
+    function syncMobileOrderBar(
+        hasItems,
+        total
+    ) {
+        const itemCount =
+            state.cart.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(item.quantity || 0),
+                0
+            );
+
+        const count =
+            $("#mobile-order-count");
+
+        const mobileTotal =
+            $("#mobile-order-total");
+
+        const viewButton =
+            $("#mobile-order-view");
+
+        const checkoutButton =
+            $("#mobile-order-checkout");
+
+        if (count) {
+            count.textContent =
+                hasItems
+                    ? `${itemCount} ${
+                        itemCount === 1
+                            ? "producto"
+                            : "productos"
+                    }`
+                    : "Orden vacía";
+        }
+
+        if (mobileTotal) {
+            mobileTotal.textContent =
+                money(total);
+        }
+
+        if (viewButton) {
+            viewButton.disabled =
+                !hasItems;
+        }
+
+        if (checkoutButton) {
+            checkoutButton.disabled =
+                !hasItems;
+        }
+
+        if (!hasItems) {
+            closeMobileOrderDrawer();
+        }
+    }
+
+
     function renderCart() {
         const container =
             $("#cart-items");
@@ -980,6 +1078,8 @@
 
         $("#checkout-button").disabled =
             !hasItems;
+
+        syncPaymentShortcuts();
 
         state.cart.forEach(item => {
             const row =
@@ -1158,6 +1258,11 @@
 
         $("#checkout-total").textContent =
             money(total);
+
+        syncMobileOrderBar(
+            hasItems,
+            total
+        );
     }
 
     function removeCartItem(lineUuid) {
@@ -1258,6 +1363,28 @@
         $("#card-fields").hidden =
             method !== "CARD_EXTERNAL";
     }
+
+    function syncPaymentShortcuts() {
+        const disabled =
+            !state.cart.length;
+
+        document
+            .querySelectorAll(
+                "[data-quick-payment], #payment-more"
+            )
+            .forEach(button => {
+                button.disabled =
+                    disabled;
+            });
+    }
+
+    function openQuickPayment(method) {
+        if (!state.cart.length) return;
+
+        openPayment();
+        setPaymentMethod(method);
+    }
+
 
     function updateChange() {
         const receivedCents =
@@ -2120,6 +2247,97 @@
     }
 
 
+    /* =====================================================
+       MOBILE CUSTOMER OVERLAY V1
+       Clientes encima de Orden actual en teléfonos
+       ===================================================== */
+
+    function closeMobileCustomerOverlay() {
+        const workspace =
+            $(".workspace");
+
+        const customers =
+            $("#customers-view");
+
+        workspace?.classList.remove(
+            "mobile-customer-overlay-open"
+        );
+
+        document.body.classList.remove(
+            "mobile-customer-overlay-active"
+        );
+
+        if (customers) {
+            customers.hidden = true;
+        }
+
+        const createPanel =
+            $("#customer-create-panel");
+
+        if (createPanel) {
+            createPanel.hidden = true;
+        }
+    }
+
+
+    async function openMobileCustomerOverlay() {
+        const workspace =
+            $(".workspace");
+
+        const customers =
+            $("#customers-view");
+
+        if (!workspace || !customers) {
+            return;
+        }
+
+        customers.hidden = false;
+
+        workspace.classList.add(
+            "mobile-customer-overlay-open"
+        );
+
+        document.body.classList.add(
+            "mobile-customer-overlay-active"
+        );
+
+        const search =
+            $("#customer-search");
+
+        await searchCustomers(
+            search?.value || ""
+        );
+
+        search?.focus();
+    }
+
+
+    async function openCustomersFromSale() {
+        const workspace =
+            $(".workspace");
+
+        const isPhone =
+            window.matchMedia(
+                "(max-width: 620px)"
+            ).matches;
+
+        const orderIsOpen =
+            workspace?.classList.contains(
+                "mobile-order-open"
+            );
+
+        if (
+            isPhone &&
+            orderIsOpen
+        ) {
+            await openMobileCustomerOverlay();
+            return;
+        }
+
+        await showCustomers();
+    }
+
+
     function showSaleFromCustomers() {
         const sale =
             $("#sale-view");
@@ -2178,6 +2396,17 @@
             customer || null;
 
         renderSelectedCustomer();
+
+        const mobileOverlayOpen =
+            $(".workspace")
+                ?.classList.contains(
+                    "mobile-customer-overlay-open"
+                );
+
+        if (mobileOverlayOpen) {
+            closeMobileCustomerOverlay();
+            return;
+        }
 
         showSaleFromCustomers();
     }
@@ -2750,6 +2979,52 @@
             openPayment
         );
 
+
+    $("#mobile-order-view")
+        ?.addEventListener(
+            "click",
+            openMobileOrderDrawer
+        );
+
+
+    $("#mobile-order-close")
+        ?.addEventListener(
+            "click",
+            closeMobileOrderDrawer
+        );
+
+
+    $("#mobile-order-checkout")
+        ?.addEventListener(
+            "click",
+            () => {
+                closeMobileOrderDrawer();
+                openPayment();
+            }
+        );
+
+    document
+        .querySelectorAll(
+            "[data-quick-payment]"
+        )
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    openQuickPayment(
+                        button.dataset.quickPayment
+                    );
+                }
+            );
+        });
+
+    $("#payment-more")
+        ?.addEventListener(
+            "click",
+            openPayment
+        );
+
+
     $("#modifier-close")
         .addEventListener(
             "click",
@@ -2871,7 +3146,14 @@
     $("#open-customers-from-sale")
         ?.addEventListener(
             "click",
-            showCustomers
+            openCustomersFromSale
+        );
+
+
+    $("#mobile-customer-close")
+        ?.addEventListener(
+            "click",
+            closeMobileCustomerOverlay
         );
 
 

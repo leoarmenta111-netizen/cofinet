@@ -2162,6 +2162,2646 @@ and (
     }
 }
 
+
+/* ==================================================
+   POS ORDER PANEL PROFESSIONAL REDESIGN
+   ================================================== */
+
+
+/* --------------------------------------------------
+   PANEL PRINCIPAL
+   -------------------------------------------------- */
+
+.order-panel {
+    display: flex;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+
+    background: #ffffff !important;
+    border: 1px solid #e7e1d8 !important;
+    border-radius: 22px !important;
+
+    box-shadow:
+        0 1px 2px rgba(25, 32, 27, 0.03),
+        0 8px 30px rgba(25, 32, 27, 0.035) !important;
+}
+
+
+/* --------------------------------------------------
+   HEADER DE ORDEN
+   -------------------------------------------------- */
+
+.order-panel .order-header,
+.order-panel .order-panel-header,
+.order-panel > header {
+    flex-shrink: 0;
+
+    padding: 18px 20px 14px !important;
+
+    border-bottom: 1px solid #eee9e1 !important;
+
+    background: #ffffff !important;
+}
+
+.order-panel h2 {
+    margin: 0 !important;
+
+    font-size: 20px !important;
+    line-height: 1.15 !important;
+    font-weight: 800 !important;
+
+    letter-spacing: -0.02em !important;
+
+    color: #1e2921 !important;
+}
+
+
+/* --------------------------------------------------
+   CLIENTE
+   -------------------------------------------------- */
+
+#sale-customer-section {
+    flex-shrink: 0 !important;
+
+    padding: 12px 16px !important;
+
+    border-bottom: 1px solid #eee9e1 !important;
+
+    background: #fff !important;
+}
+
+
+/* etiqueta Cliente + buscar */
+
+#sale-customer-section .customer-section-header,
+#sale-customer-section .customer-header,
+#sale-customer-section > header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px !important;
+
+    margin-bottom: 8px !important;
+}
+
+#sale-customer-section .customer-section-header *,
+#sale-customer-section .customer-header * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+
+/* tarjeta principal */
+
+#sale-customer-section .selected-customer-card,
+#sale-customer-section .customer-selected-card,
+#sale-customer-section .sale-customer-card,
+#sale-customer-section > div:last-child {
+    padding: 12px !important;
+
+    border: 1px solid #eadfce !important;
+    border-radius: 16px !important;
+
+    background: #fffdf9 !important;
+
+    box-shadow: none !important;
+}
+
+
+/* nombre / avatar */
+
+#sale-customer-section .selected-customer-header,
+#sale-customer-section .customer-selected-header,
+#sale-customer-section .customer-card-header,
+#sale-customer-section .customer-identity {
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 10px !important;
+}
+
+#sale-customer-section .customer-avatar,
+#sale-customer-section .selected-customer-avatar,
+#sale-customer-section .customer-selected-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+
+    display: grid !important;
+    place-items: center !important;
+
+    border-radius: 50% !important;
+
+    background: #f6efe3 !important;
+    color: #a66f09 !important;
+}
+
+#sale-customer-section .customer-name,
+#sale-customer-section .selected-customer-name,
+#sale-customer-section .customer-selected-name {
+    margin: 0 !important;
+
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+    font-weight: 800 !important;
+
+    color: #202a22 !important;
+}
+
+#sale-customer-section .customer-phone,
+#sale-customer-section .selected-customer-phone,
+#sale-customer-section .customer-selected-phone {
+    margin-top: 2px !important;
+
+    font-size: 11px !important;
+
+    color: #778078 !important;
+}
+
+
+/* --------------------------------------------------
+   MÉTRICAS DEL CLIENTE
+   -------------------------------------------------- */
+
+#sale-customer-section .customer-metrics,
+#sale-customer-section .selected-customer-metrics,
+#sale-customer-section .customer-selected-metrics {
+    display: grid !important;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr)) !important;
+
+    gap: 7px !important;
+
+    margin-top: 9px !important;
+}
+
+#sale-customer-section .customer-metric,
+#sale-customer-section .selected-customer-metric,
+#sale-customer-section .customer-selected-metric {
+    min-height: 0 !important;
+
+    padding: 7px 9px !important;
+
+    border: 0 !important;
+    border-radius: 10px !important;
+
+    background: #f4f6f2 !important;
+}
+
+#sale-customer-section .customer-metric span,
+#sale-customer-section .selected-customer-metric span,
+#sale-customer-section .customer-selected-metric span {
+    display: block !important;
+
+    margin: 0 0 2px !important;
+
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+
+    color: #7a847c !important;
+}
+
+#sale-customer-section .customer-metric strong,
+#sale-customer-section .selected-customer-metric strong,
+#sale-customer-section .customer-selected-metric strong {
+    font-size: 12px !important;
+    line-height: 1.15 !important;
+
+    color: #202a22 !important;
+}
+
+
+/* Última compra */
+
+#sale-customer-section .customer-last-purchase,
+#sale-customer-section .selected-customer-last,
+#sale-customer-section .customer-selected-last {
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px !important;
+
+    margin-top: 8px !important;
+    padding-top: 7px !important;
+
+    border-top: 1px solid #eee8df !important;
+
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+
+    color: #667068 !important;
+}
+
+
+/* quitar cliente */
+
+#sale-customer-section button {
+    box-shadow: none !important;
+}
+
+
+/* --------------------------------------------------
+   CONTENEDOR DE PRODUCTOS
+   -------------------------------------------------- */
+
+/*
+   Tenemos varios nombres porque el POS ha cambiado
+   de estructura durante las últimas iteraciones.
+*/
+
+.order-items,
+.cart-items,
+.sale-cart-items,
+#order-items,
+#cart-items {
+    flex: 1 !important;
+
+    min-height: 0 !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    padding: 6px 16px 14px !important;
+
+    overscroll-behavior: contain !important;
+
+    scrollbar-width: thin !important;
+    scrollbar-color:
+        rgba(88, 96, 90, 0.20)
+        transparent !important;
+}
+
+.order-items::-webkit-scrollbar,
+.cart-items::-webkit-scrollbar,
+.sale-cart-items::-webkit-scrollbar,
+#order-items::-webkit-scrollbar,
+#cart-items::-webkit-scrollbar {
+    width: 5px !important;
+}
+
+.order-items::-webkit-scrollbar-track,
+.cart-items::-webkit-scrollbar-track,
+.sale-cart-items::-webkit-scrollbar-track,
+#order-items::-webkit-scrollbar-track,
+#cart-items::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.order-items::-webkit-scrollbar-thumb,
+.cart-items::-webkit-scrollbar-thumb,
+.sale-cart-items::-webkit-scrollbar-thumb,
+#order-items::-webkit-scrollbar-thumb,
+#cart-items::-webkit-scrollbar-thumb {
+    border-radius: 999px !important;
+
+    background: rgba(88, 96, 90, 0.20) !important;
+}
+
+
+/* --------------------------------------------------
+   FILAS DE PRODUCTOS
+   -------------------------------------------------- */
+
+.cart-item,
+.order-item,
+.sale-cart-item {
+    display: grid !important;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto !important;
+
+    column-gap: 14px !important;
+
+    padding: 13px 2px !important;
+
+    border: 0 !important;
+    border-bottom: 1px solid #f0ece6 !important;
+
+    border-radius: 0 !important;
+
+    background: #fff !important;
+
+    box-shadow: none !important;
+}
+
+.cart-item:last-child,
+.order-item:last-child,
+.sale-cart-item:last-child {
+    border-bottom: 0 !important;
+}
+
+
+/* nombre */
+
+.cart-item-name,
+.order-item-name,
+.sale-cart-item__name {
+    margin: 0 !important;
+
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+    font-weight: 750 !important;
+
+    color: #202a22 !important;
+}
+
+
+/* precio */
+
+.cart-item-price,
+.order-item-price,
+.sale-cart-item__price {
+    align-self: start !important;
+
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+    font-weight: 800 !important;
+
+    white-space: nowrap !important;
+
+    color: #202a22 !important;
+}
+
+
+/* cantidad */
+
+.cart-item-quantity,
+.order-item-quantity,
+.sale-cart-item__qty {
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    min-width: 28px !important;
+    height: 28px !important;
+
+    margin-right: 8px !important;
+
+    padding: 0 8px !important;
+
+    border: 0 !important;
+    border-radius: 9px !important;
+
+    background: #f6eedc !important;
+
+    font-size: 11px !important;
+    font-weight: 800 !important;
+
+    color: #9a6a0b !important;
+}
+
+
+/* controles +/- */
+
+.cart-item-actions,
+.order-item-actions,
+.sale-cart-item__actions {
+    display: flex !important;
+
+    align-items: center !important;
+
+    gap: 5px !important;
+
+    margin-top: 7px !important;
+}
+
+.cart-item-actions button,
+.order-item-actions button,
+.sale-cart-item__actions button {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+
+    padding: 0 !important;
+
+    display: inline-grid !important;
+    place-items: center !important;
+
+    border: 1px solid #e2ddd4 !important;
+    border-radius: 8px !important;
+
+    background: #fff !important;
+
+    box-shadow: none !important;
+
+    font-size: 13px !important;
+
+    color: #344039 !important;
+}
+
+
+/* --------------------------------------------------
+   ESTADO VACÍO
+   -------------------------------------------------- */
+
+.empty-cart,
+.cart-empty,
+.order-empty,
+.sale-cart-empty,
+.empty-cart-state {
+    flex: 1 !important;
+
+    min-height: 180px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 28px 18px !important;
+
+    text-align: center !important;
+
+    color: #768078 !important;
+}
+
+.empty-cart strong,
+.empty-order strong,
+.cart-empty strong,
+.order-empty strong,
+.sale-cart-empty strong,
+.empty-cart-state strong {
+    margin-top: 10px !important;
+
+    font-size: 16px !important;
+
+    color: #263029 !important;
+}
+
+.empty-cart p,
+.empty-order p,
+.cart-empty p,
+.order-empty p,
+.sale-cart-empty p,
+.empty-cart-state p {
+    max-width: 250px !important;
+
+    margin: 6px auto 0 !important;
+
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+
+    color: #79827b !important;
+}
+
+
+/* --------------------------------------------------
+   PIE DE LA ORDEN
+   -------------------------------------------------- */
+
+.order-footer,
+.cart-footer,
+.sale-order-footer,
+.order-summary-footer {
+    flex-shrink: 0 !important;
+
+    padding: 12px 16px 16px !important;
+
+    border-top: 1px solid #e9e3db !important;
+
+    background: #fff !important;
+
+    box-shadow:
+        0 -10px 25px rgba(23, 31, 25, 0.035) !important;
+}
+
+
+/* subtotal */
+
+.order-footer .subtotal-row,
+.cart-footer .subtotal-row,
+.sale-order-footer .subtotal-row,
+.order-panel .subtotal-row {
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    padding-bottom: 9px !important;
+
+    font-size: 12px !important;
+
+    color: #687269 !important;
+}
+
+
+/* total */
+
+.order-footer .total-row,
+.cart-footer .total-row,
+.sale-order-footer .total-row,
+.order-panel .total-row {
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 16px !important;
+
+    padding: 10px 0 12px !important;
+
+    border-top: 1px dashed #ddd6cb !important;
+}
+
+.order-footer .total-row span,
+.cart-footer .total-row span,
+.sale-order-footer .total-row span,
+.order-panel .total-row span {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+
+    color: #202a22 !important;
+}
+
+.order-footer .total-row strong,
+.cart-footer .total-row strong,
+.sale-order-footer .total-row strong,
+.order-panel .total-row strong {
+    font-size: 27px !important;
+    line-height: 1 !important;
+    font-weight: 850 !important;
+
+    letter-spacing: -0.035em !important;
+
+    color: #af790d !important;
+}
+
+
+/* --------------------------------------------------
+   BOTÓN COBRAR
+   -------------------------------------------------- */
+
+#checkout-button,
+.checkout-button,
+.checkout-btn,
+.pay-button,
+.order-pay-button {
+    width: 100% !important;
+
+    min-height: 52px !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 14px !important;
+
+    padding: 0 18px !important;
+
+    border: 0 !important;
+    border-radius: 14px !important;
+
+    background: #47783b !important;
+    color: #fff !important;
+
+    box-shadow:
+        0 6px 16px rgba(71, 120, 59, 0.17) !important;
+
+    font-size: 14px !important;
+    font-weight: 800 !important;
+
+    cursor: pointer !important;
+
+    transition:
+        transform 120ms ease,
+        box-shadow 120ms ease,
+        background 120ms ease !important;
+}
+
+#checkout-button:hover,
+.checkout-button:hover,
+.checkout-btn:hover,
+.pay-button:hover,
+.order-pay-button:hover {
+    background: #3f6e34 !important;
+
+    transform: translateY(-1px) !important;
+
+    box-shadow:
+        0 8px 18px rgba(71, 120, 59, 0.20) !important;
+}
+
+#checkout-button:active,
+.checkout-button:active,
+.checkout-btn:active,
+.pay-button:active,
+.order-pay-button:active {
+    transform: translateY(0) !important;
+}
+
+
+/* --------------------------------------------------
+   PANTALLAS GRANDES
+   -------------------------------------------------- */
+
+@media (min-width: 901px) {
+
+    .order-panel {
+        max-height: calc(100dvh - 132px) !important;
+    }
+
+    #sale-customer-section {
+        max-height: 205px !important;
+        overflow: hidden !important;
+    }
+}
+
+
+/* --------------------------------------------------
+   TABLET / MOBILE
+   -------------------------------------------------- */
+
+@media (max-width: 900px) {
+
+    .order-panel {
+        height: auto !important;
+        max-height: none !important;
+
+        overflow: visible !important;
+    }
+
+    #sale-customer-section {
+        max-height: none !important;
+    }
+
+    .order-items,
+    .cart-items,
+    .sale-cart-items,
+    #order-items,
+    #cart-items {
+        max-height: 48dvh !important;
+    }
+
+    .order-footer,
+    .cart-footer,
+    .sale-order-footer,
+    .order-summary-footer {
+        position: sticky !important;
+
+        bottom: 68px !important;
+
+        z-index: 8 !important;
+    }
+}
+
+
+/* ==================================================
+   ORDER SUMMARY COMPACT REDESIGN
+   Más espacio para productos
+   ================================================== */
+
+
+/* --------------------------------------------------
+   PRODUCTOS: ocupan todo el espacio restante
+   -------------------------------------------------- */
+
+.cart-items {
+    flex: 1 !important;
+    min-height: 0 !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
+
+
+/* Producto más compacto */
+
+.cart-item {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+.cart-controls {
+    margin-top: 6px !important;
+}
+
+
+/* --------------------------------------------------
+   RESUMEN INFERIOR MÁS PEQUEÑO
+   -------------------------------------------------- */
+
+.order-summary {
+    flex: 0 0 auto !important;
+
+    padding: 8px 16px 8px !important;
+
+    border-top: 1px solid var(--border) !important;
+
+    background: #ffffff !important;
+
+    box-shadow:
+        0 -5px 14px rgba(25, 32, 27, 0.025) !important;
+}
+
+
+/* Subtotal */
+
+.order-summary > div:not(.sync-footnote) {
+    margin-bottom: 4px !important;
+}
+
+.order-summary > div:not(.order-total):not(.sync-footnote) {
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+}
+
+
+/* --------------------------------------------------
+   TOTAL MÁS COMPACTO
+   -------------------------------------------------- */
+
+.order-total {
+    margin-top: 5px !important;
+
+    padding-top: 7px !important;
+
+    border-top: 1px dashed var(--border-strong) !important;
+
+    align-items: center !important;
+}
+
+.order-total span {
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+
+    font-weight: 750 !important;
+}
+
+.order-total strong {
+    font-size: 22px !important;
+    line-height: 1 !important;
+
+    font-weight: 850 !important;
+
+    letter-spacing: -0.03em !important;
+}
+
+
+/* --------------------------------------------------
+   COBRAR MÁS DELGADO
+   -------------------------------------------------- */
+
+.checkout-button {
+    min-height: 44px !important;
+    height: 44px !important;
+
+    margin-top: 6px !important;
+
+    padding: 0 15px !important;
+
+    border-radius: 12px !important;
+
+    font-size: 13px !important;
+
+    box-shadow:
+        0 4px 10px rgba(49, 90, 41, 0.15) !important;
+}
+
+.checkout-button svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.checkout-button strong {
+    font-size: 14px !important;
+}
+
+
+/* --------------------------------------------------
+   PIE DE SINCRONIZACIÓN MUCHO MÁS DISCRETO
+   -------------------------------------------------- */
+
+.sync-footnote {
+    margin: 5px 0 0 !important;
+
+    gap: 4px !important;
+
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+}
+
+.catalog-source {
+    margin-top: 2px !important;
+
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+}
+
+
+/* --------------------------------------------------
+   DESKTOP: RESERVAR EL MÁXIMO ESPACIO AL CARRITO
+   -------------------------------------------------- */
+
+@media (min-width: 901px) {
+
+    .order-panel {
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+    }
+
+    .order-summary {
+        min-height: 0 !important;
+    }
+}
+
+
+/* ==================================================
+   FINAL ORDER PANEL STABILIZATION
+   Cliente compacto + cobro siempre visible
+   ================================================== */
+
+
+/* --------------------------------------------------
+   PANEL
+   -------------------------------------------------- */
+
+.order-panel {
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+}
+
+
+/* --------------------------------------------------
+   CLIENTE - CONTENEDOR MÁS PEQUEÑO
+   -------------------------------------------------- */
+
+#sale-customer-section {
+    flex: 0 0 auto !important;
+
+    padding: 8px 12px !important;
+
+    background: #ffffff !important;
+
+    border-bottom: 1px solid #ebe5dc !important;
+}
+
+.sale-customer-heading {
+    min-height: 22px !important;
+
+    margin: 0 0 5px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    font-size: 11px !important;
+}
+
+.customer-link-button {
+    min-height: 0 !important;
+
+    padding: 3px 5px !important;
+
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+}
+
+
+/* --------------------------------------------------
+   TARJETA CLIENTE SELECCIONADO
+   -------------------------------------------------- */
+
+#selected-customer-card {
+    padding: 8px 10px !important;
+
+    border: 1px solid #e9dfd0 !important;
+    border-radius: 12px !important;
+
+    background: #fffdf9 !important;
+
+    box-shadow: none !important;
+}
+
+
+/* fila nombre */
+
+#selected-customer-card .selected-customer-top {
+    min-height: 32px !important;
+
+    display: grid !important;
+
+    grid-template-columns:
+        32px
+        minmax(0, 1fr)
+        28px !important;
+
+    align-items: center !important;
+
+    gap: 7px !important;
+}
+
+
+/* avatar */
+
+#selected-customer-card .customer-avatar {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+
+    display: grid !important;
+    place-items: center !important;
+
+    border-radius: 50% !important;
+
+    background: #f5eee1 !important;
+    color: #a56f0b !important;
+}
+
+#selected-customer-card .customer-avatar svg {
+    width: 15px !important;
+    height: 15px !important;
+}
+
+
+/* nombre y teléfono */
+
+#selected-customer-card .selected-customer-identity {
+    min-width: 0 !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    gap: 1px !important;
+}
+
+#selected-customer-name {
+    overflow: hidden !important;
+
+    font-size: 13px !important;
+    line-height: 1.15 !important;
+    font-weight: 800 !important;
+
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+
+    color: #202a22 !important;
+}
+
+#selected-customer-phone {
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+
+    color: #7b847d !important;
+}
+
+
+/* quitar cliente */
+
+#remove-selected-customer {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+
+    padding: 0 !important;
+
+    border: 0 !important;
+    border-radius: 8px !important;
+
+    background: #f1f3ef !important;
+
+    box-shadow: none !important;
+}
+
+
+/* --------------------------------------------------
+   PUNTOS / VISITAS / GASTO
+   -------------------------------------------------- */
+
+/*
+   El segundo div directo de la tarjeta es el bloque
+   con las tres métricas.
+*/
+
+#selected-customer-card > div:nth-of-type(2) {
+    display: grid !important;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr)) !important;
+
+    gap: 5px !important;
+
+    margin-top: 6px !important;
+}
+
+#selected-customer-card > div:nth-of-type(2) > div {
+    min-height: 0 !important;
+
+    padding: 5px 7px !important;
+
+    border-radius: 8px !important;
+
+    background: #f3f5f1 !important;
+}
+
+#selected-customer-card > div:nth-of-type(2) span {
+    display: block !important;
+
+    margin: 0 0 1px !important;
+
+    font-size: 8px !important;
+    line-height: 1 !important;
+
+    color: #78817a !important;
+}
+
+#selected-customer-card > div:nth-of-type(2) strong {
+    display: block !important;
+
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+    font-weight: 750 !important;
+
+    color: #202a22 !important;
+}
+
+
+/* --------------------------------------------------
+   ÚLTIMA COMPRA
+   -------------------------------------------------- */
+
+#selected-customer-card .customer-last-purchase {
+    min-height: 0 !important;
+
+    margin-top: 5px !important;
+    padding-top: 5px !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 8px !important;
+
+    border-top: 1px solid #ece5dc !important;
+
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+
+    color: #707a72 !important;
+}
+
+#selected-customer-card .customer-last-purchase strong {
+    font-size: 9px !important;
+
+    color: #39433c !important;
+}
+
+
+/* --------------------------------------------------
+   SIN CLIENTE
+   -------------------------------------------------- */
+
+.no-selected-customer {
+    min-height: 44px !important;
+
+    padding: 7px 9px !important;
+
+    border-radius: 11px !important;
+}
+
+.customer-avatar-small {
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 30px !important;
+}
+
+.no-selected-customer strong {
+    font-size: 12px !important;
+}
+
+.no-selected-customer span {
+    font-size: 8px !important;
+}
+
+
+/* --------------------------------------------------
+   ESPACIO CENTRAL
+   -------------------------------------------------- */
+
+.empty-order {
+    flex: 1 1 auto !important;
+
+    min-height: 0 !important;
+
+    padding: 14px !important;
+
+    place-content: center !important;
+}
+
+.empty-order .empty-icon {
+    width: 50px !important;
+    height: 50px !important;
+}
+
+.empty-order .empty-icon svg {
+    width: 23px !important;
+    height: 23px !important;
+}
+
+.empty-order strong {
+    margin-top: 9px !important;
+
+    font-size: 14px !important;
+}
+
+.empty-order > span:last-child {
+    max-width: 220px !important;
+
+    margin-top: 4px !important;
+
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+}
+
+
+/* --------------------------------------------------
+   PRODUCTOS
+   -------------------------------------------------- */
+
+.cart-items {
+    flex: 1 1 auto !important;
+
+    min-height: 0 !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+
+/* --------------------------------------------------
+   COBRO SIEMPRE PRESENTE
+   -------------------------------------------------- */
+
+/*
+   La aplicación usa hidden cuando el carrito está
+   vacío. Visualmente queremos conservar el resumen
+   en $0.00 y dejar Cobrar deshabilitado.
+*/
+
+.order-summary[hidden] {
+    display: block !important;
+}
+
+.order-summary {
+    flex: 0 0 auto !important;
+
+    margin-top: auto !important;
+
+    padding: 7px 12px 8px !important;
+
+    border-top: 1px solid #e8e2d9 !important;
+
+    background: #ffffff !important;
+
+    box-shadow:
+        0 -4px 12px rgba(30, 38, 32, 0.025) !important;
+}
+
+.order-summary > div:not(.sync-footnote) {
+    margin-bottom: 3px !important;
+}
+
+
+/* subtotal */
+
+.order-summary > div:not(.order-total):not(.sync-footnote) {
+    font-size: 10px !important;
+}
+
+
+/* total */
+
+.order-total {
+    margin-top: 3px !important;
+
+    padding-top: 5px !important;
+
+    border-top: 1px dashed #ddd6cb !important;
+}
+
+.order-total span {
+    font-size: 13px !important;
+}
+
+.order-total strong {
+    font-size: 20px !important;
+}
+
+
+/* cobrar */
+
+.checkout-button {
+    min-height: 42px !important;
+    height: 42px !important;
+
+    margin-top: 5px !important;
+
+    padding: 0 14px !important;
+
+    border-radius: 11px !important;
+
+    font-size: 12px !important;
+}
+
+.checkout-button strong {
+    font-size: 13px !important;
+}
+
+.checkout-button svg {
+    width: 17px !important;
+    height: 17px !important;
+}
+
+
+/* carrito vacío = botón visualmente deshabilitado */
+
+.checkout-button:disabled {
+    opacity: 0.38 !important;
+
+    cursor: not-allowed !important;
+
+    box-shadow: none !important;
+}
+
+
+/* --------------------------------------------------
+   FOOTNOTE
+   -------------------------------------------------- */
+
+.sync-footnote {
+    margin-top: 4px !important;
+
+    font-size: 7px !important;
+}
+
+.catalog-source {
+    margin-top: 1px !important;
+
+    font-size: 7px !important;
+}
+
+
+/* --------------------------------------------------
+   DESKTOP
+   -------------------------------------------------- */
+
+@media (min-width: 901px) {
+
+    #sale-customer-section {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    #selected-customer-card {
+        max-height: 115px !important;
+    }
+}
+
+
+/* ==================================================
+   COFICENTER POS PROFESSIONAL
+   Phase 1 · Sale / Venta
+   ================================================== */
+
+.sale-view {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---------- Main sale workspace ---------- */
+
+.workspace {
+    grid-template-columns:
+        minmax(0, 2.15fr)
+        minmax(410px, .92fr);
+    background: #f8f8f5;
+}
+
+.catalog-panel {
+    padding: 18px 22px 0 26px;
+    background:
+        linear-gradient(
+            180deg,
+            #fafaf7 0%,
+            #f7f7f3 100%
+        );
+}
+
+/* ---------- Search and actions ---------- */
+
+.catalog-tools {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.search-box {
+    height: 68px;
+    padding: 0 20px;
+    border: 1px solid #dedfd8;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow:
+        0 1px 2px rgba(20, 32, 24, .02),
+        0 8px 30px rgba(20, 32, 24, .025);
+}
+
+.search-box svg {
+    width: 23px;
+    height: 23px;
+}
+
+.search-box input {
+    font-size: 15px;
+}
+
+.search-box kbd {
+    padding: 5px 9px;
+    border-radius: 7px;
+    font-size: 11px;
+}
+
+.catalog-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.scan-action,
+.filter-action {
+    height: 68px;
+    border: 1px solid #dedfd8;
+    border-radius: 18px;
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #443b28;
+    box-shadow: 0 5px 20px rgba(20, 32, 24, .025);
+}
+
+.scan-action {
+    min-width: 154px;
+    padding: 0 22px;
+    gap: 11px;
+    font-weight: 650;
+    font-size: 15px;
+}
+
+.scan-action svg {
+    width: 23px;
+    height: 23px;
+}
+
+.filter-action,
+.catalog-tools .icon-button,
+.catalog-tools .view-button {
+    width: 68px;
+    min-width: 68px;
+    height: 68px;
+    border-radius: 18px;
+}
+
+.filter-action svg,
+.catalog-tools .icon-button svg,
+.catalog-tools .view-button svg {
+    width: 22px;
+    height: 22px;
+}
+
+.catalog-tools .view-button {
+    border-color: #dedfd8;
+    background: #fff;
+    color: var(--gold-dark);
+}
+
+.scan-action:hover,
+.filter-action:hover,
+.catalog-tools .icon-button:hover,
+.catalog-tools .view-button:hover {
+    border-color: #c5c9bf;
+    background: #fdfdfb;
+}
+
+/* ---------- Menu heading ---------- */
+
+.catalog-heading {
+    margin: 20px 0 13px;
+}
+
+.catalog-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.catalog-heading .catalog-title h1 {
+    font-size: 25px;
+    font-weight: 760;
+    letter-spacing: -.035em;
+}
+
+.catalog-heading .catalog-title span {
+    color: #7a7e76;
+    font-size: 12px;
+}
+
+/* ---------- Categories ---------- */
+
+.category-tabs {
+    padding-bottom: 15px;
+    gap: 10px;
+}
+
+.category-tab {
+    min-height: 46px;
+    padding: 0 18px;
+    border-color: #dedfd8;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.category-tab:hover {
+    border-color: #aebaa7;
+}
+
+.category-tab.is-active {
+    border-color: #45652f;
+    background:
+        linear-gradient(
+            135deg,
+            #4d6f36,
+            #355126
+        );
+    color: #fff;
+    box-shadow:
+        0 6px 16px rgba(53, 81, 38, .16);
+}
+
+.category-tab-count {
+    margin-left: 6px;
+    font-size: 11px;
+}
+
+/* ---------- Product grid ---------- */
+
+.product-grid {
+    flex: 1;
+    min-height: 0;
+    padding: 2px 6px 18px 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 262px;
+    gap: 18px;
+}
+
+.product-card {
+    min-height: 262px;
+    border: 1px solid #dfe1da;
+    border-radius: 17px;
+    background: #fff;
+    box-shadow:
+        0 1px 2px rgba(20, 30, 22, .025),
+        0 7px 22px rgba(20, 30, 22, .04);
+}
+
+.product-card:hover {
+    transform: translateY(-2px);
+    border-color: #c8cec2;
+    box-shadow:
+        0 12px 26px rgba(20, 30, 22, .08);
+}
+
+.product-visual {
+    height: 148px;
+    background:
+        linear-gradient(
+            145deg,
+            #f4f2eb,
+            #eceee8
+        );
+}
+
+.product-visual::after {
+    display: none;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    object-fit: cover;
+}
+
+.product-placeholder {
+    width: 74px;
+    height: 74px;
+    color: #9a6d16;
+}
+
+.product-placeholder svg {
+    width: 34px;
+    height: 34px;
+}
+
+.product-badge {
+    top: 10px;
+    right: 10px;
+    padding: 5px 8px;
+    background: rgba(255, 255, 255, .94);
+    backdrop-filter: blur(4px);
+}
+
+.product-content {
+    padding: 12px 14px 13px;
+}
+
+.product-name {
+    font-size: 15px;
+    font-weight: 730;
+}
+
+.product-description {
+    margin-top: 4px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.product-footer {
+    margin-top: 9px;
+}
+
+.product-price {
+    color: #4b662f;
+    font-size: 17px;
+    font-weight: 760;
+}
+
+.product-add {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background:
+        linear-gradient(
+            135deg,
+            #56753b,
+            #3e5c2b
+        );
+    color: #fff;
+    font-size: 22px;
+    box-shadow: 0 4px 10px rgba(53, 81, 38, .15);
+}
+
+/* ---------- Order panel visual alignment ---------- */
+
+.order-panel {
+    background: #fff;
+    border-left-color: #e1e2dc;
+    box-shadow: -8px 0 30px rgba(25, 35, 27, .035);
+}
+
+.order-heading {
+    min-height: 94px;
+    padding: 18px 21px;
+}
+
+.order-heading h2 {
+    font-size: 22px;
+    letter-spacing: -.035em;
+}
+
+.order-type {
+    margin-top: 6px;
+}
+
+.order-summary {
+    padding: 15px 20px 14px;
+}
+
+.order-total strong {
+    color: #45642f;
+}
+
+.checkout-button {
+    min-height: 60px;
+    border-radius: 13px;
+    background:
+        linear-gradient(
+            135deg,
+            #526f39,
+            #3b5929
+        );
+}
+
+/* ---------- Bottom navigation ---------- */
+
+.bottom-nav {
+    flex-basis: 66px;
+    border-radius: 16px 16px 0 0;
+}
+
+.bottom-nav-item {
+    font-size: 13px;
+}
+
+.bottom-nav-item.is-active {
+    color: #45642f;
+    background: #fafaf5;
+}
+
+.bottom-nav-item.is-active::before {
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    background: #637d45;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1450px) {
+    .workspace {
+        grid-template-columns:
+            minmax(0, 1.95fr)
+            minmax(390px, .92fr);
+    }
+
+    .product-grid {
+        gap: 13px;
+    }
+
+    .scan-action {
+        min-width: 132px;
+        padding: 0 16px;
+    }
+}
+
+@media (max-width: 1180px) {
+    .product-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+    .scan-action span {
+        display: none;
+    }
+
+    .scan-action {
+        min-width: 68px;
+        width: 68px;
+        padding: 0;
+    }
+}
+
+@media (max-width: 820px) {
+    .catalog-actions {
+        gap: 7px;
+    }
+
+    .catalog-tools {
+        gap: 8px;
+    }
+
+    .filter-action,
+    .scan-action,
+    .catalog-tools .icon-button {
+        width: 52px;
+        min-width: 52px;
+        height: 52px;
+        border-radius: 13px;
+    }
+
+    .search-box {
+        height: 52px;
+        border-radius: 13px;
+    }
+}
+
+
+/* ==================================================
+   PAYMENT SHORTCUTS
+   ================================================== */
+
+.payment-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.payment-shortcut {
+    min-width: 0;
+    min-height: 52px;
+    padding: 7px 5px;
+    border: 1px solid #dedfd8;
+    border-radius: 11px;
+    background: #fff;
+    color: #4f554d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 650;
+    transition:
+        border-color .15s,
+        background .15s,
+        transform .1s;
+}
+
+.payment-shortcut:not(:disabled):hover {
+    border-color: #647c4c;
+    background: #f8faf5;
+}
+
+.payment-shortcut:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+.payment-shortcut-icon {
+    min-height: 18px;
+    color: #667b45;
+    font-size: 16px;
+    font-weight: 750;
+    line-height: 1;
+}
+
+.payment-shortcut:disabled {
+    opacity: .52;
+}
+
+.order-summary {
+    padding-bottom: 9px;
+}
+
+.sync-footnote {
+    margin-top: 7px;
+}
+
+
+
+/* ==================================================
+   PROFESSIONAL PAYMENT MODAL
+   ================================================== */
+
+.payment-card-professional {
+    width: min(590px, calc(100vw - 32px));
+    padding: 24px;
+    border-radius: 22px;
+    border: 1px solid #e2e5df;
+    background: #fff;
+    box-shadow:
+        0 28px 80px rgba(24, 34, 25, .22),
+        0 4px 18px rgba(24, 34, 25, .08);
+}
+
+.payment-card-professional .modal-header {
+    padding: 0 0 18px;
+    border-bottom: 1px solid #eceee9;
+}
+
+.payment-card-professional .modal-header h2 {
+    margin-top: 3px;
+    font-size: 24px;
+    font-weight: 780;
+    letter-spacing: -.035em;
+    color: #1e271f;
+}
+
+.payment-card-professional .modal-subtitle {
+    display: block;
+    margin-top: 5px;
+    color: #7a8078;
+    font-size: 12px;
+}
+
+.payment-card-professional .modal-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid #dfe2dc;
+    background: #f6f7f4;
+}
+
+.payment-total-professional {
+    margin: 18px 0;
+    min-height: 92px;
+    padding: 18px 20px;
+    border: 1px solid #dae3d4;
+    border-radius: 16px;
+    background:
+        linear-gradient(
+            135deg,
+            #f5f8f2,
+            #eaf2e5
+        );
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.payment-total-professional span {
+    color: #596654;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.payment-total-professional strong {
+    color: #38562a;
+    font-size: 36px;
+    font-weight: 820;
+    letter-spacing: -.045em;
+}
+
+.payment-section-label {
+    display: block;
+    margin: 0 0 9px;
+    color: #3b443b;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.payment-card-professional .payment-methods {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.payment-card-professional .payment-method {
+    min-height: 74px;
+    padding: 12px 14px;
+    border: 1px solid #dde1da;
+    border-radius: 14px;
+    background: #fff;
+    text-align: left;
+    transition: .15s ease;
+}
+
+.payment-card-professional .payment-method:hover {
+    border-color: #aebaa6;
+    background: #fafcf8;
+}
+
+.payment-card-professional .payment-method.is-active {
+    border: 2px solid #456c35;
+    background:
+        linear-gradient(
+            135deg,
+            #f1f7ed,
+            #e8f1e3
+        );
+    box-shadow: 0 5px 15px rgba(69, 108, 53, .09);
+}
+
+.payment-card-professional .payment-method-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: #eef1eb;
+    color: #436035;
+    display: grid;
+    place-items: center;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.payment-card-professional
+.payment-method.is-active
+.payment-method-icon {
+    background: #456c35;
+    color: #fff;
+}
+
+.payment-card-professional #cash-fields,
+.payment-card-professional #card-fields {
+    margin-top: 2px;
+}
+
+.payment-card-professional #cash-fields[hidden],
+.payment-card-professional #card-fields[hidden] {
+    display: none;
+}
+
+.payment-card-professional .field {
+    margin-bottom: 11px;
+}
+
+.payment-card-professional .field > span {
+    margin-bottom: 7px;
+    color: #3c453c;
+    font-weight: 700;
+}
+
+.payment-card-professional .money-input {
+    min-height: 58px;
+    border: 1px solid #d9ddd5;
+    border-radius: 13px;
+    background: #fff;
+}
+
+.payment-card-professional .money-input:focus-within {
+    border-color: #5b7849;
+    box-shadow: 0 0 0 3px rgba(69, 108, 53, .09);
+}
+
+.payment-card-professional .money-input input {
+    font-size: 20px;
+    font-weight: 750;
+}
+
+.payment-card-professional .change-box {
+    min-height: 70px;
+    padding: 14px 16px;
+    border: 1px solid #dfe4dc;
+    border-radius: 13px;
+    background: #f7f9f5;
+}
+
+.payment-card-professional .change-box span {
+    color: #687166;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.payment-card-professional .change-box strong {
+    color: #365528;
+    font-size: 27px;
+    font-weight: 820;
+}
+
+.payment-card-professional #card-reference {
+    min-height: 55px;
+    border-radius: 13px;
+    border: 1px solid #d9ddd5;
+    padding: 0 15px;
+    font-size: 13px;
+}
+
+.payment-card-professional #card-reference:focus {
+    outline: none;
+    border-color: #5b7849;
+    box-shadow: 0 0 0 3px rgba(69, 108, 53, .09);
+}
+
+.payment-confirmation-note {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border: 1px solid #dce6d7;
+    border-radius: 12px;
+    background: #f3f8ef;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.payment-confirmation-note > span {
+    flex: 0 0 auto;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: #52753d;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+}
+
+.payment-confirmation-note > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.payment-confirmation-note strong {
+    color: #354a30;
+    font-size: 11px;
+}
+
+.payment-confirmation-note small {
+    color: #788174;
+    font-size: 9px;
+}
+
+.payment-card-professional #confirm-payment {
+    min-height: 60px;
+    margin-top: 20px;
+    border-radius: 14px;
+    padding: 0 18px;
+    background:
+        linear-gradient(
+            135deg,
+            #52743c,
+            #355529
+        );
+    box-shadow:
+        0 8px 20px rgba(53, 85, 41, .16);
+}
+
+.payment-card-professional #confirm-payment span {
+    font-size: 14px;
+    font-weight: 760;
+}
+
+.payment-card-professional #confirm-payment strong {
+    font-size: 18px;
+    font-weight: 820;
+}
+
+@media (max-width: 620px) {
+    .payment-card-professional {
+        width: calc(100vw - 20px);
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .payment-total-professional strong {
+        font-size: 30px;
+    }
+}
+
+
+
+/* ==================================================
+   COFICENTER PROFESSIONAL ORDERS
+   ================================================== */
+
+.workspace.orders-mode .catalog-panel {
+    padding:
+        22px 26px
+        0;
+    background:
+        linear-gradient(
+            180deg,
+            #fafaf7 0%,
+            #f6f7f3 100%
+        );
+}
+
+.orders-view {
+    gap: 0;
+}
+
+.orders-header {
+    min-height: 90px;
+    padding: 0 0 17px;
+}
+
+.orders-heading .eyebrow {
+    color: #a3741d;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .1em;
+}
+
+.orders-heading h1 {
+    margin: 2px 0 0;
+    color: #202920;
+    font-size: 27px;
+    font-weight: 780;
+    letter-spacing: -.04em;
+}
+
+.orders-heading > span {
+    display: block;
+    margin-top: 5px;
+    color: #7b8279;
+    font-size: 11px;
+}
+
+.orders-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.orders-search-box {
+    width: min(320px, 30vw);
+    height: 50px;
+    padding: 0 15px;
+    border: 1px solid #dfe1db;
+    border-radius: 14px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow:
+        0 3px 14px rgba(25, 35, 27, .025);
+}
+
+.orders-search-box:focus-within {
+    border-color: #829477;
+    box-shadow:
+        0 0 0 3px rgba(69, 107, 53, .07);
+}
+
+.orders-search-box svg {
+    width: 19px;
+    height: 19px;
+    color: #8b9189;
+}
+
+.orders-search-box input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #2b322b;
+    font-size: 12px;
+}
+
+.orders-refresh-button {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #dfe1db;
+    border-radius: 14px;
+    background: #fff;
+    color: #56634e;
+    display: grid;
+    place-items: center;
+}
+
+.orders-refresh-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.order-filters {
+    padding-bottom: 15px;
+    gap: 8px;
+}
+
+.order-filter {
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid #dcdfd8;
+    border-radius: 999px;
+    background: #fff;
+    color: #687067;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.order-filter:hover {
+    border-color: #aeb8a8;
+}
+
+.order-filter.is-active {
+    border-color: #456730;
+    background:
+        linear-gradient(
+            135deg,
+            #516f3a,
+            #395729
+        );
+    color: #fff;
+    box-shadow:
+        0 5px 14px rgba(57, 87, 41, .13);
+}
+
+.orders-message {
+    padding: 28px;
+    color: #7a8178;
+    font-size: 12px;
+}
+
+.orders-table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    border: 1px solid #e0e2dc;
+    border-radius: 17px 17px 0 0;
+    background: #fff;
+    box-shadow:
+        0 8px 28px rgba(25, 35, 27, .035);
+}
+
+.orders-table-head,
+.order-table-row {
+    min-width: 1040px;
+    display: grid;
+    grid-template-columns:
+        1.05fr
+        1.35fr
+        2.15fr
+        .8fr
+        1.2fr
+        1fr
+        1fr
+        .7fr;
+    align-items: center;
+    column-gap: 14px;
+}
+
+.orders-table-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    min-height: 47px;
+    padding: 0 18px;
+    border-bottom: 1px solid #e8eae5;
+    background: #f7f8f5;
+    color: #8a9087;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+}
+
+.orders-list {
+    display: block;
+    min-width: 1040px;
+    padding: 0;
+    overflow: visible;
+}
+
+.order-table-row {
+    width: 100%;
+    min-height: 82px;
+    padding: 0 18px;
+    border: 0;
+    border-bottom: 1px solid #eceee9;
+    border-radius: 0;
+    background: #fff;
+    box-shadow: none;
+    text-align: left;
+    transition:
+        background .12s ease,
+        box-shadow .12s ease;
+}
+
+.order-table-row:hover {
+    border-color: #eceee9;
+    background: #fafbf8;
+    box-shadow:
+        inset 3px 0 0 #607d45;
+}
+
+.order-cell {
+    min-width: 0;
+}
+
+.order-cell strong,
+.order-cell small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.order-cell strong {
+    color: #283028;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.order-cell small {
+    margin-top: 3px;
+    color: #92978f;
+    font-size: 9px;
+}
+
+.order-folio-cell strong {
+    color: #263528;
+    font-size: 13px;
+    font-weight: 790;
+}
+
+.order-items-cell strong {
+    font-weight: 650;
+}
+
+.order-time-cell strong {
+    font-variant-numeric: tabular-nums;
+}
+
+.order-payment-cell strong {
+    font-size: 11px;
+}
+
+.order-payment-cell small {
+    color: #648050;
+    font-weight: 700;
+}
+
+.order-total-cell strong {
+    color: #3f5f2e;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.order-status-badge {
+    min-height: 27px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.status-new {
+    background: #fff5dc;
+    color: #9b6812;
+}
+
+.status-preparing {
+    background: #eef3fa;
+    color: #47658b;
+}
+
+.status-ready {
+    background: #eaf4e6;
+    color: #456936;
+}
+
+.status-delivered {
+    background: #f0f1ee;
+    color: #777d75;
+}
+
+.order-action-cell {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.order-view-action {
+    min-height: 34px;
+    padding: 0 10px;
+    border: 1px solid #dfe2da;
+    border-radius: 9px;
+    background: #fff;
+    color: #516149;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 750;
+}
+
+.order-view-action b {
+    color: #8d6c23;
+    font-size: 17px;
+    line-height: 1;
+}
+
+.order-table-row:hover
+.order-view-action {
+    border-color: #b7c0b0;
+    background: #f7f9f5;
+}
+
+@media (max-width: 900px) {
+    .orders-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .orders-toolbar {
+        width: 100%;
+    }
+
+    .orders-search-box {
+        width: 100%;
+    }
+}
+
+
+
+/* ==================================================
+   ORDER STATUS ROW COLORS
+   ================================================== */
+
+/* Base */
+.order-table-row {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Barra izquierda */
+.order-table-row::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 4px;
+    border-radius: 0 999px 999px 0;
+    opacity: .95;
+}
+
+/* NUEVA - azul */
+.status-accent-new {
+    background:
+        linear-gradient(
+            90deg,
+            #f4f8ff 0%,
+            #ffffff 12%
+        );
+}
+
+.status-accent-new::before {
+    background: #4a7fc1;
+}
+
+/* PREPARANDO - naranja */
+.status-accent-preparing {
+    background:
+        linear-gradient(
+            90deg,
+            #fff8ec 0%,
+            #ffffff 12%
+        );
+}
+
+.status-accent-preparing::before {
+    background: #d58a24;
+}
+
+/* LISTA - verde */
+.status-accent-ready {
+    background:
+        linear-gradient(
+            90deg,
+            #f0f8ed 0%,
+            #ffffff 12%
+        );
+}
+
+.status-accent-ready::before {
+    background: #5b8b48;
+}
+
+/* ENTREGADA - gris */
+.status-accent-delivered {
+    background:
+        linear-gradient(
+            90deg,
+            #f5f6f5 0%,
+            #ffffff 12%
+        );
+}
+
+.status-accent-delivered::before {
+    background: #929991;
+}
+
+/* CANCELADA - rojo */
+.status-accent-cancelled {
+    background:
+        linear-gradient(
+            90deg,
+            #fff3f2 0%,
+            #ffffff 12%
+        );
+}
+
+.status-accent-cancelled::before {
+    background: #c66058;
+}
+
+
+/* ==================================================
+   BADGES
+   ================================================== */
+
+.order-status-badge {
+    min-height: 28px;
+    padding: 0 11px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.status-new {
+    border-color: #cdddf3;
+    background: #eaf3ff;
+    color: #3f6fa8;
+}
+
+.status-preparing {
+    border-color: #f0d7a8;
+    background: #fff4df;
+    color: #ad6e18;
+}
+
+.status-ready {
+    border-color: #c9dfc0;
+    background: #edf7e9;
+    color: #4f773f;
+}
+
+.status-delivered {
+    border-color: #dde0dc;
+    background: #f0f1ef;
+    color: #747b73;
+}
+
+.status-cancelled {
+    border-color: #efcbc7;
+    background: #fdecea;
+    color: #aa5048;
+}
+
+
+/* ==================================================
+   FILTROS SEGÚN ESTADO
+   ================================================== */
+
+/* Todas */
+.order-filter[data-order-filter="ALL"].is-active {
+    border-color: #536b42;
+    background:
+        linear-gradient(
+            135deg,
+            #586f46,
+            #3e5831
+        );
+    color: #fff;
+}
+
+/* Nueva */
+.order-filter[data-order-filter="NEW"].is-active {
+    border-color: #4a7fc1;
+    background: #eaf3ff;
+    color: #3f6fa8;
+    box-shadow:
+        0 4px 13px rgba(74, 127, 193, .16);
+}
+
+/* Preparando */
+.order-filter[data-order-filter="PREPARING"].is-active {
+    border-color: #d58a24;
+    background: #fff4df;
+    color: #ad6e18;
+    box-shadow:
+        0 4px 13px rgba(213, 138, 36, .16);
+}
+
+/* Lista */
+.order-filter[data-order-filter="READY"].is-active {
+    border-color: #5b8b48;
+    background: #edf7e9;
+    color: #4f773f;
+    box-shadow:
+        0 4px 13px rgba(91, 139, 72, .16);
+}
+
+/* Entregada */
+.order-filter[data-order-filter="DELIVERED"].is-active {
+    border-color: #929991;
+    background: #f0f1ef;
+    color: #686f68;
+    box-shadow:
+        0 4px 13px rgba(100, 110, 100, .10);
+}
+
+
+/* ==================================================
+   HOVER
+   ================================================== */
+
+.status-accent-new:hover {
+    background: #f1f6fd;
+}
+
+.status-accent-preparing:hover {
+    background: #fff8eb;
+}
+
+.status-accent-ready:hover {
+    background: #f1f8ee;
+}
+
+.status-accent-delivered:hover {
+    background: #f5f6f4;
+}
+
+.status-accent-cancelled:hover {
+    background: #fff3f1;
+}
+
+
 /* ==================================================
    COFICENTER ORDER PREPARATION PROGRESS
    ================================================== */
@@ -2227,4 +4867,818 @@ and (
 .order-preparation-status[data-status="READY"] {
     background: #e8f1e7;
     color: #47724e;
+}
+
+
+/* ==================================================
+   COFICENTER PRODUCT CARD RESPONSIVE FIT V2
+   Cards size naturally according to device/content.
+   ================================================== */
+
+.product-grid {
+    grid-auto-rows: max-content;
+    align-items: start;
+}
+
+.product-card {
+    height: auto;
+    min-height: 0;
+    align-self: start;
+}
+
+.product-content {
+    min-height: 0;
+}
+
+.product-name {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.25;
+}
+
+.product-description {
+    flex: none;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-height: 1.35;
+}
+
+.product-footer {
+    margin-top: 10px;
+}
+
+
+/* Tablet */
+@media (max-width: 900px) {
+
+    .product-grid {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+
+        grid-auto-rows: max-content;
+        align-items: start;
+    }
+
+    .product-card {
+        align-self: start;
+    }
+
+    .product-visual {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4 / 3;
+        min-height: 0;
+        max-height: none;
+    }
+
+    .product-content {
+        min-height: 0;
+        padding: 10px 11px 11px;
+    }
+}
+
+
+/* Phones */
+@media (max-width: 620px) {
+
+    .product-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        grid-auto-rows: max-content;
+        align-items: start;
+        gap: 8px;
+    }
+
+    .product-card {
+        height: auto;
+        min-height: 0;
+        align-self: start;
+    }
+
+    .product-visual {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4 / 3;
+        min-height: 0;
+        max-height: none;
+    }
+
+    .product-content {
+        min-height: 0;
+        padding: 9px 10px 10px;
+    }
+
+    .product-name {
+        font-size: 13px;
+        line-height: 1.2;
+        -webkit-line-clamp: 2;
+    }
+
+    .product-description {
+        margin-top: 3px;
+        font-size: 10px;
+        line-height: 1.3;
+        -webkit-line-clamp: 1;
+    }
+
+    .product-footer {
+        margin-top: 9px;
+    }
+
+    .product-price {
+        font-size: 14px;
+    }
+
+    .product-add {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+
+/* Small phones */
+@media (max-width: 380px) {
+
+    .product-grid {
+        gap: 7px;
+    }
+
+    .product-content {
+        padding: 8px 9px 9px;
+    }
+
+    .product-name {
+        font-size: 12px;
+    }
+
+    .product-description {
+        font-size: 9px;
+    }
+
+    .product-price {
+        font-size: 13px;
+    }
+
+    .product-add {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+
+
+/* ==================================================
+   COFICENTER MOBILE ORDER CHECKOUT V1
+   ================================================== */
+
+.mobile-order-bar,
+.mobile-order-close {
+    display: none;
+}
+
+.order-heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+/* Phones */
+@media (max-width: 620px) {
+
+    /*
+       Espacio reservado para que las tarjetas no
+       queden escondidas detrás del resumen móvil.
+    */
+    #sale-view {
+        padding-bottom: 92px;
+    }
+
+
+    /* ---------- Persistent mobile order bar ---------- */
+
+    .mobile-order-bar {
+        position: fixed;
+
+        left: 8px;
+        right: 8px;
+
+        bottom:
+            calc(
+                62px +
+                env(safe-area-inset-bottom)
+            );
+
+        z-index: 80;
+
+        min-height: 68px;
+
+        padding: 8px;
+
+        border: 1px solid #dfe3da;
+        border-radius: 17px;
+
+        background:
+            rgba(255, 255, 255, .97);
+
+        box-shadow:
+            0 -4px 24px
+            rgba(24, 34, 25, .10);
+
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto;
+
+        align-items: center;
+        gap: 9px;
+
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+
+
+    .workspace.orders-mode
+    .mobile-order-bar,
+    .workspace.customers-mode
+    .mobile-order-bar,
+    .workspace.mobile-order-open
+    .mobile-order-bar {
+        display: none !important;
+    }
+
+
+    /* ---------- View order ---------- */
+
+    .mobile-order-view {
+        min-width: 0;
+        min-height: 50px;
+
+        padding: 5px 9px;
+
+        border: 0;
+        border-radius: 12px;
+
+        background: #f7f8f4;
+
+        display: flex;
+        flex-direction: column;
+
+        align-items: flex-start;
+        justify-content: center;
+
+        text-align: left;
+    }
+
+
+    .mobile-order-view span {
+        width: 100%;
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        color: #283228;
+
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+
+    .mobile-order-view small {
+        margin-top: 2px;
+
+        color: #687267;
+
+        font-size: 9px;
+        font-weight: 650;
+    }
+
+
+    .mobile-order-view:not(:disabled):active {
+        background: #eef2e9;
+    }
+
+
+    .mobile-order-view:disabled {
+        opacity: .68;
+    }
+
+
+    /* ---------- Total + checkout ---------- */
+
+    .mobile-order-payment {
+        display: grid;
+
+        grid-template-columns:
+            auto
+            auto;
+
+        align-items: center;
+        gap: 8px;
+    }
+
+
+    .mobile-order-total {
+        white-space: nowrap;
+    }
+
+
+    #mobile-order-total {
+        color: #496837;
+
+        font-size: 17px;
+        font-weight: 850;
+
+        letter-spacing: -.02em;
+        white-space: nowrap;
+    }
+
+
+    .mobile-order-checkout {
+        min-width: 88px;
+        height: 50px;
+
+        padding: 0 14px;
+
+        border: 0;
+        border-radius: 12px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #55743d,
+                #3f5e2e
+            );
+
+        color: #fff;
+
+        font-size: 13px;
+        font-weight: 800;
+
+        box-shadow:
+            0 4px 12px
+            rgba(54, 86, 39, .20);
+    }
+
+
+    .mobile-order-checkout:disabled {
+        opacity: .35;
+        box-shadow: none;
+    }
+
+
+    /* ---------- Hide desktop panel on phone ---------- */
+
+    .order-panel {
+        display: none;
+    }
+
+
+    /*
+       Drawer reuses the EXISTING order panel,
+       cart controls, customer and checkout.
+    */
+    .workspace.mobile-order-open
+    .order-panel {
+        display: flex;
+
+        position: fixed !important;
+
+        top: auto !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+
+        width: 100% !important;
+
+        height:
+            min(
+                82dvh,
+                720px
+            ) !important;
+
+        max-height: 82dvh !important;
+        min-height: 0 !important;
+
+        z-index: 120;
+
+        overflow: hidden !important;
+
+        border: 1px solid #dedfd8 !important;
+        border-bottom: 0 !important;
+
+        border-radius:
+            22px
+            22px
+            0
+            0 !important;
+
+        background: #fff !important;
+
+        box-shadow:
+            0 -18px 60px
+            rgba(18, 27, 19, .22) !important;
+    }
+
+
+    /* ---------- Drawer backdrop ---------- */
+
+    body.mobile-order-drawer-open {
+        overflow: hidden !important;
+    }
+
+
+    body.mobile-order-drawer-open::before {
+        content: "";
+
+        position: fixed;
+        inset: 0;
+
+        z-index: 110;
+
+        background:
+            rgba(16, 23, 17, .42);
+
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+
+    /* ---------- Drawer heading ---------- */
+
+    .workspace.mobile-order-open
+    .order-heading {
+        flex: 0 0 auto;
+
+        min-height: 66px;
+
+        padding:
+            12px
+            13px !important;
+    }
+
+
+    .workspace.mobile-order-open
+    .order-heading h2 {
+        font-size: 17px !important;
+    }
+
+
+    .mobile-order-close {
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+
+        padding: 0;
+
+        border: 1px solid #dfe2dc;
+        border-radius: 11px;
+
+        background: #f5f6f2;
+
+        color: #4c554b;
+
+        place-items: center;
+
+        font-size: 22px;
+        line-height: 1;
+    }
+
+
+    .workspace.mobile-order-open
+    .mobile-order-close {
+        display: grid !important;
+    }
+
+
+    /*
+       Cart remains scrollable while customer and
+       checkout stay available.
+    */
+    .workspace.mobile-order-open
+    .cart-items {
+        flex: 1 !important;
+
+        min-height: 0 !important;
+
+        overflow-y: auto !important;
+
+        -webkit-overflow-scrolling:
+            touch;
+    }
+
+
+    .workspace.mobile-order-open
+    .order-summary {
+        flex: 0 0 auto !important;
+        margin-top: auto !important;
+    }
+}
+
+
+/* Very small phones */
+@media (max-width: 380px) {
+
+    .mobile-order-bar {
+        left: 5px;
+        right: 5px;
+
+        padding: 6px;
+
+        gap: 6px;
+    }
+
+
+    #mobile-order-total {
+        font-size: 15px;
+    }
+
+
+    .mobile-order-checkout {
+        min-width: 76px;
+
+        padding:
+            0
+            10px;
+
+        font-size: 12px;
+    }
+
+
+    .mobile-order-view {
+        padding:
+            5px
+            7px;
+    }
+}
+
+
+
+/* ==================================================
+   COFICENTER MOBILE CUSTOMER OVERLAY V1
+   Clientes encima de la orden móvil
+   ================================================== */
+
+.mobile-customer-close {
+    display: none;
+}
+
+
+@media (max-width: 620px) {
+
+    body.mobile-customer-overlay-active {
+        overflow: hidden !important;
+    }
+
+
+    /*
+       El drawer de Orden actual permanece debajo.
+       Clientes se convierte temporalmente en una
+       superficie completa por encima de él.
+    */
+    .workspace.mobile-customer-overlay-open
+    #customers-view {
+        display: flex;
+
+        position: fixed;
+
+        inset: 0;
+
+        z-index: 140;
+
+        width: 100%;
+        height: 100dvh;
+
+        min-height: 0;
+
+        padding:
+            0
+            0
+            env(safe-area-inset-bottom);
+
+        flex-direction: column;
+
+        overflow-y: auto;
+        overscroll-behavior: contain;
+
+        background: #f7f6f1;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+
+    /* ---------- Header ---------- */
+
+    .workspace.mobile-customer-overlay-open
+    .customers-header {
+        position: sticky;
+
+        top: 0;
+
+        z-index: 142;
+
+        flex: 0 0 auto;
+
+        padding:
+            16px
+            58px
+            14px
+            16px !important;
+
+        background:
+            rgba(255, 255, 255, .97);
+
+        border-bottom:
+            1px solid #e7e4dc;
+
+        box-shadow:
+            0 4px 16px
+            rgba(25, 34, 27, .04);
+
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+
+
+    .workspace.mobile-customer-overlay-open
+    .customers-header h2 {
+        margin-top: 2px;
+
+        font-size: 22px;
+    }
+
+
+    .workspace.mobile-customer-overlay-open
+    .customers-header p {
+        max-width: 310px;
+
+        margin-top: 4px;
+
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+
+    /* ---------- Close overlay ---------- */
+
+    .workspace.mobile-customer-overlay-open
+    .mobile-customer-close {
+        display: grid;
+
+        position: fixed;
+
+        top:
+            calc(
+                12px +
+                env(safe-area-inset-top)
+            );
+
+        right: 12px;
+
+        z-index: 145;
+
+        width: 42px;
+        height: 42px;
+
+        padding: 0;
+
+        place-items: center;
+
+        border:
+            1px solid #dde1d9;
+
+        border-radius: 12px;
+
+        background: #ffffff;
+
+        color: #455045;
+
+        box-shadow:
+            0 4px 14px
+            rgba(28, 37, 29, .08);
+
+        font-size: 25px;
+        font-weight: 400;
+        line-height: 1;
+    }
+
+
+    /* ---------- Main customer content ---------- */
+
+    .workspace.mobile-customer-overlay-open
+    .customers-layout {
+        flex: 1;
+
+        min-height: 0;
+
+        display: flex;
+        flex-direction: column;
+
+        padding:
+            12px
+            12px
+            22px !important;
+
+        gap: 12px;
+
+        overflow-y: auto;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+
+    .workspace.mobile-customer-overlay-open
+    .customers-directory {
+        width: 100%;
+
+        min-width: 0;
+        min-height: 0;
+    }
+
+
+    .workspace.mobile-customer-overlay-open
+    .customer-search-form {
+        position: sticky;
+
+        top: 0;
+
+        z-index: 2;
+
+        padding-bottom: 8px;
+
+        background: #f7f6f1;
+    }
+
+
+    .workspace.mobile-customer-overlay-open
+    #customer-results {
+        width: 100%;
+
+        min-height: 0;
+    }
+
+
+    /*
+       Nuevo cliente continúa usando el panel que
+       ya existe, pero dentro de una capa que ahora
+       está por encima de Orden actual.
+    */
+    .workspace.mobile-customer-overlay-open
+    #customer-create-panel {
+        z-index: 146;
+    }
+}
+
+
+@media (max-width: 380px) {
+
+    .workspace.mobile-customer-overlay-open
+    .customers-header {
+        padding-left: 12px !important;
+    }
+
+
+    .workspace.mobile-customer-overlay-open
+    .customers-layout {
+        padding-left: 9px !important;
+        padding-right: 9px !important;
+    }
+}
+
+
+
+/* ==================================================
+   COFICENTER MOBILE PAYMENT OVER ORDER V1
+   Cobro por encima de Ver orden en teléfonos
+   ================================================== */
+
+@media (max-width: 620px) {
+
+    /*
+       Orden actual usa una capa inferior.
+       Clientes puede usar z-index 140.
+       Pago siempre debe quedar por encima.
+    */
+    #payment-modal {
+        z-index: 160 !important;
+    }
+
+
+    #payment-modal .payment-card {
+        position: relative;
+
+        z-index: 161;
+    }
 }
