@@ -922,6 +922,8 @@
 
     window.CofiPosReceipt = {
         calculateTax,
+        centsToMoney,
+        moneyToCents,
         buildSnapshot,
         validateSnapshot,
     };
