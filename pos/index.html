@@ -40,6 +40,7 @@
         })();
     </script>
     <link rel="stylesheet" href="./css/pos.css?v=16">
+    <link rel="stylesheet" href="./css/receipt.css?v=1">
 </head>
 <body>
 <svg class="svg-sprite" aria-hidden="true">
@@ -472,7 +473,36 @@
 </div>
 
 <div id="success-modal" class="modal-backdrop" hidden>
-    <section class="modal-card success-card" role="dialog" aria-modal="true" aria-labelledby="success-title"><div class="success-icon">✓</div><h2 id="success-title">Venta registrada</h2><p id="success-message"></p><span class="folio-label">Folio</span><strong id="success-folio" class="success-folio"></strong><button id="success-close" class="checkout-button" type="button">Iniciar nueva venta</button></section>
+    <section class="modal-card success-card" role="dialog" aria-modal="true" aria-labelledby="success-title">
+        <div class="success-icon">✓</div>
+        <h2 id="success-title">Venta registrada</h2>
+        <p id="success-message"></p>
+        <span class="folio-label">Folio</span>
+        <strong id="success-folio" class="success-folio"></strong>
+
+        <div class="success-receipt-actions">
+            <button id="success-view-receipt" class="checkout-button" type="button">Ver ticket</button>
+            <button id="success-print-receipt" class="checkout-button" type="button">Imprimir ticket</button>
+            <button id="success-close" class="checkout-button success-new-sale" type="button">Nueva venta</button>
+        </div>
+    </section>
+</div>
+
+<div id="receipt-modal" class="modal-backdrop" hidden>
+    <section class="modal-card receipt-modal-card" role="dialog" aria-modal="true" aria-labelledby="receipt-modal-title">
+        <div class="receipt-modal-controls">
+            <h2 id="receipt-modal-title">Ticket</h2>
+
+            <div class="receipt-modal-actions">
+                <button id="receipt-print" class="receipt-modal-button primary" type="button">Imprimir ticket</button>
+                <button id="receipt-close" class="receipt-modal-button" type="button" aria-label="Cerrar ticket">Cerrar</button>
+            </div>
+        </div>
+
+        <div class="receipt-preview-scroll">
+            <div id="receipt-document"></div>
+        </div>
+    </section>
 </div>
 
 
@@ -505,7 +535,8 @@
 <script src="./js/sync.js?v=8"></script>
 <script src="./js/folio.js?v=1"></script>
 <script src="./js/receipt-core.js?v=1"></script>
-<script src="./js/app.js?v=15"></script>
+<script src="./js/receipt-renderer.js?v=1"></script>
+<script src="./js/app.js?v=16"></script>
 <script src="./js/orders-local.js?v=1"></script>
 <script src="./js/orders.js?v=11"></script>
 </body>

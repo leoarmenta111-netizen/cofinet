@@ -1943,9 +1943,15 @@
     function showSaleSuccess({
         offline,
         folio,
+        receipt = null,
     }) {
         $("#payment-modal").hidden =
             true;
+
+        if (receipt) {
+            state.lastReceipt =
+                receipt;
+        }
 
         $("#success-title").textContent =
             offline
@@ -1963,6 +1969,68 @@
         $("#success-modal").hidden =
             false;
 
+        const viewReceiptButton =
+            $("#success-view-receipt");
+
+        const printReceiptButton =
+            $("#success-print-receipt");
+
+        const newSaleButton =
+            $("#success-close");
+
+        if (viewReceiptButton) {
+            viewReceiptButton.onclick =
+                () => {
+                    if (
+                        !state.lastReceipt
+                    ) {
+                        return;
+                    }
+
+                    window
+                        .CofiPosReceiptRenderer
+                        .open(
+                            state.lastReceipt
+                        );
+                };
+        }
+
+        if (printReceiptButton) {
+            printReceiptButton.onclick =
+                () => {
+                    if (
+                        !state.lastReceipt
+                    ) {
+                        return;
+                    }
+
+                    window
+                        .CofiPosReceiptRenderer
+                        .print(
+                            state.lastReceipt
+                        );
+                };
+        }
+
+        if (newSaleButton) {
+            newSaleButton.onclick =
+                () => {
+                    window
+                        .CofiPosReceiptRenderer
+                        ?.close();
+
+                    $("#success-modal").hidden =
+                        true;
+
+                    clearCart();
+                };
+        }
+
+        /*
+         * Preserve existing Task 5 behavior:
+         * the completed sale is already frozen locally,
+         * while the working cart is reset for the next sale.
+         */
         clearCart();
     }
 

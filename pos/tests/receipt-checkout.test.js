@@ -720,8 +720,8 @@ test("service worker precaches receipt modules with bumped shell version", () =>
 
     assert.match(
         sw,
-        /const SHELL_CACHE = "cofi-pos-shell-v16";/,
-        "receipt wiring must bump shell cache from v15 to v16"
+        /const SHELL_CACHE = "cofi-pos-shell-v20";/,
+        "receipt wiring must use current shell cache v20"
     );
 
     assert.match(
