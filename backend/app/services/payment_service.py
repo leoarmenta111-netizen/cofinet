@@ -93,7 +93,7 @@ class PaymentService:
                 "pending": f"{frontend_url}/?purchase_id={purchase.id}",
                 "failure": f"{frontend_url}/?purchase_id={purchase.id}",
             }
-            preference_data["auto_return"] = "approved"
+           # preference_data["auto_return"] = "approved"
         print(preference_data)
         try:
             result = sdk.preference().create(preference_data)
@@ -138,7 +138,11 @@ class PaymentService:
             return
 
         verified_payment = PaymentService._get_mercadopago_payment(notification_payment_id)
-
+        print("====================================")
+        print("VERIFIED PAYMENT:")
+        print(verified_payment)
+        print("STATUS:", verified_payment.get("status"))
+        print("====================================")
         logger.info("Mercado Pago payment:")
         logger.info("%s", verified_payment)
 
@@ -197,8 +201,6 @@ class PaymentService:
             logger.info("Generando PIN...")
 
             PurchaseService.mark_guest_purchase_paid(db, purchase)
-            
-            db.commit()
             logger.info("PIN generado correctamente y transacción completada.")
 
         except Exception as e:

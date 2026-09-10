@@ -1,7 +1,5 @@
-const API_BASE_URL =
-    window.location.hostname === "localhost"
-        ? "https://cofinet-portal.duckdns.org/api"
-        : "/api";
+// All environments expose the API through the same-origin Nginx /api proxy.
+const API_BASE_URL = "/api";
 
 class ApiError extends Error {
     constructor(message, status) {
@@ -55,11 +53,19 @@ window.CofiApi = {
             body: JSON.stringify({ plan_id: planId })
         });
     },
-    createGuestCheckout(planId) {
+    createGuestCheckout(planId, branchCode = null) {
+        const payload = {
+            plan_id: planId
+        };
+
+        if (branchCode) {
+            payload.branch_code = branchCode;
+        }
+
         return requestApi("/guest-purchases", {
             method: "POST",
             includeAuth: false,
-            body: JSON.stringify({ plan_id: planId })
+            body: JSON.stringify(payload)
         });
     },
     getGuestPurchaseStatus(purchaseId) {

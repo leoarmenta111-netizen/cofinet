@@ -3,33 +3,70 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CofiNet+ Admin</title>
-    <style>body{font-family:Arial,sans-serif;background:#f4f4ef;margin:0;display:grid;place-items:center;min-height:100vh}.card{background:#fff;padding:2rem;border-radius:12px;width:min(360px,90vw);box-shadow:0 4px 20px #0002}input,button{box-sizing:border-box;width:100%;padding:.75rem;margin:.5rem 0}button{background:#33452d;color:#fff;border:0;border-radius:6px;cursor:pointer}.error{color:#a00;min-height:1.2rem}</style>
+    <meta name="color-scheme" content="light">
+    <title>Acceso administrativo | CofiNet+</title>
+    <link rel="stylesheet" href="admin.css">
 </head>
-<body>
-    <main class="card">
-        <h1>CofiNet+ Admin</h1>
-        <p>Acceso administrativo</p>
-        <form id="login-form">
-            <input id="email" type="email" placeholder="Correo" required autocomplete="email">
-            <input id="password" type="password" placeholder="Contraseña" required autocomplete="current-password">
-            <button>Iniciar sesión</button>
-        </form>
-        <p id="error" class="error"></p>
+<body class="auth-pending">
+    <main class="auth-screen">
+        <section class="auth-brand" aria-label="CofiNet">
+            <div class="brand-lockup"><span class="brand-mark">C</span><span>CofiNet+</span></div>
+            <div>
+                <p class="eyebrow">Administración segura</p>
+                <h1>Control claro para una operación conectada.</h1>
+                <p>Gestiona ventas, accesos y operadores desde un espacio diseñado para trabajar rápido y con permisos precisos.</p>
+            </div>
+            <small class="muted">Acceso exclusivo para personal autorizado.</small>
+        </section>
+        <section class="auth-panel">
+            <div class="login-card">
+                <p class="eyebrow">CofiNet Admin</p>
+                <h2>Bienvenido</h2>
+                <p class="muted">Ingresa tus credenciales para continuar.</p>
+                <form id="login-form" novalidate>
+                    <div class="field">
+                        <label for="email">Correo electrónico</label>
+                        <input id="email" name="email" type="email" required autocomplete="username" inputmode="email">
+                    </div>
+                    <div class="field">
+                        <label for="password">Contraseña</label>
+                        <input id="password" name="password" type="password" required autocomplete="current-password">
+                    </div>
+                    <button id="login-button" class="button button-primary button-block" type="submit">Iniciar sesión</button>
+                    <p id="login-error" class="form-error" role="alert"></p>
+                </form>
+            </div>
+        </section>
     </main>
-    <script src="admin.js"></script>
+    <script src="admin.js?v=20260821-pos-catalog"></script>
     <script>
-        if (adminToken()) window.location.replace("dashboard.html");
+(() => {
+
+        const { adminLanding, adminRequest, redirectAuthenticatedAdmin, setButtonLoading, storeAdminToken } = window.CofiAdmin;
+        redirectAuthenticatedAdmin();
+
         document.getElementById("login-form").addEventListener("submit", async event => {
             event.preventDefault();
-            const error = document.getElementById("error");
+            const form = event.currentTarget;
+            const button = document.getElementById("login-button");
+            const error = document.getElementById("login-error");
+            if (!form.reportValidity()) return;
             error.textContent = "";
+            setButtonLoading(button, true, "Verificando…");
             try {
-                const response = await adminRequest("/admin/login", { method: "POST", body: JSON.stringify({ email: email.value, password: password.value }) });
-                localStorage.setItem(ADMIN_TOKEN_KEY, response.access_token);
-                window.location.replace("dashboard.html");
-            } catch (requestError) { error.textContent = requestError.message; }
+                const response = await adminRequest("/admin/login", {
+                    method: "POST",
+                    body: JSON.stringify({ email: form.email.value, password: form.password.value })
+                });
+                storeAdminToken(response.access_token);
+                window.location.replace(adminLanding(response.role));
+            } catch (requestError) {
+                error.textContent = requestError.message;
+                setButtonLoading(button, false);
+            }
         });
-    </script>
+
+})();
+</script>
 </body>
 </html>

@@ -1,40 +1,98 @@
+# Shared service definitions. Always combine this file with exactly one
+# environment overlay: docker-compose.dev.yml, .qa.yml, or .prod.yml.
 services:
-  backend:
-    build: ./backend
-    container_name: cofinet-api
-    env_file:
-      - ./backend/.env
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${DATABASE_NAME:-cofinet}
-      POSTGRES_USER: ${DATABASE_USER:-postgres}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in backend/.env and run Docker Compose with --env-file backend/.env}
+      POSTGRES_DB: ${DATABASE_NAME:?DATABASE_NAME is required}
+      POSTGRES_USER: ${DATABASE_USER:?DATABASE_USER is required}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - database
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+      target: runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 6
+      start_period: 15s
+    networks:
+      - application
+      - database
     restart: unless-stopped
+    init: true
 
   nginx:
     image: nginx:1.27-alpine
     depends_on:
-      - backend
-    ports:
-      - "80:80"
+      backend:
+        condition: service_healthy
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
       - ./admin:/usr/share/nginx/admin:ro
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./pos:/usr/share/nginx/pos:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    networks:
+      - application
     restart: unless-stopped
+
+  # Explicit maintenance job; never runs during a normal `up`.
+  db-init:
+    profiles: ["tools"]
+    build:
+      context: ./backend
+      target: runtime
+    command: ["python", "-m", "app.database.init_db"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+    restart: "no"
+
+  db-migrate:
+    profiles: ["tools"]
+    build:
+      context: ./backend
+      target: runtime
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+    restart: "no"
 
 volumes:
   postgres_data:
+
+networks:
+  application:
+  database:
+    internal: true

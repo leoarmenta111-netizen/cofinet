@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=20260817-light2">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CofiNet+ | Portal de Acceso</title>
@@ -16,15 +16,15 @@
     
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-cofiDark text-white font-sans min-h-screen flex flex-col justify-between select-none">
+<body class="portal-light-theme bg-cofiDark text-white font-sans min-h-screen flex flex-col justify-between select-none">
 
     <!-- CONTENEDOR PRINCIPAL DE PORTAL (Se adapta a max-w-lg en móvil y max-w-6xl en PC) -->
-    <div id="contenedor-portal" class="flex flex-col justify-between min-h-screen p-4 md:p-8 w-full max-w-lg md:max-w-6xl mx-auto transition-all duration-300">
+    <div id="contenedor-portal" class="portal-shell flex flex-col justify-between min-h-screen p-4 md:p-8 w-full max-w-lg md:max-w-6xl mx-auto transition-all duration-300">
         
         <!-- ENCABEZADO FIJO (Responsivo: Selector de idioma, Logo y Banner promocional real) -->
-        <header class="bg-[#0D0D0D] flex flex-col space-y-4 flex-shrink-0 pt-2 pb-1 border-b border-zinc-900/60">
+        <header class="portal-header bg-[#0D0D0D] flex flex-col space-y-4 flex-shrink-0 pt-2 pb-1 border-b border-zinc-900/60">
             <!-- Fila superior: Selector de idioma -->
-            <button class="flex items-center gap-2 px-3 py-2 rounded-xl border border-zinc-800 bg-[#181818] hover:border-cofiOlive transition-all duration-300">
+            <button class="language-selector flex items-center gap-2 px-3 py-2 rounded-xl border border-zinc-800 bg-[#181818] hover:border-cofiOlive transition-all duration-300">
     🌐
     <span class="text-xs font-medium">Español</span>
     <svg class="w-3 h-3">
@@ -32,12 +32,30 @@
     </svg>
 </button>
 
+            <section class="portal-welcome" aria-labelledby="portal-welcome-title">
+                <div class="portal-welcome__content">
+                    <img src="assets/logocofi.png" alt="CofiCenter" class="portal-welcome__logo">
+                    <h1 id="portal-welcome-title" class="portal-welcome__title">¡HOLA!</h1>
+                    <p class="portal-welcome__subtitle">Te damos la bienvenida.</p>
+                    <div class="portal-network" aria-label="Estado de la red CofiNet+">
+                        <span class="portal-network__icon" aria-hidden="true">
+                            <i data-lucide="wifi"></i>
+                        </span>
+                        <span class="portal-network__copy">
+                            <strong><span class="portal-network__dot" aria-hidden="true"></span>CofiNet+ Disponible</strong>
+                            <small>Internet listo para conectarte.</small>
+                        </span>
+                    </div>
+                </div>
+                <img src="assets/coficenter-order-banner.png" alt="Ordena desde tu celular en CofiCenter" class="portal-order-banner">
+            </section>
+
             <!-- Fila media: Logo (izq en PC, centrado en móvil) y Banner (der en PC, centrado en móvil) -->
             <div class="legacy-portal-header hidden flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
                 <!-- Logotipo Principal -->
                 <div class="flex justify-center md:justify-start">
                     <img
-                        src="logo.jpeg"
+                        src="assets/logocofi.png"
                         alt="Coficenter"
                         class="h-16 md:h-20 lg:h-24 w-auto object-contain transition-all duration-300"
                     >
@@ -180,7 +198,7 @@
                 </aside>
             </section>
 
-            <div class="w-full flex justify-center md:justify-start mt-4">
+            <div class="legacy-network-status w-full flex justify-center md:justify-start mt-4">
 
     <div class="flex items-center gap-4 bg-[#161616] border border-zinc-800 rounded-2xl px-5 py-4 shadow-lg hover:border-cofiOlive transition-all duration-300">
 
@@ -229,7 +247,7 @@
 
         <!-- Título del Portal -->
 
-<div class="text-center mt-12 mb-8">
+<div class="legacy-connect-title text-center mt-12 mb-8">
 
     <h1 class="text-3xl md:text-4xl font-black font-outfit tracking-tight text-white">
 
@@ -259,10 +277,10 @@
             >
                 
                 <!-- ACCORDION TAB 1: YA CUENTO CON MEMBRESÍA -->
-                <div class="border border-zinc-900/60 rounded-2xl bg-cofiCard overflow-hidden transition-all duration-300">
+                <div class="mobile-access-card mobile-access-card--membership border border-zinc-900/60 rounded-2xl bg-cofiCard overflow-hidden transition-all duration-300">
                     <button id="btn-acordion-membresia" data-accordion-toggle="membresia" class="w-full py-4 px-5 flex items-center justify-between text-left transition-all duration-300 text-zinc-300 hover:text-white">
                         <div class="text-left">
-                            <p id="lbl-acordion-membresia-sub" class="text-[9px] text-cofiOlive font-bold tracking-widest uppercase mb-0.5">Opción 1</p>
+                            <p id="lbl-acordion-membresia-sub" class="text-[9px] text-cofiOlive font-bold tracking-widest uppercase mb-0.5">Membresía</p>
                             <h3 id="lbl-acordion-membresia-title" class="text-sm font-semibold tracking-wide font-grotesk">Ya cuento con Membresía</h3>
                         </div>
                         <span id="icon-acordion-membresia" class="text-sm text-zinc-500 transition-transform">→</span>
@@ -302,11 +320,11 @@
                 </div>
 
                 <!-- ACCORDION TAB 2: COMPRAR ACCESO -->
-                <div class="border border-zinc-900/60 rounded-2xl bg-cofiCard overflow-hidden transition-all duration-300">
+                <div class="mobile-access-card mobile-access-card--purchase border border-zinc-900/60 rounded-2xl bg-cofiCard overflow-hidden transition-all duration-300">
                     <button id="btn-acordion-comprar" data-accordion-toggle="comprar" class="w-full py-4 px-5 flex items-center justify-between text-left transition-all duration-300 text-zinc-300 hover:text-white">
                         <div class="text-left">
-                            <p id="lbl-acordion-comprar-sub" class="text-[9px] text-cofiOlive font-bold tracking-widest uppercase mb-0.5">Opción 2</p>
-                            <h3 id="lbl-acordion-comprar-title" class="text-sm font-semibold tracking-wide font-grotesk">Comprar acceso</h3>
+                            <p id="lbl-acordion-comprar-sub" class="text-[9px] text-cofiOlive font-bold tracking-widest uppercase mb-0.5">Acceso</p>
+                            <h3 id="lbl-acordion-comprar-title" class="text-sm font-semibold tracking-wide font-grotesk">Comprar accesos</h3>
                         </div>
                         <span id="icon-acordion-comprar" class="text-sm text-zinc-500 transition-transform">→</span>
                     </button>
@@ -413,8 +431,8 @@
                 </div>
 
                 <!-- OPCIÓN 3: CÓDIGO PIN -->
-                <a href="portal.html" class="block border border-zinc-900/60 rounded-2xl bg-cofiCard p-5 transition-all duration-300 hover:border-cofiOlive hover:shadow-lg hover:shadow-cofiOlive/10">
-                    <p class="text-[9px] text-cofiOlive font-bold tracking-widest uppercase mb-1">Opción 3</p>
+                <a href="portal.html" class="mobile-access-card mobile-access-card--code block border border-zinc-900/60 rounded-2xl bg-cofiCard p-5 transition-all duration-300 hover:border-cofiOlive hover:shadow-lg hover:shadow-cofiOlive/10">
+                    <p class="text-[9px] text-cofiOlive font-bold tracking-widest uppercase mb-1">Código</p>
                     <div class="flex items-center justify-between gap-4">
                         <div>
                             <h3 class="text-sm font-semibold tracking-wide font-grotesk text-white">Ya tengo un código</h3>
@@ -433,7 +451,7 @@
                 <div id="desktop-inicio" class="grid grid-cols-3 gap-8">
                     
                     <!-- Opción 1: Membresía -->
-                    <div data-desktop-view="membresia"
+                    <div data-desktop-view="membresia" data-access-card="membership"
                     class="bg-cofiCard border border-zinc-800 rounded-3xl p-8 min-h-[320px] flex flex-col justify-between cursor-pointer group transition-all duration-300 hover:-translate-y-2 hover:border-cofiOlive hover:shadow-xl">
                     
     <!-- Contenido -->
@@ -505,7 +523,7 @@
 </div>
 
                     <!-- Opción 2: Comprar acceso -->
-<div data-desktop-view="comprar"
+<div data-desktop-view="comprar" data-access-card="purchase"
     class="bg-cofiCard border border-zinc-800 rounded-3xl p-8 min-h-[320px] flex flex-col justify-between cursor-pointer group transition-all duration-300 hover:-translate-y-2 hover:border-cofiOlive hover:shadow-xl">
 
     <div>
@@ -536,7 +554,7 @@
 
             <span class="text-white">
 
-                acceso
+                accesos
 
             </span>
 
@@ -575,7 +593,7 @@
 </div>
 
         <!-- Opción 3: Código -->
-<a href="portal.html"
+<a href="portal.html" data-access-card="code"
     class="bg-cofiCard border border-zinc-800 rounded-3xl p-8 min-h-[320px] flex flex-col justify-between cursor-pointer group transition-all duration-300 hover:-translate-y-2 hover:border-cofiOlive hover:shadow-xl">
 
     <div>
@@ -938,6 +956,8 @@ class="w-5 h-5">
         <section id="seccion-membresias-footer" class="w-full space-y-6 flex-shrink-0 border-t border-zinc-900 pt-12 mt-auto transition-all">
             <div class="text-center mb-14">
 
+    <strong class="membership-coming-soon">PRÓXIMAMENTE</strong>
+
     <span
         class="inline-flex items-center px-4 py-1 rounded-full bg-cofiOlive/10 text-cofiOlive text-xs font-semibold uppercase tracking-[0.2em]">
 
@@ -1063,9 +1083,11 @@ class="w-5 h-5">
 
     <div>
 
+        <span class="membership-plan-label">Freelance</span>
+
         <h3 class="text-2xl font-black font-outfit">
 
-            Freelancer
+            Plan Freelance
 
         </h3>
 
@@ -1323,11 +1345,28 @@ class="w-5 h-5">
                 <h3 id="success-screen-title" class="text-lg md:text-xl font-black text-cofiOlive font-grotesk tracking-wide transition-all">Ya cuentas con conexión CofiNet+</h3>
                 <p id="success-screen-subtitle" class="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider">Disfruta la experiencia Coficenter®.</p>
                 <div id="purchase-success-details" class="hidden pt-3 space-y-1 text-[10px] text-zinc-400 uppercase tracking-wider">
-                    <p class="text-cofiOlive font-bold">Tu código de acceso</p>
-                    <p>PIN: <span id="purchase-pin"></span></p>
-                    <p>Tiempo adquirido: <span id="purchase-duration"></span></p>
-                    <p>Expiration: <span id="purchase-expires-at"></span></p>
-                </div>
+
+    <p>
+        Plan:
+        <span id="purchase-plan-name"></span>
+    </p>
+
+    <p>
+        PIN:
+        <span id="purchase-pin"></span>
+    </p>
+
+    <p>
+        Tiempo adquirido:
+        <span id="purchase-duration"></span>
+    </p>
+
+    <p>
+        Expiración:
+        <span id="purchase-expires-at"></span>
+    </p>
+
+</div>
             </div>
 
                 <div id="guest-purchase-details" class="hidden pt-3 space-y-1 text-[10px] text-zinc-400 uppercase tracking-wider">
@@ -1367,45 +1406,6 @@ class="w-5 h-5">
 
         </main>
 
-        <!-- BANNER DE COMIDA (FOOTER FINAL - max-w-2xl en PC) -->
-        <section class="bg-cofiCard border border-zinc-800 rounded-xl p-4 flex items-center justify-between gap-3 text-left relative overflow-hidden flex-shrink-0 mt-auto w-full max-w-lg md:max-w-2xl mx-auto transition-all duration-300">
-            <div class="flex items-center gap-3">
-                <div class="bg-zinc-900 text-3xl p-2.5 rounded-lg flex-shrink-0">🍔🍟</div>
-                <div>
-                    <h3 class="text-xs font-bold text-cofiOlive font-grotesk tracking-wide">¿Hambre?</h3>
-                    <p class="text-[10px] text-gray-300 font-medium mt-0.5 leading-snug">Descubre nuestro menú y</p>
-                    <p class="text-[10px] text-gray-300 font-medium leading-snug">ordena desde tu celular.</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-2 flex-shrink-0 pl-2 border-l border-zinc-800/80">
-                <div class="text-right">
-                    <p class="text-[9px] font-extrabold text-white tracking-wide font-grotesk">coficenter.</p>
-                    <span class="text-[8px] bg-cofiOlive text-black px-1.5 py-0.5 rounded font-black uppercase tracking-wider inline-block mt-1">Menú</span>
-                </div>
-                <!-- QR Code SVG -->
-                <div class="bg-white p-1 rounded flex-shrink-0">
-                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="7" height="7" fill="black"/>
-                        <rect x="2" y="2" width="3" height="3" fill="white"/>
-                        <rect x="21" width="7" height="7" fill="black"/>
-                        <rect x="23" y="2" width="3" height="3" fill="white"/>
-                        <rect y="21" width="7" height="7" fill="black"/>
-                        <rect x="2" y="23" width="3" height="3" fill="white"/>
-                        <rect x="9" y="9" width="10" height="10" fill="black"/>
-                        <rect x="11" y="11" width="6" height="6" fill="white"/>
-                        <rect x="9" y="1" width="3" height="5" fill="black"/>
-                        <rect x="15" y="2" width="3" height="3" fill="black"/>
-                        <rect x="22" y="9" width="5" height="3" fill="black"/>
-                        <rect x="21" y="15" width="3" height="5" fill="black"/>
-                        <rect x="9" y="22" width="5" height="3" fill="black"/>
-                        <rect x="16" y="21" width="3" height="5" fill="black"/>
-                        <rect x="22" y="22" width="5" height="5" fill="black"/>
-                    </svg>
-                </div>
-            </div>
-        </section>
-
     </div>
     <!-- FIN PANTALLA FINAL -->
     <div id="membership-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
@@ -1427,5 +1427,14 @@ class="w-5 h-5">
     <script src="js/payment.js"></script>
     <script src="js/animations.js"></script>
     <script src="js/membership.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('a[href="portal.html"]').forEach(link => {
+        link.href = "portal.html" + window.location.search;
+    });
+});
+</script>
+
 </body>
 </html>

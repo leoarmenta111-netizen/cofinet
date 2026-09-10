@@ -3,27 +3,181 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Panel Admin | CofiNet+</title>
-    <style>body{font-family:Arial,sans-serif;background:#f4f4ef;margin:0;color:#202820}header,main{max-width:960px;margin:auto;padding:1rem}header{display:flex;justify-content:space-between;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}.card{background:#fff;padding:1rem;border-radius:10px;box-shadow:0 2px 10px #0001}.metric{font-size:1.6rem;font-weight:bold}a,button{color:#fff;background:#33452d;border:0;border-radius:5px;padding:.55rem .8rem;text-decoration:none;cursor:pointer}</style>
+    <meta name="color-scheme" content="light">
+    <title>Dashboard | CofiNet+</title>
+    <link rel="stylesheet" href="admin.css">
 </head>
-<body>
-    <header><div><strong>CofiNet+ Admin</strong><span id="admin-name"></span></div><div><a href="pins.html">PINs de efectivo</a> <button onclick="logoutAdmin()">Salir</button></div></header>
-    <main><h1>Dashboard</h1><div class="grid" id="metrics"></div></main>
-    <script src="admin.js"></script>
+<body class="auth-pending" data-page="dashboard">
+    <div class="app-shell protected-content">
+        <aside class="sidebar">
+            <div class="brand-lockup"><span class="brand-mark">C</span><span>CofiNet+</span></div>
+            <nav data-admin-nav aria-label="Navegación principal"></nav>
+            <div class="sidebar-profile">
+                <div class="profile-row"><span class="avatar" data-admin-initials></span><div class="profile-copy"><strong data-admin-name></strong><span data-admin-role></span></div></div>
+                <button class="button button-ghost logout-button" type="button" onclick="CofiAdmin.logoutAdmin()">Cerrar sesión</button>
+            </div>
+        </aside>
+        <div class="main-area">
+            <header class="topbar"><button class="button button-ghost menu-toggle" data-menu-toggle aria-expanded="false" aria-label="Abrir menú">Menú</button><span class="topbar-title">Resumen operativo</span><span class="muted" data-admin-name></span></header>
+            <main class="content">
+                <header class="page-header"><div><p class="eyebrow">Vista general</p><h1 class="page-title">Dashboard</h1><p class="page-description">Indicadores reales de ventas, accesos y pagos registrados en CofiNet.</p></div></header>
+                <section class="panel" style="margin-bottom:1rem">
+                    <div class="panel-header">
+                        <div>
+                            <h2>Sucursal</h2>
+                            <small class="muted">Consulta indicadores globales o por sucursal.</small>
+                        </div>
+                        <span id="dashboard-branch-badge" class="badge badge-neutral">Todas</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="field">
+                            <label for="dashboard-branch">Filtrar dashboard</label>
+                            <select id="dashboard-branch">
+                                <option value="">Todas las sucursales</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <div id="dashboard-loading" class="metrics-grid" aria-label="Cargando indicadores"><div class="skeleton metric-card"></div><div class="skeleton metric-card"></div><div class="skeleton metric-card"></div><div class="skeleton metric-card"></div></div>
+                <section id="metrics" class="metrics-grid" hidden aria-label="Indicadores"></section>
+            </main>
+        </div>
+    </div>
+    <script src="admin.js?v=20260821-pos-catalog"></script>
     <script>
-        requireAdmin();
-        const labels = { total_sales_today: "Ventas de hoy", active_purchases: "Compras activas", expired_purchases: "Compras expiradas", active_pins: "PINs activos", pending_mercadopago_payments: "Pagos Mercado Pago pendientes" };
-        Promise.all([adminRequest("/admin/me"), adminRequest("/admin/dashboard")]).then(([admin, dashboard]) => {
-            document.getElementById("admin-name").textContent = ` · ${admin.full_name}`;
-            const metrics = document.getElementById("metrics");
-            Object.entries(labels).forEach(([key, label]) => {
-                const card = document.createElement("section"); card.className = "card";
-                const title = document.createElement("div"); title.textContent = label;
-                const value = document.createElement("div"); value.className = "metric";
-                value.textContent = key === "total_sales_today" ? `$${Number(dashboard[key]).toFixed(2)} MXN` : dashboard[key];
-                card.append(title, value); metrics.append(card);
-            });
-        }).catch(error => { alert(error.message); if (!adminToken()) window.location.replace("login.html"); });
-    </script>
+(() => {
+
+    const {
+        SUPER_ADMIN,
+        adminRequest,
+        bootstrapAdmin,
+        formatMoney,
+        showToast
+    } = window.CofiAdmin;
+
+    const BRANCH_STORAGE_KEY = "cofinet_admin_branch_code";
+    const branchSelect = document.getElementById("dashboard-branch");
+
+    const metrics = [
+        ["total_sales_today", "Ventas de hoy", true, "Desde las 00:00"],
+        ["total_sales_week", "Ventas esta semana", true, "Desde el lunes"],
+        ["total_sales_month", "Ventas este mes", true, "Mes calendario"],
+        ["active_purchases", "Compras activas", false, "Acceso vigente"],
+        ["expired_purchases", "Compras expiradas", false, "Histórico registrado"],
+        ["active_pins", "PINs activos", false, "Con vigencia actual"],
+        ["pending_mercadopago_payments", "Pagos pendientes", false, "Mercado Pago"]
+    ];
+
+    function configureBranches(branches) {
+        branchSelect.replaceChildren(
+            new Option("Todas las sucursales", "")
+        );
+
+        for (const branch of branches) {
+            branchSelect.add(
+                new Option(branch.name, branch.code)
+            );
+        }
+
+        const saved = localStorage.getItem(BRANCH_STORAGE_KEY);
+
+        if (
+            saved &&
+            branches.some(branch => branch.code === saved)
+        ) {
+            branchSelect.value = saved;
+        }
+    }
+
+    function renderDashboard(dashboard) {
+        const container = document.getElementById("metrics");
+        container.replaceChildren();
+
+        for (const [key, label, money, foot] of metrics) {
+            const card = document.createElement("article");
+            card.className =
+                `metric-card ${money ? "metric-wide" : ""}`;
+
+            const title = document.createElement("span");
+            title.className = "metric-label";
+            title.textContent = label;
+
+            const value = document.createElement("strong");
+            value.className = "metric-value";
+            value.textContent = money
+                ? formatMoney(dashboard[key])
+                : dashboard[key];
+
+            const note = document.createElement("small");
+            note.className = "metric-foot";
+            note.textContent = foot;
+
+            card.append(title, value, note);
+            container.append(card);
+        }
+
+        container.hidden = false;
+    }
+
+    async function loadDashboard() {
+        const code = branchSelect.value;
+
+        const endpoint = code
+            ? `/admin/dashboard?branch_code=${encodeURIComponent(code)}`
+            : "/admin/dashboard";
+
+        const dashboard = await adminRequest(endpoint);
+
+        renderDashboard(dashboard);
+
+        document.getElementById(
+            "dashboard-branch-badge"
+        ).textContent =
+            branchSelect.selectedOptions[0]?.textContent ||
+            "Todas";
+    }
+
+    branchSelect.addEventListener("change", () => {
+        if (branchSelect.value) {
+            localStorage.setItem(
+                BRANCH_STORAGE_KEY,
+                branchSelect.value
+            );
+        } else {
+            localStorage.removeItem(BRANCH_STORAGE_KEY);
+        }
+
+        loadDashboard().catch(
+            error => showToast(error.message, "error")
+        );
+    });
+
+    (async () => {
+        const admin = await bootstrapAdmin({
+            allowedRoles: [SUPER_ADMIN]
+        });
+
+        if (!admin) return;
+
+        const branches = await adminRequest("/branches");
+
+        configureBranches(branches);
+        await loadDashboard();
+
+        document.getElementById(
+            "dashboard-loading"
+        )?.remove();
+
+    })().catch(error => {
+        document.getElementById(
+            "dashboard-loading"
+        )?.remove();
+
+        showToast(error.message, "error");
+    });
+
+})();
+</script>
 </body>
 </html>

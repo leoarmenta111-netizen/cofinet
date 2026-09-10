@@ -8,6 +8,7 @@ from app.models.purchase import PurchaseStatus
 
 class PurchaseCreate(BaseModel):
     plan_id: int = Field(gt=0)
+    branch_code: str | None = Field(default=None, max_length=50)
 
 
 class PurchaseResponse(BaseModel):

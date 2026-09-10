@@ -1,0 +1,10 @@
+services:
+  backend:
+    networks:
+      - default
+      - production_database
+
+networks:
+  production_database:
+    external: true
+    name: cofinet_default

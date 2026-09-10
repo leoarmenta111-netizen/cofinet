@@ -1,0 +1,11 @@
+{
+  "name": "Cofi POS",
+  "short_name": "Cofi POS",
+  "description": "Punto de venta de CofiCenter",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F5F2",
+  "theme_color": "#173524",
+  "orientation": "landscape"
+}

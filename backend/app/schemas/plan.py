@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class PlanCreate(BaseModel):
@@ -18,6 +18,33 @@ class PlanUpdate(BaseModel):
     price: Decimal | None = Field(default=None, gt=0, max_digits=10, decimal_places=2)
     duration_minutes: int | None = Field(default=None, gt=0)
     is_active: bool | None = None
+
+
+class AdminPlanUpdate(BaseModel):
+    """Editable commercial fields exposed by the administrator catalogue."""
+
+    price: Decimal | None = Field(
+        default=None,
+        ge=0,
+        allow_inf_nan=False,
+        max_digits=10,
+        decimal_places=2,
+    )
+    duration_minutes: int | None = Field(default=None, gt=0)
+    description: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def require_change(self) -> "AdminPlanUpdate":
+        if not self.model_fields_set:
+            raise ValueError("At least one plan field is required")
+
+        if any(
+            getattr(self, field) is None
+            for field in self.model_fields_set
+        ):
+            raise ValueError("Plan fields cannot be null")
+
+        return self
 
 
 class PlanResponse(BaseModel):

@@ -10,9 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.database.deps import get_db
 from app.models.user import User
-SECRET_KEY = "CAMBIAR_ESTO_DESPUES_EN_.ENV"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+from app.core.config import settings
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -47,15 +45,15 @@ def create_access_token(data: dict[str, Any]) -> str:
     payload = data.copy()
 
     expire = datetime.now(UTC) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
     payload.update({"exp": expire})
 
     return jwt.encode(
         payload,
-        SECRET_KEY,
-        algorithm=ALGORITHM
+        settings.JWT_SECRET_KEY.get_secret_value(),
+        algorithm=settings.JWT_ALGORITHM
     )
 
 
@@ -67,7 +65,11 @@ def get_current_token(
         raise _credentials_exception()
 
     try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.JWT_SECRET_KEY.get_secret_value(),
+            algorithms=[settings.JWT_ALGORITHM],
+        )
         subject = payload.get("sub")
         if not isinstance(subject, str) or not subject:
             raise _credentials_exception()
