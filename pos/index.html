@@ -39,7 +39,7 @@
             link.rel = "manifest";
         })();
     </script>
-    <link rel="stylesheet" href="./css/pos.css?v=16">
+    <link rel="stylesheet" href="./css/pos.css?v=25">
     <link rel="stylesheet" href="./css/receipt.css?v=1">
 </head>
 <body>
@@ -47,6 +47,13 @@
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></symbol>
     <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></symbol>
+        <symbol id="i-scan" viewBox="0 0 24 24">
+            <path d="M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3"></path>
+            <path d="M7 9v6M10 8v8M13 9v6M16 8v8"></path>
+        </symbol>
+        <symbol id="i-filter" viewBox="0 0 24 24">
+            <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z"></path>
+        </symbol>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
     <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L20 8H6"></path><circle cx="10" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"></path></symbol>
@@ -96,62 +103,191 @@
 
     <main class="workspace">
         <section class="catalog-panel" aria-label="Catálogo de productos">
-            <div id="sale-view" class="sale-view">
-            <div class="catalog-tools">
-                <label class="search-box" for="product-search">
-                    <svg><use href="#i-search"></use></svg>
-                    <input id="product-search" type="search" autocomplete="off" placeholder="Buscar producto por nombre o SKU" aria-label="Buscar producto por nombre o SKU">
-                    <kbd>Ctrl K</kbd>
-                </label>
-                <button id="refresh-catalog" class="icon-button refresh-button" type="button" title="Actualizar catálogo" aria-label="Actualizar catálogo"><svg><use href="#i-refresh"></use></svg></button>
-                <span class="view-button" aria-hidden="true"><svg><use href="#i-grid"></use></svg></span>
-            </div>
+            <div id="sale-view" class="sale-view" data-ui="coficenter-pos-professional">
+                <div class="catalog-tools">
+                    <label class="search-box" for="product-search">
+                        <svg><use href="#i-search"></use></svg>
+                        <input
+                            id="product-search"
+                            type="search"
+                            autocomplete="off"
+                            placeholder="Buscar producto por nombre o SKU"
+                            aria-label="Buscar producto por nombre o SKU"
+                        >
+                        <kbd>Ctrl K</kbd>
+                    </label>
 
-            <div class="catalog-heading">
-                <div><h1>Productos</h1><span id="product-result-count">0 disponibles</span></div>
-            </div>
+                    <div class="catalog-actions">
+                        <button
+                            class="scan-action"
+                            type="button"
+                            title="Escanear producto"
+                            aria-label="Escanear producto"
+                        >
+                            <svg><use href="#i-scan"></use></svg>
+                            <span>Escanear</span>
+                        </button>
+
+                        <button
+                            id="refresh-catalog"
+                            class="icon-button refresh-button"
+                            type="button"
+                            title="Actualizar catálogo"
+                            aria-label="Actualizar catálogo"
+                        >
+                            <svg><use href="#i-refresh"></use></svg>
+                        </button>
+
+                        <span
+                            class="view-button"
+                            aria-hidden="true"
+                        >
+                            <svg><use href="#i-grid"></use></svg>
+                        </span>
+
+                        <button
+                            class="filter-action"
+                            type="button"
+                            title="Filtrar productos"
+                            aria-label="Filtrar productos"
+                        >
+                            <svg><use href="#i-filter"></use></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="catalog-heading">
+                    <div class="catalog-title">
+                        <h1>Menú</h1>
+                        <span id="product-result-count">0 productos</span>
+                    </div>
+                </div>
 
             <nav id="category-tabs" class="category-tabs" aria-label="Categorías"></nav>
             <div id="catalog-message" class="catalog-message">Cargando catálogo…</div>
             <section id="product-grid" class="product-grid" aria-live="polite"></section>
             </div>
 
-            <section id="orders-view" class="orders-view" hidden>
+            <section
+                id="orders-view"
+                class="orders-view"
+                hidden
+                data-ui="coficenter-orders-professional"
+            >
                 <div class="orders-header">
-                    <div>
+                    <div class="orders-heading">
                         <p class="eyebrow">OPERACIÓN</p>
                         <h1>Órdenes del día</h1>
-                        <span id="orders-summary">Cargando órdenes…</span>
+                        <span id="orders-summary">
+                            Cargando órdenes…
+                        </span>
                     </div>
 
-                    <button
-                        id="refresh-orders"
-                        class="icon-button"
-                        type="button"
-                        title="Actualizar órdenes"
-                        aria-label="Actualizar órdenes"
-                    >
-                        <svg><use href="#i-refresh"></use></svg>
-                    </button>
-                </div>
+                    <div class="orders-toolbar">
+                        <label
+                            class="orders-search-box"
+                            for="order-search"
+                        >
+                            <svg>
+                                <use href="#i-search"></use>
+                            </svg>
 
-                <div id="order-filters" class="order-filters">
-                    <button type="button" data-order-filter="ALL" class="order-filter is-active">Todas</button>
-                    <button type="button" data-order-filter="NEW" class="order-filter">Nuevas</button>
-                    <button type="button" data-order-filter="PREPARING" class="order-filter">Preparando</button>
-                    <button type="button" data-order-filter="READY" class="order-filter">Listas</button>
-                    <button type="button" data-order-filter="DELIVERED" class="order-filter">Entregadas</button>
-                </div>
+                            <input
+                                id="order-search"
+                                type="search"
+                                autocomplete="off"
+                                placeholder="Buscar orden o producto"
+                                aria-label="Buscar orden"
+                            >
+                        </label>
 
-                <div id="orders-message" class="orders-message">
-                    Cargando órdenes…
+                        <button
+                            id="refresh-orders"
+                            class="orders-refresh-button"
+                            type="button"
+                            title="Actualizar órdenes"
+                            aria-label="Actualizar órdenes"
+                        >
+                            <svg>
+                                <use href="#i-refresh"></use>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div
-                    id="orders-list"
-                    class="orders-list"
-                    aria-live="polite"
-                ></div>
+                    id="order-filters"
+                    class="order-filters"
+                >
+                    <button
+                        type="button"
+                        data-order-filter="ALL"
+                        class="order-filter is-active"
+                    >
+                        Todas
+                    </button>
+
+                    <button
+                        type="button"
+                        data-order-filter="NEW"
+                        class="order-filter"
+                    >
+                        Nuevas
+                    </button>
+
+                    <button
+                        type="button"
+                        data-order-filter="PREPARING"
+                        class="order-filter"
+                    >
+                        Preparando
+                    </button>
+
+                    <button
+                        type="button"
+                        data-order-filter="READY"
+                        class="order-filter"
+                    >
+                        Listas
+                    </button>
+
+                    <button
+                        type="button"
+                        data-order-filter="DELIVERED"
+                        class="order-filter"
+                    >
+                        Entregadas
+                    </button>
+                </div>
+
+                <div
+                    id="orders-message"
+                    class="orders-message"
+                >
+                    Cargando órdenes…
+                </div>
+
+                <div class="orders-table-wrap">
+                    <div
+                        class="orders-table-head"
+                        aria-hidden="true"
+                    >
+                        <span>Orden</span>
+                        <span>Cliente</span>
+                        <span>Artículos</span>
+                        <span>Hora</span>
+                        <span>Estado</span>
+                        <span>Pago</span>
+                        <span>Total</span>
+                        <span></span>
+                    </div>
+
+                    <div
+                        id="orders-list"
+                        class="orders-list"
+                        aria-live="polite"
+                    ></div>
+                </div>
             </section>
 
             <section
@@ -161,6 +297,14 @@
                 aria-label="Clientes"
             >
                 <div class="customers-header">
+                    <button
+                        id="mobile-customer-close"
+                        class="mobile-customer-close"
+                        type="button"
+                        aria-label="Cerrar clientes y volver a la orden"
+                    >
+                        ×
+                    </button>
                     <div>
                         <span class="customers-eyebrow">
                             CRM de mostrador
@@ -314,6 +458,35 @@
                 </div>
             </section>
 
+            <div
+                id="mobile-order-bar"
+                class="mobile-order-bar"
+                aria-label="Resumen de orden actual"
+            >
+                <button
+                    id="mobile-order-view"
+                    class="mobile-order-view"
+                    type="button"
+                    aria-controls="current-order-panel"
+                    aria-expanded="false"
+                >
+                    <span id="mobile-order-count">Orden vacía</span>
+                    <small>Ver orden</small>
+                </button>
+
+                <div class="mobile-order-payment">
+                    <strong id="mobile-order-total">$0.00</strong>
+
+                    <button
+                        id="mobile-order-checkout"
+                        class="mobile-order-checkout"
+                        type="button"
+                    >
+                        Cobrar
+                    </button>
+                </div>
+            </div>
+
             <nav class="bottom-nav" aria-label="Módulos del punto de venta">
                 <button id="nav-sale" class="bottom-nav-item is-active" type="button"><svg><use href="#i-sale"></use></svg><span>Venta</span></button>
                 <button id="nav-orders" class="bottom-nav-item" type="button"><svg><use href="#i-orders"></use></svg><span>Órdenes</span></button>
@@ -323,10 +496,21 @@
             </nav>
         </section>
 
-        <aside class="order-panel" aria-label="Orden actual">
+        <aside id="current-order-panel" class="order-panel" aria-label="Orden actual">
             <div class="order-heading">
                 <div><h2>Orden actual</h2><span class="order-type">Venta en mostrador</span></div>
-                <button id="clear-cart" class="icon-button danger-button" type="button" hidden title="Vaciar orden" aria-label="Vaciar orden"><svg><use href="#i-trash"></use></svg></button>
+                <div class="order-heading-actions">
+                    <button id="clear-cart" class="icon-button danger-button" type="button" hidden title="Vaciar orden" aria-label="Vaciar orden"><svg><use href="#i-trash"></use></svg></button>
+
+                    <button
+                        id="mobile-order-close"
+                        class="mobile-order-close"
+                        type="button"
+                        aria-label="Cerrar orden"
+                    >
+                        ×
+                    </button>
+                </div>
             </div>
 
             <section
@@ -440,6 +624,51 @@
                 <div><span>Subtotal</span><strong id="cart-subtotal">$0.00</strong></div>
                 <div class="order-total"><span>Total</span><strong id="cart-total">$0.00</strong></div>
                 <button id="checkout-button" class="checkout-button" type="button" disabled><svg><use href="#i-cart"></use></svg><span>Cobrar</span><strong id="checkout-total">$0.00</strong></button>
+
+                    <div
+                        class="payment-shortcuts"
+                        aria-label="Métodos de pago rápidos"
+                    >
+                        <button
+                            class="payment-shortcut"
+                            data-quick-payment="CASH"
+                            type="button"
+                            disabled
+                        >
+                            <span class="payment-shortcut-icon">$</span>
+                            <span>Efectivo</span>
+                        </button>
+
+                        <button
+                            class="payment-shortcut"
+                            data-quick-payment="CARD_EXTERNAL"
+                            type="button"
+                            disabled
+                        >
+                            <span class="payment-shortcut-icon">▣</span>
+                            <span>Tarjeta</span>
+                        </button>
+
+                        <button
+                            class="payment-shortcut"
+                            type="button"
+                            disabled
+                            title="Pago mixto próximamente"
+                        >
+                            <span class="payment-shortcut-icon">◫</span>
+                            <span>Mixto</span>
+                        </button>
+
+                        <button
+                            id="payment-more"
+                            class="payment-shortcut"
+                            type="button"
+                            disabled
+                        >
+                            <span class="payment-shortcut-icon">•••</span>
+                            <span>Más</span>
+                        </button>
+                    </div>
                 <div class="sync-footnote"><span class="mini-status-dot"></span><span id="last-sync">Sin sincronización todavía</span></div>
                 <span id="catalog-source" class="catalog-source">Fuente: —</span>
             </div>
@@ -458,15 +687,22 @@
 </div>
 
 <div id="payment-modal" class="modal-backdrop" hidden>
-    <section class="modal-card payment-card" role="dialog" aria-modal="true" aria-labelledby="payment-heading">
-        <div class="modal-header"><div><p class="eyebrow">FINALIZAR VENTA</p><h2 id="payment-heading">Método de pago</h2><span class="modal-subtitle">Confirma el cobro antes de registrar la venta.</span></div><button id="payment-close" class="modal-close" type="button" aria-label="Cerrar">×</button></div>
-        <div class="payment-total"><span>Total a cobrar</span><strong id="payment-total">$0.00</strong></div>
-        <div class="payment-methods" role="group" aria-label="Método de pago">
+    <section class="modal-card payment-card payment-card-professional" role="dialog" aria-modal="true" aria-labelledby="payment-heading">
+        <div class="modal-header"><div><p class="eyebrow">FINALIZAR VENTA</p><h2 id="payment-heading">Cobro de la orden</h2><span class="modal-subtitle">Selecciona el método de pago y confirma la operación.</span></div><button id="payment-close" class="modal-close" type="button" aria-label="Cerrar">×</button></div>
+        <div class="payment-total-professional"><span>Total a cobrar</span><strong id="payment-total">$0.00</strong></div>
+        <span class="payment-section-label">Método de pago</span>
+            <div class="payment-methods" role="group" aria-label="Método de pago">
             <button class="payment-method is-active" data-method="CASH" type="button"><span class="payment-method-icon">$</span><span><strong>Efectivo</strong><small>Pago en caja</small></span></button>
             <button class="payment-method" data-method="CARD_EXTERNAL" type="button"><span class="payment-method-icon">▣</span><span><strong>Tarjeta</strong><small>Terminal externa</small></span></button>
         </div>
         <div id="cash-fields"><label class="field"><span>Efectivo recibido</span><div class="money-input"><b>$</b><input id="cash-received" type="number" min="0" step="0.01" inputmode="decimal"></div></label><div class="change-box"><span>Cambio</span><strong id="change-due">$0.00</strong></div></div>
-        <div id="card-fields" hidden><label class="field"><span>Referencia de terminal <small>(opcional)</small></span><input id="card-reference" type="text" maxlength="120" placeholder="Autorización o últimos dígitos"></label><p class="field-help">Confirma primero el cobro en la terminal externa.</p></div>
+        <div id="card-fields" hidden><label class="field"><span>Referencia de terminal <small>(opcional)</small></span><input id="card-reference" type="text" maxlength="120" placeholder="Autorización o últimos dígitos"></label><div class="payment-confirmation-note">
+                <span>✓</span>
+                <div>
+                    <strong>Cobro con terminal externa</strong>
+                    <small>Confirma primero la operación en la terminal bancaria.</small>
+                </div>
+            </div></div>
         <div id="payment-error" class="form-error" hidden></div>
         <button id="confirm-payment" class="checkout-button modal-action" type="button"><span>Confirmar cobro</span><strong id="confirm-payment-total"></strong></button>
     </section>
@@ -536,8 +772,8 @@
 <script src="./js/folio.js?v=1"></script>
 <script src="./js/receipt-core.js?v=1"></script>
 <script src="./js/receipt-renderer.js?v=1"></script>
-<script src="./js/app.js?v=16"></script>
+<script src="./js/app.js?v=18"></script>
 <script src="./js/orders-local.js?v=1"></script>
-<script src="./js/orders.js?v=11"></script>
+<script src="./js/orders.js?v=13"></script>
 </body>
 </html>

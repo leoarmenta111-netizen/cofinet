@@ -3,6 +3,7 @@
         branchCode: null,
         orders: [],
         filter: "ALL",
+        query: "",
         selectedOrder: null,
         loading: false,
         cloudUnavailable: false,
@@ -296,6 +297,21 @@
         await loadOrders();
     }
 
+
+    const orderSearch =
+        $("#order-search");
+
+    orderSearch?.addEventListener(
+        "input",
+        event => {
+            state.query =
+                event.target.value || "";
+
+            renderOrders();
+        }
+    );
+
+
     async function loadOrders() {
         if (state.loading) return;
 
@@ -470,14 +486,52 @@
 
         list.replaceChildren();
 
+        const normalizedQuery =
+            String(state.query || "")
+                .trim()
+                .toLocaleLowerCase("es-MX");
+
         const orders =
-            state.filter === "ALL"
-                ? state.orders
-                : state.orders.filter(
-                    order =>
-                        order.status ===
-                        state.filter
-                );
+            state.orders
+                .filter(order => {
+                    if (
+                        state.filter !== "ALL" &&
+                        order.status !== state.filter
+                    ) {
+                        return false;
+                    }
+
+                    if (!normalizedQuery) {
+                        return true;
+                    }
+
+                    const customerName =
+                        order.customer_name ||
+                        order.customer?.name ||
+                        order.customer?.full_name ||
+                        "";
+
+                    const itemText =
+                        (order.items || [])
+                            .map(item =>
+                                item.product_name || ""
+                            )
+                            .join(" ");
+
+                    const haystack = [
+                        order.folio,
+                        customerName,
+                        order.customer_phone,
+                        itemText,
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLocaleLowerCase("es-MX");
+
+                    return haystack.includes(
+                        normalizedQuery
+                    );
+                });
 
         const ordersSummary =
             `${state.orders.length} ${
@@ -497,10 +551,15 @@
         if (!orders.length) {
             message.hidden = false;
 
-            message.textContent =
-                state.orders.length
-                    ? "No hay órdenes con este estado."
-                    : "Todavía no hay órdenes registradas hoy.";
+            if (normalizedQuery) {
+                message.textContent =
+                    "No encontramos órdenes con esa búsqueda.";
+            } else {
+                message.textContent =
+                    state.orders.length
+                        ? "No hay órdenes con este estado."
+                        : "Todavía no hay órdenes registradas hoy.";
+            }
 
             return;
         }
@@ -508,135 +567,271 @@
         message.hidden = true;
 
         orders.forEach(order => {
-            const card =
+            const row =
                 document.createElement(
                     "button"
                 );
 
-            card.type = "button";
+            row.type = "button";
 
-            card.className =
-                "order-list-card";
-
-            const header =
-                document.createElement(
-                    "div"
-                );
-
-            header.className =
-                "order-list-card-header";
-
-            const folio =
-                document.createElement(
-                    "strong"
-                );
-
-            folio.textContent =
-                order.folio;
-
-            const time =
-                document.createElement(
-                    "span"
-                );
-
-            time.textContent =
-                formatTime(
-                    order.created_at_client
-                );
-
-            header.append(
-                folio,
-                time
-            );
-
-            const items =
-                document.createElement(
-                    "div"
-                );
-
-            items.className =
-                "order-list-items";
-
-            (order.items || [])
-                .slice(0, 3)
-                .forEach(item => {
-                    const row =
-                        document.createElement(
-                            "span"
-                        );
-
-                    row.textContent =
-                        `${item.quantity} × ${item.product_name}`;
-
-                    items.append(row);
-                });
-
-            if (
-                (order.items || []).length > 3
-            ) {
-                const more =
-                    document.createElement(
-                        "small"
-                    );
-
-                more.textContent =
-                    `+${
-                        order.items.length - 3
-                    } productos`;
-
-                items.append(more);
-            }
-
-            const footer =
-                document.createElement(
-                    "div"
-                );
-
-            footer.className =
-                "order-list-card-footer";
-
-            const total =
-                document.createElement(
-                    "strong"
-                );
-
-            total.textContent =
-                money(order.total);
-
-            const badge =
-                document.createElement(
-                    "span"
-                );
+            row.className =
+                "order-list-card order-table-row";
 
             const isLocal =
                 order.is_local === true;
+
+            const visualStatus =
+                isLocal
+                    ? "new"
+                    : String(
+                        order.status || "NEW"
+                    ).toLowerCase();
+
+            row.classList.add(
+                `status-accent-${visualStatus}`
+            );
+
+            const customerName =
+                order.customer_name ||
+                order.customer?.name ||
+                order.customer?.full_name ||
+                "Mostrador";
+
+            const paymentMethod =
+                order.payment_method ||
+                order.payment?.method ||
+                order.payment_method_code ||
+                null;
+
+            const createdAt =
+                order.created_at_client ||
+                order.created_at;
+
+            // Orden
+            const folioCell =
+                document.createElement("div");
+
+            folioCell.className =
+                "order-cell order-folio-cell";
+
+            const folio =
+                document.createElement("strong");
+
+            folio.textContent =
+                order.folio || "Sin folio";
+
+            const origin =
+                document.createElement("small");
+
+            origin.textContent =
+                isLocal
+                    ? "Local"
+                    : "POS";
+
+            folioCell.append(
+                folio,
+                origin
+            );
+
+            // Cliente
+            const customerCell =
+                document.createElement("div");
+
+            customerCell.className =
+                "order-cell order-customer-cell";
+
+            const customer =
+                document.createElement("strong");
+
+            customer.textContent =
+                customerName;
+
+            const customerMeta =
+                document.createElement("small");
+
+            customerMeta.textContent =
+                order.customer_phone ||
+                "Venta en mostrador";
+
+            customerCell.append(
+                customer,
+                customerMeta
+            );
+
+            // Articulos
+            const itemsCell =
+                document.createElement("div");
+
+            itemsCell.className =
+                "order-cell order-items-cell";
+
+            const orderItems =
+                order.items || [];
+
+            const firstItems =
+                orderItems
+                    .slice(0, 2)
+                    .map(item =>
+                        `${item.quantity} × ${item.product_name}`
+                    );
+
+            const itemPrimary =
+                document.createElement("strong");
+
+            itemPrimary.textContent =
+                firstItems[0] ||
+                "Sin artículos";
+
+            const itemSecondary =
+                document.createElement("small");
+
+            if (orderItems.length > 1) {
+                itemSecondary.textContent =
+                    firstItems[1] ||
+                    `+${
+                        orderItems.length - 1
+                    } productos`;
+
+                if (orderItems.length > 2) {
+                    itemSecondary.textContent +=
+                        ` +${
+                            orderItems.length - 2
+                        } más`;
+                }
+            } else {
+                itemSecondary.textContent =
+                    `${orderItems.length} artículo`;
+            }
+
+            itemsCell.append(
+                itemPrimary,
+                itemSecondary
+            );
+
+            // Hora
+            const timeCell =
+                document.createElement("div");
+
+            timeCell.className =
+                "order-cell order-time-cell";
+
+            const time =
+                document.createElement("strong");
+
+            time.textContent =
+                formatTime(createdAt);
+
+            const day =
+                document.createElement("small");
+
+            day.textContent = "Hoy";
+
+            timeCell.append(
+                time,
+                day
+            );
+
+            // Estado
+            const statusCell =
+                document.createElement("div");
+
+            statusCell.className =
+                "order-cell order-status-cell";
+
+            const badge =
+                document.createElement("span");
 
             badge.className =
                 `order-status-badge status-${
                     isLocal
                         ? "new"
-                        : order.status.toLowerCase()
+                        : String(
+                            order.status || "NEW"
+                        ).toLowerCase()
                 }`;
 
             badge.textContent =
                 isLocal
-                    ? "Pendiente de sincronizar"
+                    ? "Sin sincronizar"
                     : statusLabel(
                         order.status
                     );
 
-            footer.append(
-                total,
-                badge
+            statusCell.append(badge);
+
+            // Pago
+            const paymentCell =
+                document.createElement("div");
+
+            paymentCell.className =
+                "order-cell order-payment-cell";
+
+            const payment =
+                document.createElement("strong");
+
+            payment.textContent =
+                paymentLabel(
+                    paymentMethod
+                );
+
+            const paid =
+                document.createElement("small");
+
+            paid.textContent =
+                paymentMethod
+                    ? "Pagado"
+                    : "—";
+
+            paymentCell.append(
+                payment,
+                paid
             );
 
-            card.append(
-                header,
-                items,
-                footer
+            // Total
+            const totalCell =
+                document.createElement("div");
+
+            totalCell.className =
+                "order-cell order-total-cell";
+
+            const total =
+                document.createElement("strong");
+
+            total.textContent =
+                money(order.total);
+
+            totalCell.append(total);
+
+            // Accion
+            const actionCell =
+                document.createElement("div");
+
+            actionCell.className =
+                "order-cell order-action-cell";
+
+            const action =
+                document.createElement("span");
+
+            action.className =
+                "order-view-action";
+
+            action.innerHTML =
+                'Ver <b>›</b>';
+
+            actionCell.append(action);
+
+            row.append(
+                folioCell,
+                customerCell,
+                itemsCell,
+                timeCell,
+                statusCell,
+                paymentCell,
+                totalCell,
+                actionCell
             );
 
-            card.addEventListener(
+            row.addEventListener(
                 "click",
                 () =>
                     openOrder(
@@ -644,9 +839,12 @@
                     )
             );
 
-            list.append(card);
+            list.append(row);
         });
     }
+
+
+
 
     async function openOrder(orderUuid) {
         try {
@@ -776,6 +974,7 @@
 
         section.append(title);
 
+
         stations.forEach(
             station => {
 
@@ -790,6 +989,7 @@
                 row.dataset.status =
                     station.status;
 
+
                 const name =
                     document.createElement(
                         "span"
@@ -802,6 +1002,7 @@
                     preparationStationLabel(
                         station.station
                     );
+
 
                 const status =
                     document.createElement(
@@ -818,6 +1019,7 @@
                     preparationStatusLabel(
                         station.status
                     );
+
 
                 row.append(
                     name,
