@@ -929,6 +929,30 @@
     }
 
 
+    function canonicalMoneyString(
+        value,
+        name = "money"
+    ) {
+        const numeric =
+            typeof value === "string"
+                ? Number(
+                    value.trim()
+                )
+                : Number(value);
+
+        if (
+            !Number.isFinite(numeric) ||
+            numeric < 0
+        ) {
+            throw new Error(
+                `${name} must be a non-negative money value`
+            );
+        }
+
+        return numeric.toFixed(2);
+    }
+
+
     function cartTotal() {
         return state.cart.reduce(
             (sum, item) =>
@@ -1166,7 +1190,11 @@
         const merchandiseCents =
             window.CofiPosReceipt
                 .moneyToCents(
-                    cartTotal()
+                    canonicalMoneyString(
+                        cartTotal(),
+                        "cart total"
+                    ),
+                    "cart total"
                 );
 
         state.paymentCheckoutTotals =
@@ -1235,8 +1263,12 @@
         const receivedCents =
             window.CofiPosReceipt
                 .moneyToCents(
-                    $("#cash-received")
-                        .value || "0"
+                    canonicalMoneyString(
+                        $("#cash-received")
+                            .value || "0",
+                        "cash received"
+                    ),
+                    "cash received"
                 );
 
         const totalCents =
@@ -1369,8 +1401,12 @@
                 amountTenderedCents =
                     window.CofiPosReceipt
                         .moneyToCents(
-                            $("#cash-received")
-                                .value || "0"
+                            canonicalMoneyString(
+                                $("#cash-received")
+                                    .value || "0",
+                                "cash received"
+                            ),
+                            "cash received"
                         );
             } catch {
                 showPaymentError(
@@ -1448,6 +1484,9 @@
             const soldAt =
                 payload.created_at_client;
 
+            const soldAtDate =
+                new Date(soldAt);
+
             const folio =
                 window.CofiPosFolio
                     .generate({
@@ -1456,7 +1495,8 @@
                                 .receiptSettings
                                 .folio_prefix,
 
-                        soldAt,
+                        soldAt:
+                            soldAtDate,
 
                         timeZone:
                             state
@@ -1470,7 +1510,11 @@
                         const unitPriceCents =
                             window.CofiPosReceipt
                                 .moneyToCents(
-                                    item.unit_price
+                                    canonicalMoneyString(
+                                        item.unit_price,
+                                        "item unit price"
+                                    ),
+                                    "item unit price"
                                 );
 
                         const quantity =
@@ -1535,8 +1579,12 @@
                                         price_delta_cents:
                                             window.CofiPosReceipt
                                                 .moneyToCents(
-                                                    modifier.price_delta ??
-                                                    0
+                                                    canonicalMoneyString(
+                                                        modifier.price_delta ??
+                                                        0,
+                                                        "modifier price delta"
+                                                    ),
+                                                    "modifier price delta"
                                                 ),
 
                                         customer_visible:
