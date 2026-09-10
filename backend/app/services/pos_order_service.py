@@ -42,6 +42,8 @@ from app.schemas.pos_orders import (
 )
 
 
+from app.services.pos_receipt_service import PosReceiptService
+
 CENT = Decimal("0.01")
 LOYALTY_MXN_PER_POINT = Decimal("10.00")
 
@@ -576,6 +578,23 @@ class PosOrderService:
         if existing:
             return cls._response(existing)
 
+
+        if payload.folio is not None:
+            existing_folio = db.execute(
+                select(PosOrder).where(
+                    PosOrder.folio
+                    == payload.folio
+                )
+            ).scalar_one_or_none()
+
+            if existing_folio is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        "Receipt folio already exists"
+                    ),
+                )
+
         customer = None
 
         if payload.customer_uuid is not None:
@@ -613,7 +632,9 @@ class PosOrderService:
         calculated_items = []
         subtotal = Decimal("0.00")
 
-        for requested_item in payload.items:
+        for item_index, requested_item in enumerate(
+            payload.items
+        ):
             branch_product = db.execute(
                 select(PosBranchProduct)
                 .join(PosBranchProduct.product)
@@ -637,6 +658,50 @@ class PosOrderService:
                 )
 
             product = branch_product.product
+
+            snapshot_item = None
+
+            if payload.receipt_snapshot is not None:
+                if item_index >= len(
+                    payload.receipt_snapshot.items
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Receipt snapshot item count "
+                            "does not match order"
+                        ),
+                    )
+
+                snapshot_item = (
+                    payload.receipt_snapshot.items[
+                        item_index
+                    ]
+                )
+
+                if (
+                    snapshot_item.product_id
+                    != requested_item.product_id
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Receipt product does not "
+                            "match order item"
+                        ),
+                    )
+
+                if (
+                    snapshot_item.quantity
+                    != requested_item.quantity
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Receipt quantity does not "
+                            "match order item"
+                        ),
+                    )
 
             if not product.category.is_active:
                 raise HTTPException(
@@ -737,11 +802,83 @@ class PosOrderService:
             modifier_total = Decimal("0.00")
             modifier_snapshots = []
 
+            frozen_modifiers_by_option_id = {}
+
+            if snapshot_item is not None:
+                for frozen_modifier in snapshot_item.modifiers:
+                    if (
+                        frozen_modifier.modifier_option_id
+                        is None
+                    ):
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=(
+                                "Frozen modifier must include "
+                                "modifier_option_id"
+                            ),
+                        )
+
+                    frozen_modifiers_by_option_id[
+                        frozen_modifier.modifier_option_id
+                    ] = frozen_modifier
+
+                if set(
+                    frozen_modifiers_by_option_id
+                ) != set(requested_option_ids):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Receipt modifiers do not "
+                            "match order selections"
+                        ),
+                    )
+
             for group_id, options in selected_by_group.items():
                 group = active_groups[group_id]
 
                 for option in options:
-                    delta = money(option.price_delta)
+                    if snapshot_item is not None:
+                        frozen_modifier = (
+                            frozen_modifiers_by_option_id[
+                                option.id
+                            ]
+                        )
+
+                        if (
+                            frozen_modifier.modifier_group_id
+                            is not None
+                            and frozen_modifier.modifier_group_id
+                            != group.id
+                        ):
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=(
+                                    "Receipt modifier group "
+                                    "does not match catalog"
+                                ),
+                            )
+
+                        delta = money(
+                            Decimal(
+                                frozen_modifier.price_delta_cents
+                            )
+                            / Decimal("100")
+                        )
+
+                        group_name = (
+                            frozen_modifier.group_name
+                            or group.name
+                        )
+
+                        option_name = (
+                            frozen_modifier.option_name
+                        )
+                    else:
+                        delta = money(
+                            option.price_delta
+                        )
+                        group_name = group.name
+                        option_name = option.name
 
                     modifier_total += delta
 
@@ -749,25 +886,58 @@ class PosOrderService:
                         {
                             "group_id": group.id,
                             "option_id": option.id,
-                            "group_name": group.name,
-                            "option_name": option.name,
+                            "group_name": group_name,
+                            "option_name": option_name,
                             "price_delta": delta,
                         }
                     )
 
-            unit_price = money(
-                base_price + modifier_total
-            )
+            if snapshot_item is not None:
+                snapshot_modifier_total_cents = sum(
+                    modifier.price_delta_cents
+                    for modifier
+                    in snapshot_item.modifiers
+                )
+
+                modifier_total = money(
+                    Decimal(
+                        snapshot_modifier_total_cents
+                    )
+                    / Decimal("100")
+                )
+
+                unit_price = money(
+                    Decimal(
+                        snapshot_item.unit_price_cents
+                    )
+                    / Decimal("100")
+                )
+
+                line_total = money(
+                    Decimal(
+                        snapshot_item.line_total_cents
+                    )
+                    / Decimal("100")
+                )
+
+                base_price = money(
+                    unit_price - modifier_total
+                )
+            else:
+                unit_price = money(
+                    base_price + modifier_total
+                )
+
+                line_total = money(
+                    unit_price
+                    * requested_item.quantity
+                )
 
             if unit_price < 0:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Calculated product price is invalid",
                 )
-
-            line_total = money(
-                unit_price * requested_item.quantity
-            )
 
             subtotal += line_total
 
@@ -787,9 +957,89 @@ class PosOrderService:
             )
 
         subtotal = money(subtotal)
-        total = subtotal
+
+        if payload.receipt_snapshot is not None:
+            total = money(
+                Decimal(
+                    payload.receipt_snapshot
+                    .totals.total_cents
+                )
+                / Decimal("100")
+            )
+        else:
+            total = subtotal
 
         payment_method = payload.payment.method
+
+        if payload.receipt_snapshot is not None:
+            snapshot = payload.receipt_snapshot
+
+            if (
+                snapshot.branch.branch_code
+                != branch.code
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Receipt branch does not "
+                        "match order branch"
+                    ),
+                )
+
+            if (
+                snapshot.terminal.terminal_id
+                != payload.terminal_id
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Receipt terminal does not "
+                        "match order terminal"
+                    ),
+                )
+
+            if (
+                snapshot.payment.method
+                != payment_method
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Receipt payment method does not "
+                        "match order payment method"
+                    ),
+                )
+
+            if payment_method == "CASH":
+                snapshot_tendered_cents = (
+                    snapshot.payment.amount_tendered_cents
+                )
+
+                if (
+                    snapshot_tendered_cents is not None
+                    and payload.payment.amount_tendered
+                    is not None
+                ):
+                    payload_tendered_cents = int(
+                        money(
+                            payload.payment.amount_tendered
+                        )
+                        * 100
+                    )
+
+                    if (
+                        snapshot_tendered_cents
+                        != payload_tendered_cents
+                    ):
+                        raise HTTPException(
+                            status_code=(
+                                status.HTTP_400_BAD_REQUEST
+                            ),
+                            detail=(
+                                "Receipt tendered amount does "
+                                "not match order payment"
+                            ),
+                        )
 
         amount_tendered = None
         change_due = None
@@ -844,15 +1094,18 @@ class PosOrderService:
         db.add(order)
         db.flush()
 
-        prefix = (
-            branch.code
-            .replace("-", "")
-            .upper()[:3]
-        )
+        if payload.folio is not None:
+            order.folio = payload.folio
+        else:
+            prefix = (
+                branch.code
+                .replace("-", "")
+                .upper()[:3]
+            )
 
-        order.folio = (
-            f"{prefix}-{order.id:06d}"
-        )
+            order.folio = (
+                f"{prefix}-{order.id:06d}"
+            )
 
         for calculated in calculated_items:
             item = PosOrderItem(
@@ -946,6 +1199,13 @@ class PosOrderService:
         )
 
         db.add(payment)
+
+        if payload.receipt_snapshot is not None:
+            PosReceiptService.create_for_order(
+                db=db,
+                order=order,
+                snapshot=payload.receipt_snapshot,
+            )
 
         loyalty_points = (
             loyalty_points_for_total(total)

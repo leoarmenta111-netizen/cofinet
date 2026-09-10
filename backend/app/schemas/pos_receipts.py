@@ -1,8 +1,10 @@
+from uuid import UUID
+from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, field_serializer, field_validator
+from pydantic import BaseModel, field_serializer, field_validator, Field
 
 
 TaxMode = Literal["NONE", "INCLUDED", "ADDED"]
@@ -119,3 +121,87 @@ class BranchReceiptSettingsUpdate(BaseModel):
             raise ValueError("folio_prefix must be ASCII alphanumeric")
 
         return value
+
+
+class ReceiptSnapshotBusinessV1(BaseModel):
+    business_name: str
+    logo_ref: str | None = None
+    phone: str | None = None
+    web_social: str | None = None
+    footer_message: str | None = None
+
+
+class ReceiptSnapshotBranchV1(BaseModel):
+    branch_code: str
+    branch_name: str
+    address: str | None = None
+    phone: str | None = None
+
+
+class ReceiptSnapshotTerminalV1(BaseModel):
+    terminal_id: str
+
+
+class ReceiptSnapshotCustomerV1(BaseModel):
+    name: str
+
+    model_config = {"extra": "forbid"}
+
+
+class ReceiptSnapshotModifierV1(BaseModel):
+    modifier_group_id: int | None = None
+    modifier_option_id: int | None = None
+    group_name: str | None = None
+    option_name: str
+    price_delta_cents: int = Field(ge=0)
+
+    model_config = {"extra": "forbid"}
+
+
+class ReceiptSnapshotItemV1(BaseModel):
+    product_id: int
+    product_name: str
+    quantity: int = Field(ge=1)
+    unit_price_cents: int = Field(ge=0)
+    line_total_cents: int = Field(ge=0)
+    modifiers: list[ReceiptSnapshotModifierV1] = []
+
+    model_config = {"extra": "forbid"}
+
+
+class ReceiptSnapshotTotalsV1(BaseModel):
+    subtotal_cents: int = Field(ge=0)
+    discount_cents: int = Field(default=0, ge=0)
+    tax_mode: Literal["NONE", "INCLUDED", "ADDED"]
+    tax_rate: Decimal = Field(ge=0)
+    tax_cents: int = Field(ge=0)
+    tip_cents: int = Field(ge=0)
+    total_cents: int = Field(ge=0)
+
+    model_config = {"extra": "forbid"}
+
+
+class ReceiptSnapshotPaymentV1(BaseModel):
+    method: Literal["CASH", "CARD_EXTERNAL"]
+    amount_cents: int = Field(ge=0)
+    amount_tendered_cents: int | None = Field(default=None, ge=0)
+    change_due_cents: int | None = Field(default=None, ge=0)
+
+    model_config = {"extra": "forbid"}
+
+
+class ReceiptSnapshotV1(BaseModel):
+    schema_version: Literal[1]
+    order_uuid: UUID
+    folio: str = Field(min_length=8, max_length=40)
+    sold_at: datetime
+    currency: str = Field(min_length=3, max_length=3)
+    business: ReceiptSnapshotBusinessV1
+    branch: ReceiptSnapshotBranchV1
+    terminal: ReceiptSnapshotTerminalV1
+    customer: ReceiptSnapshotCustomerV1 | None = None
+    items: list[ReceiptSnapshotItemV1] = Field(min_length=1)
+    totals: ReceiptSnapshotTotalsV1
+    payment: ReceiptSnapshotPaymentV1
+
+    model_config = {"extra": "forbid"}

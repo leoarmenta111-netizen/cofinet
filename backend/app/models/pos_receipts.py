@@ -5,6 +5,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    JSON,
     Numeric,
     String,
     Text,
@@ -84,3 +85,48 @@ class PosBranchReceiptSettings(Base):
     timezone = Column(String(64), nullable=True)
     folio_prefix = Column(String(8), nullable=True)
     auto_print_customer = Column(Boolean, nullable=True)
+
+
+
+class PosReceiptSnapshot(Base):
+    __tablename__ = "pos_receipt_snapshots"
+    __table_args__ = (
+        CheckConstraint(
+            "schema_version = 1",
+            name="ck_pos_receipt_snapshots_schema_version_v1",
+        ),
+    )
+
+    id = Column(
+        Integer,
+        primary_key=True,
+    )
+
+    order_id = Column(
+        Integer,
+        ForeignKey(
+            "pos_orders.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    schema_version = Column(
+        Integer,
+        nullable=False,
+        default=1,
+        server_default="1",
+    )
+
+    snapshot_json = Column(
+        JSON,
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )

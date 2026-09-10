@@ -3,7 +3,9 @@ from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from app.schemas.pos_receipts import ReceiptSnapshotV1
 
 
 class PosOrderItemCreate(BaseModel):
@@ -36,6 +38,25 @@ class PosOrderCreate(BaseModel):
     notes: str | None = Field(default=None, max_length=1000)
     items: list[PosOrderItemCreate] = Field(min_length=1)
     payment: PosPaymentCreate
+
+    folio: str | None = Field(
+        default=None,
+        min_length=8,
+        max_length=40,
+    )
+    receipt_snapshot: ReceiptSnapshotV1 | None = None
+
+    @model_validator(mode="after")
+    def validate_receipt_payload_mode(self):
+        has_folio = self.folio is not None
+        has_snapshot = self.receipt_snapshot is not None
+
+        if has_folio != has_snapshot:
+            raise ValueError(
+                "folio and receipt_snapshot must be provided together"
+            )
+
+        return self
 
 
 class PosOrderModifierResponse(BaseModel):
