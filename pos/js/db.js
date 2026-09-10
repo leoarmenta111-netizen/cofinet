@@ -267,7 +267,7 @@ window.CofiPosDB = (() => {
         }
 
         if (
-            typeof settings.auto_print
+            typeof settings.auto_print_customer
                 !== "boolean"
         ) {
             return false;

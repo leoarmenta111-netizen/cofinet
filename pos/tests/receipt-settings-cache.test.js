@@ -247,7 +247,7 @@ function validSettings(
         folio_prefix:
             "NV",
 
-        auto_print:
+        auto_print_customer:
             false,
     };
 }
@@ -556,6 +556,76 @@ test(
         assert.match(
             guardArea,
             /conexi[oó]n|con[eé]ct/i
+        );
+    }
+);
+
+
+test(
+    "receipt settings cache accepts backend auto_print_customer contract",
+    async () => {
+        const fake =
+            makeMetaIndexedDb();
+
+        const db =
+            loadReceiptDb(
+                fake.indexedDB
+            );
+
+        const settings = {
+            business_name:
+                "CofiCenter",
+
+            logo_ref: null,
+
+            branch_code:
+                "nuevo-vallarta",
+
+            branch_name:
+                "Nuevo Vallarta",
+
+            address: null,
+            phone: null,
+            web_social: null,
+            footer_message: null,
+
+            currency:
+                "MXN",
+
+            tax_mode:
+                "NONE",
+
+            tax_rate:
+                0,
+
+            receipt_width_mm:
+                80,
+
+            timezone:
+                "America/Bahia_Banderas",
+
+            folio_prefix:
+                "CF",
+
+            auto_print_customer:
+                false,
+        };
+
+        await assert.doesNotReject(
+            db.setReceiptSettings(
+                "nuevo-vallarta",
+                settings
+            )
+        );
+
+        const cached =
+            await db.getReceiptSettings(
+                "nuevo-vallarta"
+            );
+
+        assert.deepEqual(
+            cached,
+            settings
         );
     }
 );
