@@ -78,6 +78,17 @@ window.CofiPosAPI = (() => {
         );
     }
 
+    function getReceiptSettings(branchCode) {
+        return request(
+            `/pos/receipts/settings?branch_code=${
+                encodeURIComponent(
+                    branchCode
+                )
+            }`
+        );
+    }
+
+
     function createOrder(payload) {
         return request(
             "/pos/orders",
@@ -268,6 +279,7 @@ window.CofiPosAPI = (() => {
     return {
         request,
         getCatalog,
+        getReceiptSettings,
         createOrder,
         listOrders,
         getOrder,

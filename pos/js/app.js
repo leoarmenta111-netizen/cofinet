@@ -17,6 +17,10 @@
 
         paymentMethod: "CASH",
         paymentBusy: false,
+        paymentCheckoutTotals: null,
+        lastReceipt: null,
+
+        receiptSettings: null,
 
         cloudOnline: null,
         syncing: false,
@@ -46,6 +50,48 @@
             ?.trim()
             .toLowerCase() || null;
     }
+
+    async function loadReceiptSettingsForBranch(
+        branchCode
+    ) {
+        const cachedReceiptSettings =
+            await window.CofiPosDB
+                .getReceiptSettings(
+                    branchCode
+                );
+
+        state.receiptSettings =
+            cachedReceiptSettings;
+
+        try {
+            const refreshedReceiptSettings =
+                await window.CofiPosAPI
+                    .getReceiptSettings(
+                        branchCode
+                    );
+
+            await window.CofiPosDB
+                .setReceiptSettings(
+                    branchCode,
+                    refreshedReceiptSettings
+                );
+
+            state.receiptSettings =
+                refreshedReceiptSettings;
+
+        } catch (error) {
+            state.receiptSettings =
+                cachedReceiptSettings;
+
+            console.warn(
+                "Receipt settings refresh unavailable:",
+                error
+            );
+        }
+
+        return state.receiptSettings;
+    }
+
 
     async function configureTerminal() {
         const requestedBranch =
@@ -813,6 +859,76 @@
             true;
     }
 
+    function calculateCheckoutTotals({
+        merchandiseCents,
+        discountCents = 0,
+        tipCents = 0,
+        receiptSettings,
+    }) {
+        if (!receiptSettings) {
+            throw new Error(
+                "Receipt settings unavailable"
+            );
+        }
+
+        const subtotalCents =
+            merchandiseCents;
+
+        const normalizedDiscountCents =
+            discountCents;
+
+        const normalizedTipCents =
+            tipCents;
+
+        const taxMode =
+            String(
+                receiptSettings.tax_mode ||
+                ""
+            ).toUpperCase();
+
+        const taxRate =
+            Number(
+                receiptSettings.tax_rate ??
+                0
+            );
+
+        const {
+            taxCents,
+            totalCents,
+        } =
+            window.CofiPosReceipt
+                .calculateTax({
+                    merchandiseCents:
+                        subtotalCents,
+
+                    discountCents:
+                        normalizedDiscountCents,
+
+                    tipCents:
+                        normalizedTipCents,
+
+                    taxMode,
+                    taxRate,
+                });
+
+        return {
+            subtotalCents,
+
+            discountCents:
+                normalizedDiscountCents,
+
+            taxMode,
+            taxRate,
+            taxCents,
+
+            tipCents:
+                normalizedTipCents,
+
+            totalCents,
+        };
+    }
+
+
     function cartTotal() {
         return state.cart.reduce(
             (sum, item) =>
@@ -1047,14 +1163,37 @@
         state.paymentMethod =
             "CASH";
 
+        const merchandiseCents =
+            window.CofiPosReceipt
+                .moneyToCents(
+                    cartTotal()
+                );
+
+        state.paymentCheckoutTotals =
+            calculateCheckoutTotals({
+                merchandiseCents,
+                discountCents: 0,
+                tipCents: 0,
+                receiptSettings:
+                    state.receiptSettings,
+            });
+
+        const paymentTotal =
+            window.CofiPosReceipt
+                .centsToMoney(
+                    state
+                        .paymentCheckoutTotals
+                        .totalCents
+                );
+
         $("#payment-total").textContent =
-            money(cartTotal());
+            money(paymentTotal);
 
         $("#confirm-payment-total").textContent =
-            money(cartTotal());
+            money(paymentTotal);
 
         $("#cash-received").value =
-            cartTotal().toFixed(2);
+            paymentTotal;
 
         $("#card-reference").value =
             "";
@@ -1093,19 +1232,31 @@
     }
 
     function updateChange() {
-        const received =
-            Number(
-                $("#cash-received").value || 0
-            );
+        const receivedCents =
+            window.CofiPosReceipt
+                .moneyToCents(
+                    $("#cash-received")
+                        .value || "0"
+                );
 
-        const change =
+        const totalCents =
+            state.paymentCheckoutTotals
+                ?.totalCents ?? 0;
+
+        const changeCents =
             Math.max(
                 0,
-                received - cartTotal()
+                receivedCents -
+                    totalCents
             );
 
         $("#change-due").textContent =
-            money(change);
+            money(
+                window.CofiPosReceipt
+                    .centsToMoney(
+                        changeCents
+                    )
+            );
     }
 
     function buildOrderPayload() {
@@ -1182,24 +1333,56 @@
         };
     }
 
-    async function confirmPayment() {
+        async function confirmPayment() {
         if (state.paymentBusy) return;
 
-        const total =
-            cartTotal();
+        if (!state.receiptSettings) {
+            showPaymentError(
+                "Conecta esta terminal a internet una vez para cargar la configuración del ticket."
+            );
+
+            return;
+        }
+
+        const checkoutTotals =
+            state.paymentCheckoutTotals;
+
+        if (!checkoutTotals) {
+            showPaymentError(
+                "No fue posible confirmar el total del cobro. Cierra y vuelve a abrir el pago."
+            );
+
+            return;
+        }
+
+        let amountTenderedCents =
+            null;
+
+        let changeDueCents =
+            null;
 
         if (
-            state.paymentMethod === "CASH"
+            state.paymentMethod ===
+            "CASH"
         ) {
-            const received =
-                Number(
-                    $("#cash-received")
-                        .value
+            try {
+                amountTenderedCents =
+                    window.CofiPosReceipt
+                        .moneyToCents(
+                            $("#cash-received")
+                                .value || "0"
+                        );
+            } catch {
+                showPaymentError(
+                    "Ingresa un monto de efectivo válido."
                 );
 
+                return;
+            }
+
             if (
-                !Number.isFinite(received) ||
-                received < total
+                amountTenderedCents <
+                checkoutTotals.totalCents
             ) {
                 showPaymentError(
                     "El efectivo recibido es menor al total."
@@ -1207,6 +1390,10 @@
 
                 return;
             }
+
+            changeDueCents =
+                amountTenderedCents -
+                checkoutTotals.totalCents;
         }
 
         state.paymentBusy = true;
@@ -1228,10 +1415,9 @@
             true;
 
         try {
-            // Defensive recovery: a sale must never leave
-            // this terminal without terminal identity.
             if (
-                typeof state.terminalId !== "string" ||
+                typeof state.terminalId !==
+                    "string" ||
                 !state.terminalId.trim()
             ) {
                 state.terminalId =
@@ -1240,77 +1426,428 @@
                             state.branchCode
                         );
 
-                $("#terminal-id").textContent =
-                    state.terminalId;
+                $("#terminal-id")
+                    .textContent =
+                        state.terminalId;
             }
 
-            if (
-                !state.terminalId
-            ) {
+            if (!state.terminalId) {
                 throw new Error(
                     "No se pudo identificar esta terminal."
                 );
             }
 
+            /*
+             * buildOrderPayload() captures one timestamp
+             * and one order UUID. Those values become part
+             * of the frozen sale identity below.
+             */
             const payload =
                 buildOrderPayload();
 
-            if (navigator.onLine) {
-                try {
-                    const response =
-                        await window.CofiPosAPI
-                            .createOrder(payload);
+            const soldAt =
+                payload.created_at_client;
 
-                    showSaleSuccess({
-                        offline: false,
-                        folio:
-                            response.folio,
+            const folio =
+                window.CofiPosFolio
+                    .generate({
+                        branchPrefix:
+                            state
+                                .receiptSettings
+                                .folio_prefix,
+
+                        soldAt,
+
+                        timeZone:
+                            state
+                                .receiptSettings
+                                .timezone,
                     });
 
-                    return;
+            const receiptItems =
+                state.cart.map(
+                    item => {
+                        const unitPriceCents =
+                            window.CofiPosReceipt
+                                .moneyToCents(
+                                    item.unit_price
+                                );
 
-                } catch (error) {
-                    // The server DID answer. This is not an
-                    // offline sale and must not be hidden.
-                    if (error.isHttpError) {
-                        console.error(
-                            "Error del servidor al registrar venta",
-                            error.status,
-                            error.payload
-                        );
+                        const quantity =
+                            Number(
+                                item.quantity
+                            );
 
-                        showPaymentError(
-                            `No se pudo registrar la venta: ${
-                                error.message
-                            }`
-                        );
+                        return {
+                            product_id:
+                                Number(
+                                    item.product_id
+                                ),
 
-                        return;
+                            product_name:
+                                String(
+                                    item.product_name ||
+                                    ""
+                                ),
+
+                            quantity,
+
+                            unit_price_cents:
+                                unitPriceCents,
+
+                            line_total_cents:
+                                unitPriceCents *
+                                quantity,
+
+                            modifiers:
+                                (
+                                    item.modifiers ||
+                                    []
+                                ).map(
+                                    modifier => ({
+                                        modifier_group_id:
+                                            modifier.group_id ==
+                                            null
+                                                ? null
+                                                : Number(
+                                                    modifier.group_id
+                                                ),
+
+                                        modifier_option_id:
+                                            modifier.option_id ==
+                                            null
+                                                ? null
+                                                : Number(
+                                                    modifier.option_id
+                                                ),
+
+                                        group_name:
+                                            modifier.group_name ??
+                                            null,
+
+                                        option_name:
+                                            String(
+                                                modifier.option_name ??
+                                                modifier.name ??
+                                                ""
+                                            ),
+
+                                        price_delta_cents:
+                                            window.CofiPosReceipt
+                                                .moneyToCents(
+                                                    modifier.price_delta ??
+                                                    0
+                                                ),
+
+                                        customer_visible:
+                                            true,
+                                    })
+                                ),
+                        };
                     }
+                );
 
-                    // Network/timeout only: safe offline fallback.
+            const receiptSnapshot =
+                window.CofiPosReceipt
+                    .buildSnapshot({
+                        order_uuid:
+                            payload.order_uuid,
+
+                        folio,
+
+                        sold_at:
+                            soldAt,
+
+                        currency:
+                            state
+                                .receiptSettings
+                                .currency ||
+                            "MXN",
+
+                        business: {
+                            business_name:
+                                state
+                                    .receiptSettings
+                                    .business_name,
+
+                            logo_ref:
+                                state
+                                    .receiptSettings
+                                    .logo_ref ??
+                                null,
+
+                            phone:
+                                state
+                                    .receiptSettings
+                                    .phone ??
+                                null,
+
+                            web_social:
+                                state
+                                    .receiptSettings
+                                    .web_social ??
+                                null,
+
+                            footer_message:
+                                state
+                                    .receiptSettings
+                                    .footer_message ??
+                                null,
+                        },
+
+                        branch: {
+                            branch_code:
+                                state.branchCode,
+
+                            branch_name:
+                                state
+                                    .receiptSettings
+                                    .branch_name,
+
+                            address:
+                                state
+                                    .receiptSettings
+                                    .address ??
+                                null,
+
+                            phone:
+                                state
+                                    .receiptSettings
+                                    .phone ??
+                                null,
+                        },
+
+                        terminal: {
+                            terminal_id:
+                                state.terminalId,
+                        },
+
+                        customer:
+                            state.selectedCustomer
+                                ? {
+                                    name:
+                                        state
+                                            .selectedCustomer
+                                            .name,
+                                }
+                                : null,
+
+                        items:
+                            receiptItems,
+
+                        totals: {
+                            subtotal_cents:
+                                checkoutTotals
+                                    .subtotalCents,
+
+                            discount_cents:
+                                checkoutTotals
+                                    .discountCents,
+
+                            tax_mode:
+                                checkoutTotals
+                                    .taxMode,
+
+                            tax_rate:
+                                String(
+                                    state
+                                        .receiptSettings
+                                        .tax_rate ??
+                                    checkoutTotals
+                                        .taxRate
+                                ),
+
+                            tax_cents:
+                                checkoutTotals
+                                    .taxCents,
+
+                            tip_cents:
+                                checkoutTotals
+                                    .tipCents,
+
+                            total_cents:
+                                checkoutTotals
+                                    .totalCents,
+                        },
+
+                        payment: {
+                            method:
+                                state
+                                    .paymentMethod,
+
+                            amount_cents:
+                                checkoutTotals
+                                    .totalCents,
+
+                            amount_tendered_cents:
+                                amountTenderedCents,
+
+                            change_due_cents:
+                                changeDueCents,
+                        },
+                    });
+
+            window.CofiPosReceipt
+                .validateSnapshot(
+                    receiptSnapshot
+                );
+
+            /*
+             * The API/sync payload receives the exact same
+             * identity and snapshot. Nothing gets rebuilt.
+             */
+            payload.folio =
+                folio;
+
+            payload.receipt_snapshot =
+                receiptSnapshot;
+
+            payload.created_at_client =
+                soldAt;
+
+            payload.payment
+                .created_at_client =
+                    soldAt;
+
+            payload.payment
+                .amount_tendered =
+                    amountTenderedCents ===
+                    null
+                        ? null
+                        : window
+                            .CofiPosReceipt
+                            .centsToMoney(
+                                amountTenderedCents
+                            );
+
+            const localTotal =
+                Number(
+                    window.CofiPosReceipt
+                        .centsToMoney(
+                            checkoutTotals
+                                .totalCents
+                        )
+                );
+
+            const localOrder = {
+                order_uuid:
+                    payload.order_uuid,
+
+                payload,
+
+                folio,
+
+                receipt_snapshot:
+                    receiptSnapshot,
+
+                local_total:
+                    localTotal,
+
+                sync_status:
+                    "PENDING_SYNC",
+
+                created_at:
+                    soldAt,
+            };
+
+            const syncEvent = {
+                event_uuid:
+                    payload.order_uuid,
+
+                event_type:
+                    "ORDER_CREATED",
+
+                payload,
+
+                sync_status:
+                    "PENDING_SYNC",
+
+                attempts: 0,
+
+                last_error: null,
+
+                created_at:
+                    soldAt,
+            };
+
+            /*
+             * This is the sale boundary:
+             * local order + receipt + queue event are one
+             * IndexedDB transaction.
+             */
+            try {
+                await window.CofiPosDB
+                    .finalizePaidSale({
+                        order_uuid:
+                            payload.order_uuid,
+
+                        local_order:
+                            localOrder,
+
+                        receipt_snapshot:
+                            receiptSnapshot,
+
+                        sync_event:
+                            syncEvent,
+                    });
+            } catch (error) {
+                const localError =
+                    new Error(
+                        "No se pudo guardar la venta localmente. El carrito sigue intacto; intenta confirmar el cobro nuevamente."
+                    );
+
+                localError.cause =
+                    error;
+
+                throw localError;
+            }
+
+            state.lastReceipt =
+                receiptSnapshot;
+
+            /*
+             * Network state may change after local
+             * finalization, but never the sale identity.
+             */
+            let pendingSync =
+                true;
+
+            if (navigator.onLine) {
+                try {
+                    await window.CofiPosSync
+                        .syncPending();
+
+                    const persistedOrder =
+                        await window.CofiPosDB
+                            .getLocalOrder(
+                                payload
+                                    .order_uuid
+                            );
+
+                    pendingSync =
+                        persistedOrder
+                            ?.sync_status !==
+                        "SYNCED";
+
+                } catch (syncError) {
+                    pendingSync =
+                        true;
+
                     console.warn(
-                        "Sin conexión con el servidor. " +
-                        "Guardando venta localmente.",
-                        error
+                        "Venta guardada localmente; sincronización pendiente.",
+                        syncError
                     );
                 }
             }
 
-            await window.CofiPosSync
-                .enqueueOrder(
-                    payload,
-                    total
-                );
-
             showSaleSuccess({
-                offline: true,
-                folio:
-                    `LOCAL-${
-                        payload.order_uuid
-                            .slice(0, 8)
-                            .toUpperCase()
-                    }`,
+                offline:
+                    pendingSync,
+
+                folio,
+
+                receipt:
+                    receiptSnapshot,
             });
 
         } catch (error) {
@@ -1325,12 +1862,16 @@
             );
 
         } finally {
-            state.paymentBusy = false;
+            state.paymentBusy =
+                false;
 
-            button.disabled = false;
+            button.disabled =
+                false;
 
             const buttonLabel =
-                button.querySelector("span");
+                button.querySelector(
+                    "span"
+                );
 
             if (buttonLabel) {
                 buttonLabel.textContent =
@@ -2022,6 +2563,10 @@
 
         await window.CofiPosDB.open();
         await configureTerminal();
+
+        await loadReceiptSettingsForBranch(
+            state.branchCode
+        );
 
         await updatePendingCount();
         await loadCatalog();

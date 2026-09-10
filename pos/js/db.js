@@ -117,6 +117,245 @@ window.CofiPosDB = (() => {
         });
     }
 
+    function normalizeReceiptBranchCode(
+        value
+    ) {
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
+
+
+    function receiptSettingsKey(
+        branchCode
+    ) {
+        const normalized =
+            normalizeReceiptBranchCode(
+                branchCode
+            );
+
+        if (!normalized) {
+            throw new Error(
+                "Receipt settings require branch code"
+            );
+        }
+
+        return (
+            "receipt_settings:" +
+            normalized
+        );
+    }
+
+
+    function isValidReceiptSettings(
+        branchCode,
+        settings
+    ) {
+        if (
+            !settings ||
+            typeof settings !== "object" ||
+            Array.isArray(settings)
+        ) {
+            return false;
+        }
+
+        const normalizedBranch =
+            normalizeReceiptBranchCode(
+                branchCode
+            );
+
+        const settingsBranch =
+            normalizeReceiptBranchCode(
+                settings.branch_code
+            );
+
+        if (
+            !normalizedBranch ||
+            settingsBranch !==
+                normalizedBranch
+        ) {
+            return false;
+        }
+
+        if (
+            typeof settings.business_name
+                !== "string" ||
+            !settings.business_name.trim()
+        ) {
+            return false;
+        }
+
+        if (
+            typeof settings.branch_name
+                !== "string" ||
+            !settings.branch_name.trim()
+        ) {
+            return false;
+        }
+
+        if (
+            ![
+                "NONE",
+                "INCLUDED",
+                "ADDED",
+            ].includes(
+                settings.tax_mode
+            )
+        ) {
+            return false;
+        }
+
+        const taxRate =
+            Number(settings.tax_rate);
+
+        if (
+            !Number.isFinite(taxRate) ||
+            taxRate < 0
+        ) {
+            return false;
+        }
+
+        if (
+            settings.tax_mode === "NONE" &&
+            taxRate !== 0
+        ) {
+            return false;
+        }
+
+        if (
+            Number(
+                settings.receipt_width_mm
+            ) !== 80
+        ) {
+            return false;
+        }
+
+        if (
+            typeof settings.timezone
+                !== "string" ||
+            !settings.timezone.trim()
+        ) {
+            return false;
+        }
+
+        const prefix =
+            String(
+                settings.folio_prefix ||
+                ""
+            )
+                .trim()
+                .toUpperCase();
+
+        if (
+            !/^[A-Z0-9]{2,8}$/.test(
+                prefix
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            typeof settings.currency
+                !== "string" ||
+            !/^[A-Z]{3}$/.test(
+                settings.currency
+                    .trim()
+                    .toUpperCase()
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            typeof settings.auto_print
+                !== "boolean"
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    async function setReceiptSettings(
+        branchCode,
+        settings
+    ) {
+        const key =
+            receiptSettingsKey(
+                branchCode
+            );
+
+        if (
+            !isValidReceiptSettings(
+                branchCode,
+                settings
+            )
+        ) {
+            throw new Error(
+                "Invalid receipt settings"
+            );
+        }
+
+        const db = await open();
+
+        return new Promise(
+            (resolve, reject) => {
+                const tx =
+                    db.transaction(
+                        "meta",
+                        "readwrite"
+                    );
+
+                const request =
+                    tx.objectStore("meta")
+                        .put(
+                            settings,
+                            key
+                        );
+
+                request.onsuccess = () =>
+                    resolve(settings);
+
+                request.onerror = () =>
+                    reject(
+                        request.error
+                    );
+            }
+        );
+    }
+
+
+    async function getReceiptSettings(
+        branchCode
+    ) {
+        const settings =
+            await get(
+                "meta",
+                receiptSettingsKey(
+                    branchCode
+                )
+            );
+
+        if (
+            settings == null
+        ) {
+            return null;
+        }
+
+        if (
+            !isValidReceiptSettings(
+                branchCode,
+                settings
+            )
+        ) {
+            return null;
+        }
+
+        return settings;
+    }
+
+
     async function getReceipt(orderUuid) {
         const receipt = await get(
             "receipts",
@@ -319,6 +558,8 @@ window.CofiPosDB = (() => {
         get,
         put,
         getAll,
+        setReceiptSettings,
+        getReceiptSettings,
         getReceipt,
         getLocalOrder,
         finalizePaidSale,
