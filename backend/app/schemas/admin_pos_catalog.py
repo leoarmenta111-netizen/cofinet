@@ -101,6 +101,16 @@ class AdminPosBranchSettingResponse(BaseModel):
     effective_price: Decimal
     is_available: bool
     sort_order: int
+    inventory_tracked: bool
+    inventory_quantity_on_hand: Decimal | None
+    inventory_low_stock_threshold: Decimal | None
+    inventory_status: Literal[
+        "UNTRACKED",
+        "AVAILABLE",
+        "LOW_STOCK",
+        "OUT_OF_STOCK",
+        "REVIEW",
+    ]
 
 
 class AdminPosCategoryResponse(BaseModel):

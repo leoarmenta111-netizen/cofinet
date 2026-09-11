@@ -16,6 +16,10 @@ from app.models.pos_catalog import (
     PosProduct,
     PosProductModifierGroup,
 )
+from app.models.pos_inventory import (
+    PosInventoryBalance,
+    PosInventoryItem,
+)
 from app.schemas.admin_pos_catalog import (
     AdminPosBranchProductUpdate,
     AdminPosCategoryCreate,
@@ -28,9 +32,62 @@ from app.schemas.admin_pos_catalog import (
     AdminPosProductModifierUpdate,
     AdminPosProductUpdate,
 )
+from app.services.pos_inventory_service import PosInventoryService
 
 
 class AdminPosCatalogService:
+
+    @staticmethod
+    def _inventory_metadata(
+        db: Session,
+        *,
+        branch_id: int,
+        product_id: int,
+    ) -> dict:
+        inventory_item = db.execute(
+            select(PosInventoryItem).where(
+                PosInventoryItem.product_id == product_id
+            )
+        ).scalar_one_or_none()
+
+        if inventory_item is None:
+            return {
+                "inventory_tracked": False,
+                "inventory_quantity_on_hand": None,
+                "inventory_low_stock_threshold": None,
+                "inventory_status": "UNTRACKED",
+            }
+
+        balance = db.execute(
+            select(PosInventoryBalance).where(
+                PosInventoryBalance.branch_id == branch_id,
+                PosInventoryBalance.inventory_item_id
+                == inventory_item.id,
+            )
+        ).scalar_one_or_none()
+
+        if balance is None or not balance.is_tracked:
+            return {
+                "inventory_tracked": False,
+                "inventory_quantity_on_hand": None,
+                "inventory_low_stock_threshold": None,
+                "inventory_status": "UNTRACKED",
+            }
+
+        return {
+            "inventory_tracked": True,
+            "inventory_quantity_on_hand": Decimal(
+                balance.quantity_on_hand
+            ),
+            "inventory_low_stock_threshold": Decimal(
+                balance.low_stock_threshold
+            ),
+            "inventory_status": PosInventoryService.status_for(
+                tracked=True,
+                quantity_on_hand=balance.quantity_on_hand,
+                threshold=balance.low_stock_threshold,
+            ),
+        }
 
     @staticmethod
     def _slug(value: str) -> str:
@@ -169,6 +226,11 @@ class AdminPosCatalogService:
                         setting.sort_order
                         if setting is not None
                         else 0
+                    ),
+                    **cls._inventory_metadata(
+                        db,
+                        branch_id=branch.id,
+                        product_id=product.id,
                     ),
                 })
 

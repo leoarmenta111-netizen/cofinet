@@ -10,17 +10,75 @@ from app.models.pos_catalog import (
     PosModifierGroup,
     PosProduct,
 )
+from app.models.pos_inventory import (
+    PosInventoryBalance,
+    PosInventoryItem,
+)
 from app.schemas.pos_catalog import (
     PosCatalogBranchResponse,
     PosCatalogCategoryResponse,
+    PosCatalogInventoryResponse,
     PosCatalogProductResponse,
     PosCatalogResponse,
     PosModifierGroupResponse,
     PosModifierOptionResponse,
 )
+from app.services.pos_inventory_service import PosInventoryService
 
 
 class PosCatalogService:
+    @staticmethod
+    def _inventory_for(
+        db: Session,
+        *,
+        branch_id: int,
+        product_id: int,
+    ) -> PosCatalogInventoryResponse:
+        inventory_item = db.execute(
+            select(PosInventoryItem).where(
+                PosInventoryItem.product_id == product_id
+            )
+        ).scalar_one_or_none()
+
+        if inventory_item is None:
+            return PosCatalogInventoryResponse(
+                tracked=False,
+                quantity_available=None,
+                low_stock_threshold=None,
+                status="UNTRACKED",
+            )
+
+        balance = db.execute(
+            select(PosInventoryBalance).where(
+                PosInventoryBalance.branch_id == branch_id,
+                PosInventoryBalance.inventory_item_id
+                == inventory_item.id,
+            )
+        ).scalar_one_or_none()
+
+        if balance is None or not balance.is_tracked:
+            return PosCatalogInventoryResponse(
+                tracked=False,
+                quantity_available=None,
+                low_stock_threshold=None,
+                status="UNTRACKED",
+            )
+
+        return PosCatalogInventoryResponse(
+            tracked=True,
+            quantity_available=Decimal(
+                balance.quantity_on_hand
+            ),
+            low_stock_threshold=Decimal(
+                balance.low_stock_threshold
+            ),
+            status=PosInventoryService.status_for(
+                tracked=True,
+                quantity_on_hand=balance.quantity_on_hand,
+                threshold=balance.low_stock_threshold,
+            ),
+        )
+
     @staticmethod
     def get_catalog(
         db: Session,
@@ -146,6 +204,11 @@ class PosCatalogService:
                 image_url=product.image_url,
                 preparation_station=product.preparation_station,
                 sort_order=effective_sort_order,
+                inventory=PosCatalogService._inventory_for(
+                    db,
+                    branch_id=branch.id,
+                    product_id=product.id,
+                ),
                 modifiers=modifier_groups,
             )
 

@@ -27,6 +27,19 @@ class PosModifierGroupResponse(BaseModel):
     options: list[PosModifierOptionResponse]
 
 
+class PosCatalogInventoryResponse(BaseModel):
+    tracked: bool
+    quantity_available: Decimal | None
+    low_stock_threshold: Decimal | None
+    status: Literal[
+        "UNTRACKED",
+        "AVAILABLE",
+        "LOW_STOCK",
+        "OUT_OF_STOCK",
+        "REVIEW",
+    ]
+
+
 class PosCatalogProductResponse(BaseModel):
     id: int
     name: str
@@ -40,6 +53,7 @@ class PosCatalogProductResponse(BaseModel):
         "NONE",
     ]
     sort_order: int
+    inventory: PosCatalogInventoryResponse
     modifiers: list[PosModifierGroupResponse]
 
 
