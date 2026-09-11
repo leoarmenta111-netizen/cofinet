@@ -20,6 +20,12 @@ from app.models.pos_catalog import (
     PosProductModifierGroup,
 )
 
+from app.models.pos_inventory import (
+    PosInventoryBalance,
+    PosInventoryItem,
+    PosInventoryMovement,
+)
+
 __all__ = [
     "PosPayment",
     "PosOrderItemModifier",
@@ -36,4 +42,7 @@ __all__ = [
     "PosModifierOption",
     "PosProduct",
     "PosProductModifierGroup",
+    "PosInventoryBalance",
+    "PosInventoryItem",
+    "PosInventoryMovement",
 ]
