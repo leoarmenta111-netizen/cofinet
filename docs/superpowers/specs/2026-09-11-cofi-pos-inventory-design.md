@@ -381,24 +381,61 @@ Inventory is not reserved when:
 
 - Product is viewed.
 - Product is added to the cart.
-- Order is only PENDING.
+- A sale has not yet crossed its payment boundary.
 
-Inventory is applied when the sale is confirmed as PAID.
+Inventory is applied when a sale is confirmed as PAID.
 
-For an online transaction:
+### Online sale boundary
 
-1. Validate tracked inventory.
-2. Confirm sufficient stock.
-3. Persist payment transition.
-4. Create SALE movements.
-5. Update balances.
+When the POS has network connectivity, checkout is server-first.
 
-The payment/inventory operation must be atomic from the backend's perspective.
+The POS freezes one immutable sale identity before sending:
 
-An online sale must not knowingly reduce tracked stock below zero.
+- order_uuid
+- payment_uuid
+- folio
+- created_at_client
+- receipt_snapshot
 
-If stock became insufficient before payment confirmation, the POS must tell the
-cashier which product needs correction before completing the sale.
+It then sends that exact payload to the normal online order endpoint.
+
+The backend:
+
+1. Resolves the branch and products.
+2. Locks relevant tracked inventory balances.
+3. Validates sufficient stock.
+4. Persists order and payment.
+5. Creates SALE movements.
+6. Updates inventory balances.
+7. Commits the complete transaction.
+
+If tracked stock is insufficient, the transaction is rejected and the sale is
+not confirmed. The cashier keeps the cart and corrects the unavailable item.
+
+Only after backend success does the browser persist the completed local copy as
+SYNCED.
+
+### Network failure during checkout
+
+If the request cannot reach the server because of an actual network failure or
+timeout, the POS preserves the already-frozen order UUID, folio, timestamp and
+receipt snapshot.
+
+The same sale is then finalized locally and queued as PENDING_SYNC.
+
+The POS must not generate a second sale identity after a network failure.
+
+### Offline sale boundary
+
+When the device is already offline, checkout remains local-first.
+
+The paid local order, immutable receipt and synchronization event are persisted
+atomically in IndexedDB.
+
+The server later receives that already-completed sale through the explicit
+offline synchronization path.
+
+Normal online sales must never knowingly reduce tracked stock below zero.
 
 ## 13. Sale Movements
 
@@ -441,8 +478,20 @@ second inventory movement.
 
 ## 15. Refunds and Cancellations
 
-If inventory was previously deducted for an order and that sale is later
-reversed, inventory is restored automatically.
+Phase 1 includes an explicit administrative refund/cancellation operation for
+completed POS sales.
+
+This operation is protected by Admin authorization.
+
+For a previously paid sale:
+
+1. Lock the order.
+2. Confirm the sale has not already been reversed.
+3. Set payment_status to REFUNDED.
+4. Set the order operational status to CANCELLED.
+5. Create SALE_REVERSAL movements for every original tracked SALE movement.
+6. Restore the branch balances.
+7. Commit the complete transaction.
 
 A reversal creates:
 
@@ -451,10 +500,13 @@ A reversal creates:
 
 Only one reversal may be applied for the corresponding SALE movement.
 
-A duplicate refund/cancellation event must not restore inventory twice.
+The reversal operation is idempotent. Retrying the same administrative request
+must not restore inventory twice.
 
 A cancellation/refund that never had an inventory SALE movement does not
 create inventory out of nothing.
+
+Phase 1 does not implement partial refunds. The complete sale is reversed.
 
 ## 16. Offline Behavior
 
@@ -512,16 +564,29 @@ sale solely to force inventory back to zero.
 
 ## 18. Offline Synchronization
 
+Offline replay uses an explicit synchronization endpoint separate from strict
+online checkout:
+
+    POST /pos/orders/sync
+
+The payload is the exact immutable paid-sale payload already stored locally.
+
 When an offline paid order reaches the server:
 
-1. Resolve/create the order through the existing idempotent order path.
-2. Persist its items.
+1. Resolve/create the order through the existing order_uuid idempotency rule.
+2. Persist its items and payment if the order does not already exist.
 3. Apply inventory SALE movements.
 4. Reuse deterministic inventory idempotency keys.
 5. Update branch balances.
-6. Return refreshed inventory/catalog state when appropriate.
+6. Permit a negative result only because the sale was already physically
+   completed offline.
+7. Return the persisted order response.
 
-Retrying synchronization does not generate additional deductions.
+Retrying synchronization does not generate an additional order, payment or
+inventory deduction.
+
+The normal POST /pos/orders path remains strict and rejects insufficient online
+inventory. The /pos/orders/sync path preserves already-completed offline sales.
 
 ## 19. Negative Inventory
 
@@ -639,6 +704,18 @@ Conceptual Admin endpoints:
     POST /admin/pos/inventory/{item_id}/receipt
     POST /admin/pos/inventory/{item_id}/waste
     POST /admin/pos/inventory/{item_id}/adjust
+
+    POST /admin/pos/sales/{order_uuid}/refund
+
+POS order endpoints:
+
+    POST /pos/orders
+        Strict online paid sale. Reject insufficient tracked inventory.
+
+    POST /pos/orders/sync
+        Replay an already-completed offline paid sale. Preserve the sale even
+        when stale offline stock causes the resulting balance to become
+        negative.
 
 Inventory configuration can be exposed through the existing product/catalog
 administration contract or a small inventory-specific configuration endpoint,
@@ -850,7 +927,10 @@ Phase 1 is successful when:
 - An admin can enable inventory for a product at one branch.
 - An initial quantity can be recorded.
 - Entries, waste and physical adjustments are auditable.
-- A paid sale deducts stock exactly once.
+- A strict online paid sale deducts stock exactly once.
+- An online sale with insufficient stock is not confirmed.
+- A network failure preserves one frozen sale identity and queues it offline.
+- Offline replay through /pos/orders/sync deducts stock exactly once.
 - A refund/cancellation reversal restores stock exactly once.
 - Low stock is visible.
 - Zero stock blocks new POS sales.
