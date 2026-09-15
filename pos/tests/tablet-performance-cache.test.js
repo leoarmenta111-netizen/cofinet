@@ -13,7 +13,7 @@ test("tablet performance release forces fresh CSS cache", () => {
 
     assert.match(
         sw,
-        /const SHELL_CACHE = "cofi-pos-shell-v22";/
+        /const SHELL_CACHE = "cofi-pos-shell-v23";/
     );
 
     assert.match(

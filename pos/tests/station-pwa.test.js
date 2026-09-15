@@ -21,14 +21,14 @@ const stations = [
         name: "Cofi KDS Cocina",
         id: "/pos/kitchen/",
         visibleName: "Cocina",
-        cache: "cofi-kds-kitchen-shell-v2",
+        cache: "cofi-kds-kitchen-shell-v3",
     },
     {
         dir: "bar",
         name: "Cofi KDS Barra",
         id: "/pos/bar/",
         visibleName: "Barra",
-        cache: "cofi-kds-bar-shell-v2",
+        cache: "cofi-kds-bar-shell-v3",
     },
 ];
 

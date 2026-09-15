@@ -108,32 +108,32 @@ test(
 
         assert.match(
             kitchen,
-            /station\.js\?v=2/
+            /station\.js\?v=3/
         );
 
         assert.match(
             bar,
-            /station\.js\?v=2/
+            /station\.js\?v=3/
         );
 
         assert.match(
             kitchenSw,
-            /cofi-kds-kitchen-shell-v2/
+            /cofi-kds-kitchen-shell-v3/
         );
 
         assert.match(
             barSw,
-            /cofi-kds-bar-shell-v2/
+            /cofi-kds-bar-shell-v3/
         );
 
         assert.match(
             kitchenSw,
-            /station\.js\?v=2/
+            /station\.js\?v=3/
         );
 
         assert.match(
             barSw,
-            /station\.js\?v=2/
+            /station\.js\?v=3/
         );
     }
 );

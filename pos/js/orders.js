@@ -1,4 +1,13 @@
 (() => {
+    const readyAlertStatuses =
+        new Map();
+
+    let readyAlertsInitialized =
+        false;
+
+    let readyAlertsLoading =
+        false;
+
     const state = {
         branchCode: null,
         orders: [],
@@ -1406,4 +1415,100 @@
     } else {
         init();
     }
+
+    async function monitorReadyAlerts() {
+        if (readyAlertsLoading) {
+            return;
+        }
+
+        readyAlertsLoading = true;
+
+        try {
+            const branchCode =
+                await getBranchCode();
+
+            if (
+                !branchCode
+                || !navigator.onLine
+            ) {
+                return;
+            }
+
+            const response =
+                await window
+                    .CofiPosAPI
+                    .listOrders(
+                        branchCode,
+                        {
+                            limit: 200,
+                        }
+                    );
+
+            const orders =
+                response?.orders || [];
+
+            const nextStatuses =
+                new Map();
+
+            orders.forEach(order => {
+                const orderId =
+                    order.order_uuid;
+
+                if (!orderId) {
+                    return;
+                }
+
+                const status =
+                    order.status;
+
+                nextStatuses.set(
+                    orderId,
+                    status
+                );
+
+                if (
+                    readyAlertsInitialized
+                    && status === "READY"
+                    && readyAlertStatuses
+                        .get(orderId)
+                        !== "READY"
+                ) {
+                    window.CofiSoundAlerts
+                        ?.playOrderReady();
+                }
+            });
+
+            readyAlertStatuses.clear();
+
+            nextStatuses.forEach(
+                (status, orderId) => {
+                    readyAlertStatuses.set(
+                        orderId,
+                        status
+                    );
+                }
+            );
+
+            readyAlertsInitialized =
+                true;
+
+        } catch (error) {
+            console.warn(
+                "Ready alert monitor unavailable:",
+                error
+            );
+
+        } finally {
+            readyAlertsLoading =
+                false;
+        }
+    }
+
+    monitorReadyAlerts();
+
+    setInterval(
+        monitorReadyAlerts,
+        5000
+    );
+
 })();
