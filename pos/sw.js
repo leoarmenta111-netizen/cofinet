@@ -1,4 +1,4 @@
-const SHELL_CACHE = "cofi-pos-shell-v20";
+const SHELL_CACHE = "cofi-pos-shell-v21";
 const IMAGE_CACHE = "cofi-pos-images-v1";
 
 const APP_SHELL = [
@@ -17,6 +17,9 @@ const APP_SHELL = [
     "./js/orders-local.js",
     "./js/orders.js",
     "./assets/coficenter-logo.png",
+    "./assets/pwa/icon-192.png",
+    "./assets/pwa/icon-512.png",
+    "./assets/pwa/icon-maskable-512.png",
     "./manifest.webmanifest",
     "./manifest-nuevo-vallarta.webmanifest",
     "./manifest-bucerias.webmanifest",
