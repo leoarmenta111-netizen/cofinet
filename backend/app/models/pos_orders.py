@@ -176,7 +176,7 @@ class PosOrderStation(Base):
             name="ck_pos_order_stations_station",
         ),
         CheckConstraint(
-            "status IN ('NEW','PREPARING','READY')",
+            "status IN ('NEW','PREPARING','READY','DELIVERED')",
             name="ck_pos_order_stations_status",
         ),
     )

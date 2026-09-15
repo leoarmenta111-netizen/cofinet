@@ -174,13 +174,20 @@ class PosOrderService:
             order.status = "NEW"
             return
 
-        if statuses == {"READY"}:
+        if statuses == {"DELIVERED"}:
+            order.status = "DELIVERED"
+            return
+
+        if statuses.issubset({
+            "READY",
+            "DELIVERED",
+        }):
             order.status = "READY"
             return
 
-        # Any partial/mixed progress is PREPARING:
-        # NEW + READY, NEW + PREPARING,
-        # PREPARING + READY, etc.
+        # Any other partial/mixed progress is
+        # PREPARING, including combinations where
+        # another station is still NEW/PREPARING.
         order.status = "PREPARING"
 
     @staticmethod
@@ -244,6 +251,7 @@ class PosOrderService:
                 .where(
                     PosOrder.branch_id == branch.id,
                     PosOrderStation.station == station,
+                    PosOrderStation.status != "DELIVERED",
                 )
                 .order_by(
                     PosOrder.created_at_client.asc(),
@@ -370,7 +378,7 @@ class PosOrderService:
             allowed = {
                 "NEW": {"PREPARING"},
                 "PREPARING": {"READY"},
-                "READY": set(),
+                "READY": {"DELIVERED"},
             }
 
             if next_status not in allowed.get(

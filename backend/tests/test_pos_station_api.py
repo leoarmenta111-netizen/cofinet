@@ -504,3 +504,154 @@ def test_station_update_is_branch_scoped(
     )
 
     assert wrong_branch.status_code == 404
+
+
+def test_ready_station_can_be_delivered_independently_and_leaves_kds_feed(
+    client,
+    db_session,
+):
+    branch, products = seed_station_catalog(
+        db_session,
+        branch_code="station-api-delivered",
+    )
+
+    order = create_order(
+        db_session,
+        branch,
+        products,
+        [
+            "KITCHEN",
+            "BAR",
+        ],
+    )
+
+    def advance(station, next_status):
+        return client.patch(
+            (
+                f"/pos/orders/{order.order_uuid}"
+                f"/stations/{station}"
+            ),
+            json={
+                "branch_code": branch.code,
+                "status": next_status,
+            },
+        )
+
+    # Both stations become READY first.
+    for station in (
+        "KITCHEN",
+        "BAR",
+    ):
+        response = advance(
+            station,
+            "PREPARING",
+        )
+        assert response.status_code == 200
+
+        response = advance(
+            station,
+            "READY",
+        )
+        assert response.status_code == 200
+
+    stored = get_order_model(
+        db_session,
+        order.order_uuid,
+    )
+
+    assert stored.status == "READY"
+
+    # Delivering BAR removes only BAR from its KDS.
+    response = advance(
+        "BAR",
+        "DELIVERED",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "DELIVERED"
+
+    # Kitchen is still READY, so the whole order
+    # remains READY and visible in Kitchen.
+    assert response.json()["order_status"] == "READY"
+
+    bar_feed = client.get(
+        "/pos/orders/stations/BAR",
+        params={
+            "branch_code": branch.code,
+        },
+    )
+
+    assert bar_feed.status_code == 200
+    assert all(
+        row["order_uuid"]
+        != str(order.order_uuid)
+        for row in bar_feed.json()["orders"]
+    )
+
+    kitchen_feed = client.get(
+        "/pos/orders/stations/KITCHEN",
+        params={
+            "branch_code": branch.code,
+        },
+    )
+
+    assert kitchen_feed.status_code == 200
+
+    kitchen_order = next(
+        row
+        for row in kitchen_feed.json()["orders"]
+        if row["order_uuid"]
+        == str(order.order_uuid)
+    )
+
+    assert (
+        kitchen_order["station_status"]
+        == "READY"
+    )
+
+    # Once Kitchen is also delivered, the whole
+    # order becomes DELIVERED.
+    response = advance(
+        "KITCHEN",
+        "DELIVERED",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "DELIVERED"
+    assert (
+        response.json()["order_status"]
+        == "DELIVERED"
+    )
+
+    kitchen_feed = client.get(
+        "/pos/orders/stations/KITCHEN",
+        params={
+            "branch_code": branch.code,
+        },
+    )
+
+    assert kitchen_feed.status_code == 200
+    assert all(
+        row["order_uuid"]
+        != str(order.order_uuid)
+        for row in kitchen_feed.json()["orders"]
+    )
+
+    detail = client.get(
+        f"/pos/orders/{order.order_uuid}",
+        params={
+            "branch_code": branch.code,
+        },
+    )
+
+    assert detail.status_code == 200
+
+    station_statuses = {
+        row["station"]: row["status"]
+        for row in detail.json()["stations"]
+    }
+
+    assert station_statuses == {
+        "BAR": "DELIVERED",
+        "KITCHEN": "DELIVERED",
+    }

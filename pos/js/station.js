@@ -63,6 +63,7 @@
         return {
             NEW: "PREPARING",
             PREPARING: "READY",
+            READY: "DELIVERED",
         }[status] || null;
     }
 
@@ -70,6 +71,7 @@
         return {
             NEW: "Comenzar preparación",
             PREPARING: "Marcar como lista",
+            READY: "Entregado",
         }[status] || "";
     }
 
