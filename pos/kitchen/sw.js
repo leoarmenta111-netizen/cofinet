@@ -2,7 +2,7 @@ const CACHE_PREFIX =
     "cofi-kds-kitchen-shell-";
 
 const SHELL_CACHE =
-    "cofi-kds-kitchen-shell-v1";
+    "cofi-kds-kitchen-shell-v2";
 
 const STATION_PATH =
     "/pos/kitchen/";
@@ -16,7 +16,7 @@ const APP_SHELL = [
     "./manifest-ixtapa.webmanifest?v=1",
     "../css/station.css?v=2",
     "../js/api.js?v=11",
-    "../js/station.js?v=1",
+    "../js/station.js?v=2",
     "../assets/coficenter-logo.png",
     "../assets/pwa/icon-192.png",
     "../assets/pwa/icon-512.png",

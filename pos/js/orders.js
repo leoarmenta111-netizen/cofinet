@@ -929,6 +929,7 @@
             NEW: "Nueva",
             PREPARING: "Preparando",
             READY: "Lista",
+            DELIVERED: "Entregada",
         };
 
         return labels[status] || status;

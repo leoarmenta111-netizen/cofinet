@@ -88,6 +88,7 @@ class PosOrderStationResponse(BaseModel):
         "NEW",
         "PREPARING",
         "READY",
+        "DELIVERED",
     ]
     started_at: datetime | None
     ready_at: datetime | None
@@ -141,6 +142,7 @@ class PosStationOrderResponse(BaseModel):
         "NEW",
         "PREPARING",
         "READY",
+        "DELIVERED",
     ]
     created_at_client: datetime
     notes: str | None
@@ -165,6 +167,7 @@ class PosOrderStationStatusUpdate(BaseModel):
         "NEW",
         "PREPARING",
         "READY",
+        "DELIVERED",
     ]
 
 
@@ -178,6 +181,7 @@ class PosOrderStationStatusResponse(BaseModel):
         "NEW",
         "PREPARING",
         "READY",
+        "DELIVERED",
     ]
     order_status: str
     started_at: datetime | None
