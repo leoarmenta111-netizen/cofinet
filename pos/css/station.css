@@ -369,3 +369,23 @@ button {
         justify-content: flex-end;
     }
 }
+
+
+/* ==========================================================
+   COFICENTER KDS — INSTALLED TABLET PWA
+   ========================================================== */
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    min-height: 100dvh;
+    overscroll-behavior: none;
+}
+
+.station-app {
+    min-height: 100dvh;
+}

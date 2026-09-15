@@ -10,12 +10,53 @@
         name="theme-color"
         content="#f4f2eb"
     >
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <link
+        rel="manifest"
+        id="cofi-kds-manifest"
+        href="./manifest.webmanifest?v=1"
+    >
+
+    <script>
+        (() => {
+            const params =
+                new URLSearchParams(
+                    window.location.search
+                );
+
+            const branch = (
+                params.get("branch")
+                || params.get("branch_code")
+                || ""
+            )
+                .trim()
+                .toLowerCase();
+
+            const manifests = {
+                "nuevo-vallarta":
+                    "./manifest-nuevo-vallarta.webmanifest?v=1",
+                bucerias:
+                    "./manifest-bucerias.webmanifest?v=1",
+                ixtapa:
+                    "./manifest-ixtapa.webmanifest?v=1",
+            };
+
+            if (manifests[branch]) {
+                document
+                    .getElementById(
+                        "cofi-kds-manifest"
+                    )
+                    .href = manifests[branch];
+            }
+        })();
+    </script>
 
     <title>Cocina | CofiCenter</title>
 
     <link
         rel="stylesheet"
-        href="../css/station.css?v=1"
+        href="../css/station.css?v=2"
     >
 </head>
 
@@ -136,6 +177,27 @@
 
 <script src="../js/api.js?v=11"></script>
 <script src="../js/station.js?v=1"></script>
+
+<script>
+    if ("serviceWorker" in navigator) {
+        window.addEventListener(
+            "load",
+            () => {
+                navigator.serviceWorker
+                    .register("./sw.js", {
+                        scope: "./",
+                    })
+                    .catch(error => {
+                        console.warn(
+                            "KDS service worker unavailable:",
+                            error
+                        );
+                    });
+            }
+        );
+    }
+</script>
+
 
 </body>
 </html>
