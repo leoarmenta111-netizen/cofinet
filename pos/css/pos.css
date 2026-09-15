@@ -5836,3 +5836,20 @@ and (orientation: landscape) {
         bottom: 0 !important;
     }
 }
+
+
+/* ==================================================
+   COFI POS — ANDROID TABLET PERFORMANCE V1
+   Avoid full-screen GPU blur while modals are open
+   ================================================== */
+
+@media
+(pointer: coarse)
+and (min-width: 600px)
+and (max-width: 1366px) {
+
+    .modal-backdrop {
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+    }
+}
