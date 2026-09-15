@@ -10,6 +10,8 @@
         branchCode: null,
         orders: [],
         loading: false,
+        alertedNewOrderIds: new Set(),
+        alertsInitialized: false,
     };
 
     const labels = {
@@ -299,6 +301,47 @@
         element.dataset.state = type;
     }
 
+    function notifyNewOrders(orders) {
+        const newOrders =
+            orders.filter(
+                order =>
+                    order.station_status === "NEW"
+            );
+
+        if (!state.alertsInitialized) {
+            newOrders.forEach(order => {
+                if (order.order_uuid) {
+                    state.alertedNewOrderIds
+                        .add(
+                            order.order_uuid
+                        );
+                }
+            });
+
+            state.alertsInitialized = true;
+            return;
+        }
+
+        newOrders.forEach(order => {
+            const orderId =
+                order.order_uuid;
+
+            if (
+                !orderId
+                || state.alertedNewOrderIds
+                    .has(orderId)
+            ) {
+                return;
+            }
+
+            state.alertedNewOrderIds
+                .add(orderId);
+
+            window.CofiSoundAlerts
+                ?.playNewOrder();
+        });
+    }
+
     async function loadStation() {
         if (
             state.loading
@@ -317,8 +360,15 @@
                         state.branchCode
                     );
 
-            state.orders =
+            const nextOrders =
                 response.orders || [];
+
+            notifyNewOrders(
+                nextOrders
+            );
+
+            state.orders =
+                nextOrders;
 
             render();
 

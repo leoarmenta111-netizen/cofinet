@@ -18,9 +18,9 @@ test(
 
         assert.ok(
             html.includes(
-                './js/orders.js?v=14'
+                './js/orders.js?v=15'
             ),
-            "orders.js debe subir de v13 a v14"
+            "orders.js debe usar la version v15"
         );
     }
 );

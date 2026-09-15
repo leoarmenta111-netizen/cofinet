@@ -2,7 +2,7 @@ const CACHE_PREFIX =
     "cofi-kds-bar-shell-";
 
 const SHELL_CACHE =
-    "cofi-kds-bar-shell-v2";
+    "cofi-kds-bar-shell-v3";
 
 const STATION_PATH =
     "/pos/bar/";
@@ -16,7 +16,8 @@ const APP_SHELL = [
     "./manifest-ixtapa.webmanifest?v=1",
     "../css/station.css?v=2",
     "../js/api.js?v=11",
-    "../js/station.js?v=2",
+    "../js/sound-alerts.js?v=1",
+    "../js/station.js?v=3",
     "../assets/coficenter-logo.png",
     "../assets/pwa/icon-192.png",
     "../assets/pwa/icon-512.png",
@@ -26,6 +27,7 @@ const APP_SHELL = [
 const STATIC_PATHS = new Set([
     "/pos/css/station.css",
     "/pos/js/api.js",
+    "/pos/js/sound-alerts.js",
     "/pos/js/station.js",
     "/pos/assets/coficenter-logo.png",
     "/pos/assets/pwa/icon-192.png",
