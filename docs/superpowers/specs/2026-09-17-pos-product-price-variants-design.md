@@ -844,3 +844,133 @@ The feature is complete when:
 16. Historical sales remain correct after catalog changes.
 17. Products without variants behave exactly as before.
 18. Existing test suites remain green.
+
+## 28. Final persistence and pricing invariants
+
+This section resolves and supersedes any ambiguity in earlier sections.
+
+### 28.1 Product variant-group assignment
+
+`PosProduct.variant_group_id` is a nullable foreign key to
+`PosVariantGroup`.
+
+- `NULL` means the product is a normal non-variant product.
+- A non-NULL value means the product requires a variant selection.
+- Version 1 supports at most one variant group per product.
+- Every active `PosProductVariant` for a product must reference a
+  `PosVariant` belonging to that product's assigned variant group.
+
+A product with an assigned variant group but with no sellable active
+product variants must not appear in the customer POS catalog.
+
+The system must never silently fall back to `PosProduct.base_price`
+for such a product.
+
+If the assigned variant group is inactive, the product is unsellable
+until the assignment or group state is corrected.
+
+### 28.2 Base-price semantics
+
+`PosProduct.base_price` remains authoritative only for non-variant
+products.
+
+Variant products use `PosProductVariant.price` as their default base
+price.
+
+A branch-specific `price_override`, when present, replaces that
+product-variant default price.
+
+### 28.3 Branch override semantics
+
+`PosBranchProductVariant` is an optional override row.
+
+If no row exists for a branch/product-variant pair:
+
+- the variant is available by default;
+- its effective price is `PosProductVariant.price`.
+
+If a row exists:
+
+- `is_available = false` makes that variant unavailable at the branch;
+- a non-NULL `price_override` replaces the default variant price;
+- a NULL `price_override` inherits the default variant price.
+
+### 28.4 Checkout validation
+
+For a non-variant product, supplying `product_variant_id` is invalid.
+
+For a variant product, omitting `product_variant_id` is invalid.
+
+The selected variant must:
+
+- belong to the product;
+- belong to the product's assigned variant group;
+- be active;
+- have an active product-variant relationship;
+- be available at the requested branch.
+
+The backend remains authoritative for this validation.
+
+### 28.5 Reassignment and historical safety
+
+Variant groups, variants, and product-variant relationships should be
+deactivated instead of hard-deleted once they may be referenced by
+historical orders.
+
+Changing a product's assigned variant group must atomically deactivate
+any previously active product-variant relationships that no longer
+belong to the newly assigned group.
+
+Historical order rows must remain readable.
+
+### 28.6 Order snapshots
+
+`PosOrderItem.unit_base_price` already stores the historical resolved
+base price and remains the price snapshot field.
+
+Variant support adds only nullable:
+
+- `product_variant_id`;
+- `variant_name`.
+
+`unit_price` remains the final per-unit price after modifiers.
+
+### 28.7 Receipt snapshot and offline pricing
+
+Receipt snapshot schema version remains `v1`.
+
+The following fields are optional additions for backward compatibility:
+
+- `product_variant_id`;
+- `variant_name`.
+
+When a valid frozen receipt snapshot exists, the backend preserves the
+snapshot's `unit_price_cents` and `line_total_cents`, even if current
+catalog pricing changed after the sale was created.
+
+The backend must still validate product identity, selected variant
+identity, modifier identity, and branch eligibility.
+
+For variant lines, snapshot `product_variant_id` must match the request
+`product_variant_id`.
+
+Persisted `unit_base_price` is reconstructed from the frozen unit price
+minus the frozen modifier total.
+
+Existing v1 snapshots without variant fields remain valid for historic
+non-variant orders.
+
+Without a frozen receipt snapshot, current server-resolved branch
+variant pricing is authoritative.
+
+### 28.8 Rollback
+
+The schema additions are additive and may remain present if the
+application code is rolled back.
+
+A destructive database downgrade after variant-backed orders exist can
+destroy historical references and must not be used as the normal
+application rollback procedure.
+
+Database downgrade is safe only before variant data exists or after a
+controlled data-conversion procedure.
