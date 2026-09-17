@@ -277,6 +277,17 @@ class PosOrderItem(Base):
         index=True,
     )
 
+    product_variant_id = Column(
+        Integer,
+        ForeignKey("pos_product_variants.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    variant_name = Column(
+        String(160),
+        nullable=True,
+    )
+
     product_name = Column(
         String(160),
         nullable=False,

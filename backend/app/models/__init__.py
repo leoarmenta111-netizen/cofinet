@@ -13,6 +13,10 @@ from app.models.pos_orders import (
 )
 from app.models.pos_catalog import (
     PosBranchProduct,
+    PosBranchProductVariant,
+    PosProductVariant,
+    PosVariant,
+    PosVariantGroup,
     PosCategory,
     PosModifierGroup,
     PosModifierOption,
@@ -31,6 +35,10 @@ __all__ = [
     "PinBatchFailure",
     "PinBatchStatus",
     "PosBranchProduct",
+    "PosBranchProductVariant",
+    "PosProductVariant",
+    "PosVariant",
+    "PosVariantGroup",
     "PosCategory",
     "PosModifierGroup",
     "PosModifierOption",
