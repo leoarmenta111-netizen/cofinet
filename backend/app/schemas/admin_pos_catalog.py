@@ -56,6 +56,30 @@ class AdminPosBranchProductUpdate(BaseModel):
     sort_order: int = 0
 
 
+class AdminPosVariantGroupCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class AdminPosVariantGroupUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    sort_order: int | None = None
+    is_active: bool | None = None
+
+
+class AdminPosVariantCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    sort_order: int = 0
+    is_active: bool = True
+
+
+class AdminPosVariantUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=160)
+    sort_order: int | None = None
+    is_active: bool | None = None
+
+
 class AdminPosModifierGroupCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     required: bool = False
@@ -109,6 +133,22 @@ class AdminPosCategoryResponse(BaseModel):
     slug: str
     sort_order: int
     is_active: bool
+
+
+class AdminPosVariantResponse(BaseModel):
+    id: int
+    variant_group_id: int
+    name: str
+    sort_order: int
+    is_active: bool
+
+
+class AdminPosVariantGroupResponse(BaseModel):
+    id: int
+    name: str
+    sort_order: int
+    is_active: bool
+    variants: list[AdminPosVariantResponse]
 
 
 class AdminPosModifierOptionResponse(BaseModel):
@@ -167,3 +207,4 @@ class AdminPosCatalogResponse(BaseModel):
     categories: list[AdminPosCategoryResponse]
     products: list[AdminPosProductResponse]
     modifier_groups: list[AdminPosModifierGroupResponse]
+    variant_groups: list[AdminPosVariantGroupResponse]

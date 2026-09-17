@@ -15,6 +15,8 @@ from app.models.pos_catalog import (
     PosModifierOption,
     PosProduct,
     PosProductModifierGroup,
+    PosVariant,
+    PosVariantGroup,
 )
 from app.schemas.admin_pos_catalog import (
     AdminPosBranchProductUpdate,
@@ -27,6 +29,10 @@ from app.schemas.admin_pos_catalog import (
     AdminPosProductCreate,
     AdminPosProductModifierUpdate,
     AdminPosProductUpdate,
+    AdminPosVariantCreate,
+    AdminPosVariantGroupCreate,
+    AdminPosVariantGroupUpdate,
+    AdminPosVariantUpdate,
 )
 
 
@@ -79,6 +85,32 @@ class AdminPosCatalogService:
             raise HTTPException(404, "POS modifier option not found")
         return item
 
+    @staticmethod
+    def _variant_group(
+        db: Session,
+        group_id: int,
+    ) -> PosVariantGroup:
+        item = db.get(PosVariantGroup, group_id)
+        if item is None:
+            raise HTTPException(
+                404,
+                "POS variant group not found",
+            )
+        return item
+
+    @staticmethod
+    def _variant(
+        db: Session,
+        variant_id: int,
+    ) -> PosVariant:
+        item = db.get(PosVariant, variant_id)
+        if item is None:
+            raise HTTPException(
+                404,
+                "POS variant not found",
+            )
+        return item
+
     @classmethod
     def get_catalog(cls, db: Session) -> dict:
         branches = (
@@ -124,6 +156,19 @@ class AdminPosCatalogService:
                     PosModifierGroup.sort_order,
                     PosModifierGroup.name,
                     PosModifierGroup.id,
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        variant_groups = (
+            db.execute(
+                select(PosVariantGroup)
+                .order_by(
+                    PosVariantGroup.sort_order,
+                    PosVariantGroup.name,
+                    PosVariantGroup.id,
                 )
             )
             .scalars()
@@ -236,6 +281,35 @@ class AdminPosCatalogService:
                 ],
             })
 
+        variant_group_rows = []
+
+        for group in variant_groups:
+            variants = sorted(
+                group.variants,
+                key=lambda row: (
+                    row.sort_order,
+                    row.name.lower(),
+                    row.id,
+                ),
+            )
+
+            variant_group_rows.append({
+                "id": group.id,
+                "name": group.name,
+                "sort_order": group.sort_order,
+                "is_active": group.is_active,
+                "variants": [
+                    {
+                        "id": variant.id,
+                        "variant_group_id": variant.variant_group_id,
+                        "name": variant.name,
+                        "sort_order": variant.sort_order,
+                        "is_active": variant.is_active,
+                    }
+                    for variant in variants
+                ],
+            })
+
         return {
             "branches": [
                 {
@@ -257,7 +331,92 @@ class AdminPosCatalogService:
             ],
             "products": product_rows,
             "modifier_groups": group_rows,
+            "variant_groups": variant_group_rows,
         }
+
+    @classmethod
+    def create_variant_group(
+        cls,
+        db: Session,
+        data: AdminPosVariantGroupCreate,
+    ) -> dict:
+        group = PosVariantGroup(
+            name=data.name.strip(),
+            sort_order=data.sort_order,
+            is_active=data.is_active,
+        )
+        db.add(group)
+        cls._commit(db)
+        return cls.get_catalog(db)
+
+    @classmethod
+    def update_variant_group(
+        cls,
+        db: Session,
+        group_id: int,
+        data: AdminPosVariantGroupUpdate,
+    ) -> dict:
+        group = cls._variant_group(
+            db,
+            group_id,
+        )
+        values = data.model_dump(
+            exclude_unset=True,
+        )
+
+        for key, value in values.items():
+            if value is not None:
+                if key == "name":
+                    value = value.strip()
+                setattr(group, key, value)
+
+        cls._commit(db)
+        return cls.get_catalog(db)
+
+    @classmethod
+    def create_variant(
+        cls,
+        db: Session,
+        group_id: int,
+        data: AdminPosVariantCreate,
+    ) -> dict:
+        group = cls._variant_group(
+            db,
+            group_id,
+        )
+        variant = PosVariant(
+            group=group,
+            name=data.name.strip(),
+            sort_order=data.sort_order,
+            is_active=data.is_active,
+        )
+        db.add(variant)
+        cls._commit(db)
+        return cls.get_catalog(db)
+
+    @classmethod
+    def update_variant(
+        cls,
+        db: Session,
+        variant_id: int,
+        data: AdminPosVariantUpdate,
+    ) -> dict:
+        variant = cls._variant(
+            db,
+            variant_id,
+        )
+        values = data.model_dump(
+            exclude_unset=True,
+        )
+
+        for key, value in values.items():
+            if value is not None:
+                if key == "name":
+                    value = value.strip()
+                setattr(variant, key, value)
+
+        cls._commit(db)
+        return cls.get_catalog(db)
 
     @classmethod
     def create_category(

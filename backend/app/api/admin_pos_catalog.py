@@ -22,6 +22,10 @@ from app.schemas.admin_pos_catalog import (
     AdminPosProductCreate,
     AdminPosProductModifierUpdate,
     AdminPosProductUpdate,
+    AdminPosVariantCreate,
+    AdminPosVariantGroupCreate,
+    AdminPosVariantGroupUpdate,
+    AdminPosVariantUpdate,
 )
 from app.services.admin_pos_catalog_service import (
     AdminPosCatalogService,
@@ -167,6 +171,74 @@ def update_product_branch(
         db,
         product_id,
         branch_code,
+        data,
+    )
+
+
+@router.post(
+    "/variant-groups",
+    response_model=AdminPosCatalogResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_variant_group(
+    data: AdminPosVariantGroupCreate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.create_variant_group(
+        db,
+        data,
+    )
+
+
+@router.patch(
+    "/variant-groups/{group_id}",
+    response_model=AdminPosCatalogResponse,
+)
+def update_variant_group(
+    group_id: int,
+    data: AdminPosVariantGroupUpdate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.update_variant_group(
+        db,
+        group_id,
+        data,
+    )
+
+
+@router.post(
+    "/variant-groups/{group_id}/variants",
+    response_model=AdminPosCatalogResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_variant(
+    group_id: int,
+    data: AdminPosVariantCreate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.create_variant(
+        db,
+        group_id,
+        data,
+    )
+
+
+@router.patch(
+    "/variants/{variant_id}",
+    response_model=AdminPosCatalogResponse,
+)
+def update_variant(
+    variant_id: int,
+    data: AdminPosVariantUpdate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.update_variant(
+        db,
+        variant_id,
         data,
     )
 
