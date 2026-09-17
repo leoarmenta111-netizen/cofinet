@@ -10,16 +10,19 @@ from sqlalchemy.orm import Session
 from app.models.branch import Branch
 from app.models.pos_catalog import (
     PosBranchProduct,
+    PosBranchProductVariant,
     PosCategory,
     PosModifierGroup,
     PosModifierOption,
     PosProduct,
     PosProductModifierGroup,
+    PosProductVariant,
     PosVariant,
     PosVariantGroup,
 )
 from app.schemas.admin_pos_catalog import (
     AdminPosBranchProductUpdate,
+    AdminPosBranchProductVariantUpdate,
     AdminPosCategoryCreate,
     AdminPosCategoryUpdate,
     AdminPosModifierGroupCreate,
@@ -29,6 +32,7 @@ from app.schemas.admin_pos_catalog import (
     AdminPosProductCreate,
     AdminPosProductModifierUpdate,
     AdminPosProductUpdate,
+    AdminPosProductVariantUpdate,
     AdminPosVariantCreate,
     AdminPosVariantGroupCreate,
     AdminPosVariantGroupUpdate,
@@ -217,6 +221,62 @@ class AdminPosCatalogService:
                     ),
                 })
 
+            product_variant_rows = []
+
+            for product_variant in sorted(
+                product.product_variants,
+                key=lambda row: (
+                    row.sort_order,
+                    row.variant.sort_order,
+                    row.variant.name.lower(),
+                    row.id,
+                ),
+            ):
+                branch_overrides = {
+                    row.branch.id: row
+                    for row in product_variant.branch_overrides
+                }
+
+                variant_branch_rows = []
+
+                for branch in branches:
+                    override_row = branch_overrides.get(
+                        branch.id
+                    )
+
+                    price_override = (
+                        Decimal(override_row.price_override)
+                        if override_row is not None
+                        and override_row.price_override is not None
+                        else None
+                    )
+
+                    variant_branch_rows.append({
+                        "branch_code": branch.code,
+                        "branch_name": branch.name,
+                        "price_override": price_override,
+                        "effective_price": (
+                            price_override
+                            if price_override is not None
+                            else Decimal(product_variant.price)
+                        ),
+                        "is_available": (
+                            bool(override_row.is_available)
+                            if override_row is not None
+                            else True
+                        ),
+                    })
+
+                product_variant_rows.append({
+                    "product_variant_id": product_variant.id,
+                    "variant_id": product_variant.variant.id,
+                    "variant_name": product_variant.variant.name,
+                    "price": Decimal(product_variant.price),
+                    "is_active": product_variant.is_active,
+                    "sort_order": product_variant.sort_order,
+                    "branches": variant_branch_rows,
+                })
+
             modifier_rows = []
 
             for link in sorted(
@@ -245,6 +305,8 @@ class AdminPosCatalogService:
                 "preparation_station": product.preparation_station,
                 "sort_order": product.sort_order,
                 "is_active": product.is_active,
+                "variant_group_id": product.variant_group_id,
+                "variants": product_variant_rows,
                 "branches": branch_rows,
                 "modifiers": modifier_rows,
             })
@@ -543,6 +605,195 @@ class AdminPosCatalogService:
 
         for key, value in values.items():
             setattr(product, key, value)
+
+        cls._commit(db)
+        return cls.get_catalog(db)
+
+    @classmethod
+    def assign_variant_group(
+        cls,
+        db: Session,
+        product_id: int,
+        group_id: int,
+    ) -> dict:
+        product = cls._product(
+            db,
+            product_id,
+        )
+        group = cls._variant_group(
+            db,
+            group_id,
+        )
+
+        product.variant_group_id = group.id
+
+        for row in product.product_variants:
+            if (
+                row.is_active
+                and row.variant.variant_group_id != group.id
+            ):
+                row.is_active = False
+
+        cls._commit(db)
+        return cls.get_catalog(db)
+
+    @classmethod
+    def remove_variant_group(
+        cls,
+        db: Session,
+        product_id: int,
+    ) -> dict:
+        product = cls._product(
+            db,
+            product_id,
+        )
+
+        product.variant_group_id = None
+
+        for row in product.product_variants:
+            if row.is_active:
+                row.is_active = False
+
+        cls._commit(db)
+        return cls.get_catalog(db)
+
+    @classmethod
+    def update_product_variant(
+        cls,
+        db: Session,
+        product_id: int,
+        variant_id: int,
+        data: AdminPosProductVariantUpdate,
+    ) -> dict:
+        product = cls._product(
+            db,
+            product_id,
+        )
+        variant = cls._variant(
+            db,
+            variant_id,
+        )
+
+        if (
+            product.variant_group_id is None
+            or variant.variant_group_id
+            != product.variant_group_id
+        ):
+            raise HTTPException(
+                422,
+                "Variant does not belong to product variant group",
+            )
+
+        product_variant = next(
+            (
+                row
+                for row in product.product_variants
+                if row.variant_id == variant.id
+            ),
+            None,
+        )
+
+        if product_variant is None:
+            product_variant = PosProductVariant(
+                product=product,
+                variant=variant,
+                price=data.price,
+                is_active=data.is_active,
+                sort_order=data.sort_order,
+            )
+            db.add(product_variant)
+        else:
+            product_variant.price = data.price
+            product_variant.is_active = data.is_active
+            product_variant.sort_order = data.sort_order
+
+        cls._commit(db)
+        return cls.get_catalog(db)
+
+    @classmethod
+    def update_branch_product_variant(
+        cls,
+        db: Session,
+        product_id: int,
+        variant_id: int,
+        branch_code: str,
+        data: AdminPosBranchProductVariantUpdate,
+    ) -> dict:
+        product = cls._product(
+            db,
+            product_id,
+        )
+        variant = cls._variant(
+            db,
+            variant_id,
+        )
+
+        if (
+            product.variant_group_id is None
+            or variant.variant_group_id
+            != product.variant_group_id
+        ):
+            raise HTTPException(
+                422,
+                "Variant does not belong to product variant group",
+            )
+
+        product_variant = next(
+            (
+                row
+                for row in product.product_variants
+                if row.variant_id == variant.id
+            ),
+            None,
+        )
+
+        if product_variant is None:
+            raise HTTPException(
+                404,
+                "POS product variant not found",
+            )
+
+        branch = db.execute(
+            select(Branch).where(
+                Branch.code
+                == branch_code.strip().lower()
+            )
+        ).scalar_one_or_none()
+
+        if branch is None:
+            raise HTTPException(
+                404,
+                "Branch not found",
+            )
+
+        setting = next(
+            (
+                row
+                for row in product_variant.branch_overrides
+                if row.branch.id == branch.id
+            ),
+            None,
+        )
+
+        if (
+            data.price_override is None
+            and data.is_available is True
+        ):
+            if setting is not None:
+                db.delete(setting)
+
+            cls._commit(db)
+            return cls.get_catalog(db)
+
+        if setting is None:
+            setting = PosBranchProductVariant(
+                branch=branch,
+                product_variant=product_variant,
+            )
+            db.add(setting)
+
+        setting.price_override = data.price_override
+        setting.is_available = data.is_available
 
         cls._commit(db)
         return cls.get_catalog(db)

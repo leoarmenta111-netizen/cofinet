@@ -56,6 +56,17 @@ class AdminPosBranchProductUpdate(BaseModel):
     sort_order: int = 0
 
 
+class AdminPosProductVariantUpdate(BaseModel):
+    price: Decimal = Field(ge=0)
+    is_active: bool = True
+    sort_order: int = 0
+
+
+class AdminPosBranchProductVariantUpdate(BaseModel):
+    price_override: Decimal | None = Field(default=None, ge=0)
+    is_available: bool = True
+
+
 class AdminPosVariantGroupCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     sort_order: int = 0
@@ -176,6 +187,24 @@ class AdminPosProductModifierResponse(BaseModel):
     sort_order: int
 
 
+class AdminPosBranchProductVariantResponse(BaseModel):
+    branch_code: str
+    branch_name: str
+    price_override: Decimal | None
+    effective_price: Decimal
+    is_available: bool
+
+
+class AdminPosProductVariantResponse(BaseModel):
+    product_variant_id: int
+    variant_id: int
+    variant_name: str
+    price: Decimal
+    is_active: bool
+    sort_order: int
+    branches: list[AdminPosBranchProductVariantResponse]
+
+
 class AdminPosProductResponse(BaseModel):
     id: int
     category_id: int
@@ -192,6 +221,8 @@ class AdminPosProductResponse(BaseModel):
     ]
     sort_order: int
     is_active: bool
+    variant_group_id: int | None
+    variants: list[AdminPosProductVariantResponse]
     branches: list[AdminPosBranchSettingResponse]
     modifiers: list[AdminPosProductModifierResponse]
 
