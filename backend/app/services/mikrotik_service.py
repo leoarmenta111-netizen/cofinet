@@ -14,6 +14,7 @@ class MikroTikBranchNotConfiguredError(RuntimeError):
 class MikroTikService:
     _BRANCH_PREFIXES = {
         "bucerias": "MIKROTIK_BUCERIAS",
+        "ixtapa": "MIKROTIK_IXTAPA",
     }
 
     @classmethod
