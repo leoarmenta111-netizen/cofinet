@@ -1,3 +1,4 @@
+from app.database.self_order_seed import ensure_self_order_devices
 from app.database.session import Base, SessionLocal, engine
 from sqlalchemy import text
 from app.models.admin import Admin
@@ -21,5 +22,6 @@ with engine.begin() as connection:
 
 with SessionLocal() as db:
     PlanService.seed_default_plans(db)
+    ensure_self_order_devices(db)
 
 print("Database created and default plans seeded successfully.")

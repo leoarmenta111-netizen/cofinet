@@ -1,0 +1,674 @@
+"""Add customer self-order staging.
+
+Revision ID: 20260923_0001
+Revises: 20260915_0001
+Create Date: 2026-09-23
+"""
+
+from alembic import op
+import sqlalchemy as sa
+
+
+revision = '20260923_0001'
+down_revision = '20260915_0001'
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.create_table(
+        'self_order_devices',
+        sa.Column(
+            'id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'device_code',
+            sa.String(length=80),
+            nullable=False,
+        ),
+        sa.Column(
+            'branch_id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'source',
+            sa.String(length=24),
+            nullable=False,
+        ),
+        sa.Column(
+            'is_active',
+            sa.Boolean(),
+            server_default=sa.text('true'),
+            nullable=False,
+        ),
+        sa.Column(
+            'created_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            'updated_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            "source IN ('KIOSK','BAR_TABLET')",
+            name='ck_self_order_devices_source',
+        ),
+        sa.ForeignKeyConstraint(
+            ['branch_id'],
+            ['branches.id'],
+            name='fk_self_order_devices_branch_id_branches',
+            ondelete='RESTRICT',
+        ),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint(
+            'device_code',
+            name='uq_self_order_devices_device_code',
+        ),
+    )
+
+    op.create_index(
+        'ix_self_order_devices_id',
+        'self_order_devices',
+        ['id'],
+    )
+    op.create_index(
+        'ix_self_order_devices_device_code',
+        'self_order_devices',
+        ['device_code'],
+    )
+    op.create_index(
+        'ix_self_order_devices_branch_id',
+        'self_order_devices',
+        ['branch_id'],
+    )
+    op.create_index(
+        'ix_self_order_devices_is_active',
+        'self_order_devices',
+        ['is_active'],
+    )
+
+    op.create_table(
+        'self_orders',
+        sa.Column(
+            'id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'self_order_uuid',
+            sa.String(length=36),
+            nullable=False,
+        ),
+        sa.Column(
+            'branch_id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'device_id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'status',
+            sa.String(length=32),
+            server_default='AWAITING_PAYMENT',
+            nullable=False,
+        ),
+        sa.Column(
+            'subtotal',
+            sa.Numeric(12, 2),
+            nullable=False,
+        ),
+        sa.Column(
+            'total',
+            sa.Numeric(12, 2),
+            nullable=False,
+        ),
+        sa.Column(
+            'currency',
+            sa.String(length=3),
+            server_default='MXN',
+            nullable=False,
+        ),
+        sa.Column(
+            'expires_at',
+            sa.DateTime(timezone=True),
+            nullable=False,
+        ),
+        sa.Column(
+            'created_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            'updated_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            "status IN ('AWAITING_PAYMENT','PAYMENT_PROCESSING','PAYMENT_DECLINED','PAYMENT_UNKNOWN','PAID','SUBMITTED','CANCELLED','EXPIRED')",
+            name='ck_self_orders_status',
+        ),
+        sa.CheckConstraint(
+            'subtotal >= 0',
+            name='ck_self_orders_subtotal_nonnegative',
+        ),
+        sa.CheckConstraint(
+            'total >= 0',
+            name='ck_self_orders_total_nonnegative',
+        ),
+        sa.ForeignKeyConstraint(
+            ['branch_id'],
+            ['branches.id'],
+            name='fk_self_orders_branch_id_branches',
+            ondelete='RESTRICT',
+        ),
+        sa.ForeignKeyConstraint(
+            ['device_id'],
+            ['self_order_devices.id'],
+            name='fk_self_orders_device_id_self_order_devices',
+            ondelete='RESTRICT',
+        ),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint(
+            'self_order_uuid',
+            name='uq_self_orders_self_order_uuid',
+        ),
+    )
+
+    op.create_index(
+        'ix_self_orders_id',
+        'self_orders',
+        ['id'],
+    )
+    op.create_index(
+        'ix_self_orders_self_order_uuid',
+        'self_orders',
+        ['self_order_uuid'],
+    )
+    op.create_index(
+        'ix_self_orders_branch_id',
+        'self_orders',
+        ['branch_id'],
+    )
+    op.create_index(
+        'ix_self_orders_device_id',
+        'self_orders',
+        ['device_id'],
+    )
+    op.create_index(
+        'ix_self_orders_status',
+        'self_orders',
+        ['status'],
+    )
+
+    op.create_table(
+        'self_order_items',
+        sa.Column(
+            'id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'self_order_id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'product_id',
+            sa.Integer(),
+            nullable=True,
+        ),
+        sa.Column(
+            'product_name',
+            sa.String(length=160),
+            nullable=False,
+        ),
+        sa.Column(
+            'preparation_station',
+            sa.String(length=16),
+            server_default='NONE',
+            nullable=False,
+        ),
+        sa.Column(
+            'quantity',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'unit_base_price',
+            sa.Numeric(12, 2),
+            nullable=False,
+        ),
+        sa.Column(
+            'unit_modifier_total',
+            sa.Numeric(12, 2),
+            server_default='0',
+            nullable=False,
+        ),
+        sa.Column(
+            'unit_price',
+            sa.Numeric(12, 2),
+            nullable=False,
+        ),
+        sa.Column(
+            'line_total',
+            sa.Numeric(12, 2),
+            nullable=False,
+        ),
+        sa.Column(
+            'notes',
+            sa.Text(),
+            nullable=True,
+        ),
+        sa.Column(
+            'created_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            'quantity > 0',
+            name='ck_self_order_items_quantity_positive',
+        ),
+        sa.CheckConstraint(
+            'unit_base_price >= 0',
+            name='ck_self_order_items_base_price_nonnegative',
+        ),
+        sa.CheckConstraint(
+            'unit_price >= 0',
+            name='ck_self_order_items_unit_price_nonnegative',
+        ),
+        sa.CheckConstraint(
+            'line_total >= 0',
+            name='ck_self_order_items_line_total_nonnegative',
+        ),
+        sa.CheckConstraint(
+            "preparation_station IN ('KITCHEN','BAR','NONE')",
+            name='ck_self_order_items_preparation_station',
+        ),
+        sa.ForeignKeyConstraint(
+            ['self_order_id'],
+            ['self_orders.id'],
+            name='fk_self_order_items_self_order_id_self_orders',
+            ondelete='CASCADE',
+        ),
+        sa.ForeignKeyConstraint(
+            ['product_id'],
+            ['pos_products.id'],
+            name='fk_self_order_items_product_id_pos_products',
+            ondelete='SET NULL',
+        ),
+        sa.PrimaryKeyConstraint('id'),
+    )
+
+    op.create_index(
+        'ix_self_order_items_id',
+        'self_order_items',
+        ['id'],
+    )
+    op.create_index(
+        'ix_self_order_items_self_order_id',
+        'self_order_items',
+        ['self_order_id'],
+    )
+    op.create_index(
+        'ix_self_order_items_product_id',
+        'self_order_items',
+        ['product_id'],
+    )
+
+    op.create_table(
+        'self_order_item_modifiers',
+        sa.Column(
+            'id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'self_order_item_id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'modifier_option_id',
+            sa.Integer(),
+            nullable=True,
+        ),
+        sa.Column(
+            'group_name',
+            sa.String(length=120),
+            nullable=False,
+        ),
+        sa.Column(
+            'option_name',
+            sa.String(length=120),
+            nullable=False,
+        ),
+        sa.Column(
+            'price_delta',
+            sa.Numeric(12, 2),
+            nullable=False,
+        ),
+        sa.Column(
+            'created_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ['self_order_item_id'],
+            ['self_order_items.id'],
+            name='fk_self_order_item_modifiers_item_id',
+            ondelete='CASCADE',
+        ),
+        sa.ForeignKeyConstraint(
+            ['modifier_option_id'],
+            ['pos_modifier_options.id'],
+            name='fk_self_order_item_modifiers_option_id',
+            ondelete='SET NULL',
+        ),
+        sa.PrimaryKeyConstraint('id'),
+    )
+
+    op.create_index(
+        'ix_self_order_item_modifiers_id',
+        'self_order_item_modifiers',
+        ['id'],
+    )
+    op.create_index(
+        'ix_self_order_item_modifiers_self_order_item_id',
+        'self_order_item_modifiers',
+        ['self_order_item_id'],
+    )
+    op.create_index(
+        'ix_self_order_item_modifiers_modifier_option_id',
+        'self_order_item_modifiers',
+        ['modifier_option_id'],
+    )
+
+    op.create_table(
+        'self_order_payment_attempts',
+        sa.Column(
+            'id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'payment_attempt_uuid',
+            sa.String(length=36),
+            nullable=False,
+        ),
+        sa.Column(
+            'self_order_id',
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            'provider',
+            sa.String(length=40),
+            nullable=False,
+        ),
+        sa.Column(
+            'status',
+            sa.String(length=24),
+            server_default='PROCESSING',
+            nullable=False,
+        ),
+        sa.Column(
+            'amount',
+            sa.Numeric(12, 2),
+            nullable=False,
+        ),
+        sa.Column(
+            'external_reference',
+            sa.String(length=160),
+            nullable=True,
+        ),
+        sa.Column(
+            'created_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            'updated_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            "status IN ('PROCESSING','APPROVED','DECLINED','UNKNOWN')",
+            name='ck_self_order_payment_attempts_status',
+        ),
+        sa.CheckConstraint(
+            'amount >= 0',
+            name='ck_self_order_payment_attempts_amount_nonnegative',
+        ),
+        sa.ForeignKeyConstraint(
+            ['self_order_id'],
+            ['self_orders.id'],
+            name='fk_self_order_payment_attempts_self_order_id',
+            ondelete='CASCADE',
+        ),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint(
+            'payment_attempt_uuid',
+            name='uq_self_order_payment_attempts_uuid',
+        ),
+    )
+
+    op.create_index(
+        'ix_self_order_payment_attempts_id',
+        'self_order_payment_attempts',
+        ['id'],
+    )
+    op.create_index(
+        'ix_self_order_payment_attempts_payment_attempt_uuid',
+        'self_order_payment_attempts',
+        ['payment_attempt_uuid'],
+    )
+    op.create_index(
+        'ix_self_order_payment_attempts_self_order_id',
+        'self_order_payment_attempts',
+        ['self_order_id'],
+    )
+    op.create_index(
+        'ix_self_order_payment_attempts_status',
+        'self_order_payment_attempts',
+        ['status'],
+    )
+
+    op.add_column(
+        'pos_orders',
+        sa.Column(
+            'source',
+            sa.String(length=24),
+            server_default='POS',
+            nullable=False,
+        ),
+    )
+
+    op.add_column(
+        'pos_orders',
+        sa.Column(
+            'self_order_id',
+            sa.Integer(),
+            nullable=True,
+        ),
+    )
+
+    op.create_check_constraint(
+        'ck_pos_orders_source',
+        'pos_orders',
+        "source IN ('POS','KIOSK','BAR_TABLET')",
+    )
+
+    op.create_foreign_key(
+        'fk_pos_orders_self_order_id_self_orders',
+        'pos_orders',
+        'self_orders',
+        ['self_order_id'],
+        ['id'],
+        ondelete='SET NULL',
+    )
+
+    op.create_unique_constraint(
+        'uq_pos_orders_self_order_id',
+        'pos_orders',
+        ['self_order_id'],
+    )
+
+    op.create_index(
+        'ix_pos_orders_source',
+        'pos_orders',
+        ['source'],
+    )
+
+    op.create_index(
+        'ix_pos_orders_self_order_id',
+        'pos_orders',
+        ['self_order_id'],
+    )
+
+
+def downgrade() -> None:
+    op.drop_index(
+        'ix_pos_orders_self_order_id',
+        table_name='pos_orders',
+    )
+    op.drop_index(
+        'ix_pos_orders_source',
+        table_name='pos_orders',
+    )
+
+    op.drop_constraint(
+        'uq_pos_orders_self_order_id',
+        'pos_orders',
+        type_='unique',
+    )
+    op.drop_constraint(
+        'fk_pos_orders_self_order_id_self_orders',
+        'pos_orders',
+        type_='foreignkey',
+    )
+    op.drop_constraint(
+        'ck_pos_orders_source',
+        'pos_orders',
+        type_='check',
+    )
+
+    op.drop_column(
+        'pos_orders',
+        'self_order_id',
+    )
+    op.drop_column(
+        'pos_orders',
+        'source',
+    )
+
+    op.drop_index(
+        'ix_self_order_payment_attempts_status',
+        table_name='self_order_payment_attempts',
+    )
+    op.drop_index(
+        'ix_self_order_payment_attempts_self_order_id',
+        table_name='self_order_payment_attempts',
+    )
+    op.drop_index(
+        'ix_self_order_payment_attempts_payment_attempt_uuid',
+        table_name='self_order_payment_attempts',
+    )
+    op.drop_index(
+        'ix_self_order_payment_attempts_id',
+        table_name='self_order_payment_attempts',
+    )
+    op.drop_table(
+        'self_order_payment_attempts',
+    )
+
+    op.drop_index(
+        'ix_self_order_item_modifiers_modifier_option_id',
+        table_name='self_order_item_modifiers',
+    )
+    op.drop_index(
+        'ix_self_order_item_modifiers_self_order_item_id',
+        table_name='self_order_item_modifiers',
+    )
+    op.drop_index(
+        'ix_self_order_item_modifiers_id',
+        table_name='self_order_item_modifiers',
+    )
+    op.drop_table(
+        'self_order_item_modifiers',
+    )
+
+    op.drop_index(
+        'ix_self_order_items_product_id',
+        table_name='self_order_items',
+    )
+    op.drop_index(
+        'ix_self_order_items_self_order_id',
+        table_name='self_order_items',
+    )
+    op.drop_index(
+        'ix_self_order_items_id',
+        table_name='self_order_items',
+    )
+    op.drop_table(
+        'self_order_items',
+    )
+
+    op.drop_index(
+        'ix_self_orders_status',
+        table_name='self_orders',
+    )
+    op.drop_index(
+        'ix_self_orders_device_id',
+        table_name='self_orders',
+    )
+    op.drop_index(
+        'ix_self_orders_branch_id',
+        table_name='self_orders',
+    )
+    op.drop_index(
+        'ix_self_orders_self_order_uuid',
+        table_name='self_orders',
+    )
+    op.drop_index(
+        'ix_self_orders_id',
+        table_name='self_orders',
+    )
+    op.drop_table(
+        'self_orders',
+    )
+
+    op.drop_index(
+        'ix_self_order_devices_is_active',
+        table_name='self_order_devices',
+    )
+    op.drop_index(
+        'ix_self_order_devices_branch_id',
+        table_name='self_order_devices',
+    )
+    op.drop_index(
+        'ix_self_order_devices_device_code',
+        table_name='self_order_devices',
+    )
+    op.drop_index(
+        'ix_self_order_devices_id',
+        table_name='self_order_devices',
+    )
+    op.drop_table(
+        'self_order_devices',
+    )

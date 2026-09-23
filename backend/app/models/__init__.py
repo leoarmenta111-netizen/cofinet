@@ -37,3 +37,20 @@ __all__ = [
     "PosProduct",
     "PosProductModifierGroup",
 ]
+
+
+from app.models.self_orders import (
+    SelfOrder,
+    SelfOrderDevice,
+    SelfOrderItem,
+    SelfOrderItemModifier,
+    SelfOrderPaymentAttempt,
+)
+
+__all__ += [
+    'SelfOrder',
+    'SelfOrderDevice',
+    'SelfOrderItem',
+    'SelfOrderItemModifier',
+    'SelfOrderPaymentAttempt',
+]

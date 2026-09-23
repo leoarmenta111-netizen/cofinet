@@ -34,6 +34,10 @@ class PosOrder(Base):
             "payment_status IN ('PENDING','PAID','REFUNDED')",
             name="ck_pos_orders_payment_status",
         ),
+        CheckConstraint(
+            "source IN ('POS','KIOSK','BAR_TABLET')",
+            name='ck_pos_orders_source',
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -77,6 +81,22 @@ class PosOrder(Base):
     terminal_id = Column(
         String(80),
         nullable=False,
+        index=True,
+    )
+
+    source = Column(
+        String(24),
+        nullable=False,
+        default='POS',
+        server_default='POS',
+        index=True,
+    )
+
+    self_order_id = Column(
+        Integer,
+        ForeignKey('self_orders.id', ondelete='SET NULL'),
+        nullable=True,
+        unique=True,
         index=True,
     )
 
@@ -143,6 +163,11 @@ class PosOrder(Base):
     )
 
     branch = relationship("Branch")
+
+    self_order = relationship(
+        'SelfOrder',
+        back_populates='pos_order',
+    )
 
     items = relationship(
         "PosOrderItem",
