@@ -42,6 +42,10 @@ from app.schemas.pos_orders import (
 )
 
 
+from app.services.pos_pricing_service import (
+    PosPricingService,
+    PricingItemRequest,
+)
 from app.services.pos_receipt_service import PosReceiptService
 
 CENT = Decimal("0.01")
@@ -640,9 +644,80 @@ class PosOrderService:
         calculated_items = []
         subtotal = Decimal("0.00")
 
+        shared_priced_items = None
+
+        if payload.receipt_snapshot is None:
+            shared_priced_items = (
+                PosPricingService.resolve_items(
+                    db=db,
+                    branch=branch,
+                    items=[
+                        PricingItemRequest(
+                            product_id=item.product_id,
+                            quantity=item.quantity,
+                            modifier_option_ids=list(
+                                item.modifier_option_ids
+                            ),
+                            notes=item.notes,
+                        )
+                        for item in payload.items
+                    ],
+                )
+            )
+
         for item_index, requested_item in enumerate(
             payload.items
         ):
+            if shared_priced_items is not None:
+                priced_item = shared_priced_items[
+                    item_index
+                ]
+
+                subtotal += priced_item.line_total
+
+                calculated_items.append(
+                    {
+                        "product": priced_item.product,
+                        "quantity": priced_item.quantity,
+                        "base_price": (
+                            priced_item.unit_base_price
+                        ),
+                        "modifier_total": (
+                            priced_item.unit_modifier_total
+                        ),
+                        "unit_price": (
+                            priced_item.unit_price
+                        ),
+                        "line_total": (
+                            priced_item.line_total
+                        ),
+                        "notes": priced_item.notes,
+                        "modifiers": [
+                            {
+                                "group_id": (
+                                    modifier.group_id
+                                ),
+                                "option_id": (
+                                    modifier.option_id
+                                ),
+                                "group_name": (
+                                    modifier.group_name
+                                ),
+                                "option_name": (
+                                    modifier.option_name
+                                ),
+                                "price_delta": (
+                                    modifier.price_delta
+                                ),
+                            }
+                            for modifier
+                            in priced_item.modifiers
+                        ],
+                    }
+                )
+
+                continue
+
             branch_product = db.execute(
                 select(PosBranchProduct)
                 .join(PosBranchProduct.product)
