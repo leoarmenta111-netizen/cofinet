@@ -268,15 +268,256 @@
                 id="continue-payment-button"
                 class="customer-primary-button"
                 type="button"
-                disabled
             >
                 Continuar al pago
             </button>
 
             <small class="next-block-note">
-                Pago con tarjeta se habilita
-                en el siguiente bloque.
+                Pago únicamente con tarjeta.
             </small>
+        </section>
+    </div>
+
+
+
+    <div
+        id="payment-sheet"
+        class="customer-modal"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="payment-title"
+    >
+        <div class="modal-backdrop"></div>
+
+        <section class="payment-panel">
+            <div class="sheet-handle"></div>
+
+            <section
+                id="payment-ready"
+                class="payment-state"
+            >
+                <p class="eyebrow">
+                    PAGO
+                </p>
+
+                <h2 id="payment-title">
+                    Confirma tu pedido
+                </h2>
+
+                <p class="payment-copy">
+                    Tu pedido se enviará a
+                    preparación únicamente después
+                    de confirmar el pago.
+                </p>
+
+                <div class="payment-card-row">
+                    <span class="payment-card-icon">
+                        ◫
+                    </span>
+
+                    <div>
+                        <strong>
+                            Tarjeta
+                        </strong>
+
+                        <small>
+                            Crédito o débito
+                        </small>
+                    </div>
+                </div>
+
+                <button
+                    id="pay-card-button"
+                    class="customer-primary-button payment-action"
+                    type="button"
+                >
+                    Pagar con tarjeta
+                </button>
+
+                <button
+                    id="cancel-payment-button"
+                    class="payment-secondary-button"
+                    type="button"
+                >
+                    Volver al pedido
+                </button>
+            </section>
+
+
+            <section
+                id="payment-processing"
+                class="payment-state payment-centered"
+                hidden
+            >
+                <div class="payment-spinner"></div>
+
+                <p class="eyebrow">
+                    PROCESANDO
+                </p>
+
+                <h2>
+                    Estamos confirmando tu pago
+                </h2>
+
+                <p class="payment-copy">
+                    No cierres esta pantalla
+                    ni intentes pagar otra vez.
+                </p>
+            </section>
+
+
+            <section
+                id="payment-declined"
+                class="payment-state payment-centered"
+                hidden
+            >
+                <div class="payment-state-icon">
+                    !
+                </div>
+
+                <p class="eyebrow">
+                    PAGO NO APROBADO
+                </p>
+
+                <h2>
+                    No pudimos aprobar la tarjeta
+                </h2>
+
+                <p class="payment-copy">
+                    No se envió ningún pedido
+                    a preparación.
+                </p>
+
+                <button
+                    id="retry-payment-button"
+                    class="customer-primary-button payment-action"
+                    type="button"
+                >
+                    Intentar otra vez
+                </button>
+            </section>
+
+
+            <section
+                id="payment-unknown"
+                class="payment-state payment-centered"
+                hidden
+            >
+                <div class="payment-state-icon">
+                    ?
+                </div>
+
+                <p class="eyebrow">
+                    VERIFICANDO PAGO
+                </p>
+
+                <h2>
+                    No repitas el pago
+                </h2>
+
+                <p class="payment-copy">
+                    Perdimos la confirmación.
+                    Revisaremos el estado del
+                    mismo intento antes de permitir
+                    cualquier otro cobro.
+                </p>
+
+                <button
+                    id="recover-payment-button"
+                    class="customer-primary-button payment-action"
+                    type="button"
+                >
+                    Revisar estado
+                </button>
+            </section>
+
+
+            <section
+                id="payment-success"
+                class="payment-state payment-centered"
+                hidden
+            >
+                <div class="success-check">
+                    ✓
+                </div>
+
+                <p class="eyebrow">
+                    PEDIDO CONFIRMADO
+                </p>
+
+                <h2>
+                    ¡Gracias!
+                </h2>
+
+                <p>
+                    Tu número de orden es
+                </p>
+
+                <strong
+                    id="success-folio"
+                    class="success-folio"
+                >
+                    —
+                </strong>
+
+                <div class="success-pickup">
+                    Recoge en barra
+                </div>
+
+                <button
+                    id="new-order-button"
+                    class="customer-primary-button payment-action"
+                    type="button"
+                >
+                    Nueva orden
+                </button>
+            </section>
+
+
+            <p
+                id="payment-message"
+                class="payment-message"
+                hidden
+            ></p>
+        </section>
+    </div>
+
+
+    <div
+        id="idle-warning"
+        class="customer-modal idle-warning"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="idle-warning-title"
+    >
+        <div class="modal-backdrop"></div>
+
+        <section class="idle-panel">
+            <p class="eyebrow">
+                ¿SIGUES AHÍ?
+            </p>
+
+            <h2 id="idle-warning-title">
+                Tu pedido se reiniciará pronto
+            </h2>
+
+            <p>
+                Reiniciaremos esta pantalla en
+                <strong id="idle-countdown">
+                    15
+                </strong>
+                segundos.
+            </p>
+
+            <button
+                id="continue-idle-button"
+                class="customer-primary-button"
+                type="button"
+            >
+                Seguir ordenando
+            </button>
         </section>
     </div>
 
@@ -308,6 +549,7 @@
 
 <script src="./js/api.js?v=1"></script>
 <script src="./js/cart.js?v=1"></script>
+<script src="./js/checkout.js?v=1"></script>
 <script src="./js/app.js?v=1"></script>
 </body>
 </html>

@@ -13,10 +13,28 @@
         cart: [],
         modifierProduct: null,
         modifierQuantity: 1,
+
+        selfOrderUuid: null,
+        selfOrderStatus: null,
+        paymentAttemptUuid: null,
+        lastSelfOrder: null,
+        paymentBusy: false,
+
+        idleWarningTimer: null,
+        idleResetTimer: null,
+        idleCountdownTimer: null,
+        idleSecondsRemaining: 15,
     };
 
     const $ = selector =>
         document.querySelector(selector);
+
+
+    const IDLE_WARNING_MS =
+        90000;
+
+    const IDLE_GRACE_SECONDS =
+        15;
 
 
     function money(value) {
@@ -106,7 +124,21 @@
         state.modifierProduct = null;
         state.modifierQuantity = 1;
 
+        state.selfOrderUuid = null;
+        state.selfOrderStatus = null;
+        state.paymentAttemptUuid = null;
+        state.lastSelfOrder = null;
+        state.paymentBusy = false;
+
+        clearCheckoutSession();
         closeOverlays();
+
+        $("#payment-sheet").hidden =
+            true;
+
+        $("#idle-warning").hidden =
+            true;
+
         renderCart();
 
         $("#menu-screen").hidden =
@@ -114,6 +146,8 @@
 
         $("#start-screen").hidden =
             false;
+
+        scheduleIdleTracking();
     }
 
 
@@ -969,6 +1003,690 @@
     }
 
 
+
+    function saveCheckoutSession() {
+        if (!state.selfOrderUuid) {
+            return;
+        }
+
+        const session =
+            window.CofiCustomerCheckout
+                .buildSession({
+                    selfOrderUuid:
+                        state.selfOrderUuid,
+                    branchCode:
+                        state.branchCode,
+                    deviceCode:
+                        state.deviceCode,
+                    paymentAttemptUuid:
+                        state.paymentAttemptUuid,
+                });
+
+        window.localStorage.setItem(
+            window.CofiCustomerCheckout
+                .SESSION_KEY,
+            JSON.stringify(session)
+        );
+    }
+
+
+    function readCheckoutSession() {
+        const raw =
+            window.localStorage.getItem(
+                window.CofiCustomerCheckout
+                    .SESSION_KEY
+            );
+
+        if (!raw) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(raw);
+        } catch {
+            window.localStorage.removeItem(
+                window.CofiCustomerCheckout
+                    .SESSION_KEY
+            );
+
+            return null;
+        }
+    }
+
+
+    function clearCheckoutSession() {
+        window.localStorage.removeItem(
+            window.CofiCustomerCheckout
+                .SESSION_KEY
+        );
+    }
+
+
+    function setPaymentMessage(
+        message = null
+    ) {
+        const element =
+            $("#payment-message");
+
+        element.hidden =
+            !message;
+
+        element.textContent =
+            message || "";
+    }
+
+
+    function hidePaymentStates() {
+        [
+            "#payment-ready",
+            "#payment-processing",
+            "#payment-declined",
+            "#payment-unknown",
+            "#payment-success",
+        ].forEach(selector => {
+            $(selector).hidden = true;
+        });
+    }
+
+
+    function applySelfOrder(order) {
+        state.lastSelfOrder =
+            order;
+
+        state.selfOrderUuid =
+            order.self_order_uuid;
+
+        state.selfOrderStatus =
+            order.status;
+
+        saveCheckoutSession();
+
+        return order;
+    }
+
+
+    function renderPaymentView(order) {
+        const current =
+            order ||
+            state.lastSelfOrder ||
+            {
+                status:
+                    state.selfOrderStatus,
+            };
+
+        const view =
+            window.CofiCustomerCheckout
+                .viewForStatus(
+                    current.status
+                );
+
+        hidePaymentStates();
+        setPaymentMessage();
+
+        $("#payment-sheet").hidden =
+            false;
+
+        if (view === "PAYMENT") {
+            $("#payment-ready").hidden =
+                false;
+        }
+
+        if (view === "PROCESSING") {
+            $("#payment-processing").hidden =
+                false;
+        }
+
+        if (view === "DECLINED") {
+            $("#payment-declined").hidden =
+                false;
+        }
+
+        if (view === "UNKNOWN") {
+            $("#payment-unknown").hidden =
+                false;
+        }
+
+        if (view === "SUCCESS") {
+            $("#payment-success").hidden =
+                false;
+
+            $("#success-folio").textContent =
+                current.folio || "—";
+        }
+
+        scheduleIdleTracking();
+    }
+
+
+    function simulatedOutcome() {
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const requested =
+            String(
+                params.get(
+                    "payment_outcome"
+                ) ||
+                "APPROVED"
+            ).toUpperCase();
+
+        if (
+            [
+                "APPROVED",
+                "DECLINED",
+                "UNKNOWN",
+            ].includes(requested)
+        ) {
+            return requested;
+        }
+
+        return "APPROVED";
+    }
+
+
+    async function createStagedOrder() {
+        if (state.selfOrderUuid) {
+            const existing =
+                await window.CofiCustomerAPI
+                    .getSelfOrder(
+                        state.selfOrderUuid,
+                        state.deviceCode
+                    );
+
+            return applySelfOrder(
+                existing
+            );
+        }
+
+        state.selfOrderUuid =
+            uuid();
+
+        state.selfOrderStatus =
+            "AWAITING_PAYMENT";
+
+        saveCheckoutSession();
+
+        const payload = {
+            self_order_uuid:
+                state.selfOrderUuid,
+            branch_code:
+                state.branchCode,
+            device_code:
+                state.deviceCode,
+            items:
+                window.CofiCustomerCart
+                    .toSelfOrderItems(
+                        state.cart
+                    ),
+        };
+
+        const order =
+            await window.CofiCustomerAPI
+                .createSelfOrder(
+                    payload
+                );
+
+        return applySelfOrder(
+            order
+        );
+    }
+
+
+    async function beginCheckout() {
+        if (
+            !state.cart.length ||
+            state.paymentBusy
+        ) {
+            return;
+        }
+
+        state.paymentBusy = true;
+
+        const button =
+            $("#continue-payment-button");
+
+        button.disabled = true;
+
+        try {
+            const order =
+                await createStagedOrder();
+
+            $("#review-sheet").hidden =
+                true;
+
+            renderPaymentView(order);
+
+        } catch (error) {
+            setPaymentMessage(
+                error.message ||
+                "No pudimos preparar el pago."
+            );
+
+            $("#payment-sheet").hidden =
+                false;
+
+        } finally {
+            state.paymentBusy = false;
+            button.disabled = false;
+        }
+    }
+
+
+    async function refreshSelfOrder({
+        uncertainPayment = false,
+    } = {}) {
+        if (!state.selfOrderUuid) {
+            return null;
+        }
+
+        try {
+            const order =
+                await window.CofiCustomerAPI
+                    .getSelfOrder(
+                        state.selfOrderUuid,
+                        state.deviceCode
+                    );
+
+            applySelfOrder(order);
+
+            if (
+                order.status ===
+                "PAYMENT_DECLINED"
+            ) {
+                state.paymentAttemptUuid =
+                    null;
+
+                saveCheckoutSession();
+            }
+
+            renderPaymentView(order);
+
+            return order;
+
+        } catch (error) {
+            if (error.status === 404) {
+                clearCheckoutSession();
+
+                state.selfOrderUuid =
+                    null;
+
+                state.paymentAttemptUuid =
+                    null;
+
+                state.selfOrderStatus =
+                    null;
+
+                if (!uncertainPayment) {
+                    $("#payment-sheet").hidden =
+                        true;
+                }
+
+                return null;
+            }
+
+            if (uncertainPayment) {
+                state.selfOrderStatus =
+                    "PAYMENT_UNKNOWN";
+
+                saveCheckoutSession();
+
+                renderPaymentView({
+                    status:
+                        "PAYMENT_UNKNOWN",
+                    folio: null,
+                });
+
+                return null;
+            }
+
+            throw error;
+        }
+    }
+
+
+    async function startCardPayment() {
+        if (
+            state.paymentBusy ||
+            !window.CofiCustomerCheckout
+                .canStartPayment(
+                    state.selfOrderStatus
+                )
+        ) {
+            return;
+        }
+
+        state.paymentBusy = true;
+
+        state.paymentAttemptUuid =
+            window.CofiCustomerCheckout
+                .ensureAttemptUuid(
+                    state.paymentAttemptUuid,
+                    uuid
+                );
+
+        saveCheckoutSession();
+
+        state.selfOrderStatus =
+            "PAYMENT_PROCESSING";
+
+        renderPaymentView({
+            status:
+                "PAYMENT_PROCESSING",
+        });
+
+        try {
+            const order =
+                await window.CofiCustomerAPI
+                    .createPaymentAttempt(
+                        state.selfOrderUuid,
+                        {
+                            device_code:
+                                state.deviceCode,
+                            payment_attempt_uuid:
+                                state
+                                    .paymentAttemptUuid,
+                            simulated_outcome:
+                                simulatedOutcome(),
+                        }
+                    );
+
+            applySelfOrder(order);
+
+            if (
+                order.status ===
+                "PAYMENT_DECLINED"
+            ) {
+                state.paymentAttemptUuid =
+                    null;
+
+                saveCheckoutSession();
+            }
+
+            renderPaymentView(order);
+
+        } catch {
+            await refreshSelfOrder({
+                uncertainPayment: true,
+            });
+
+        } finally {
+            state.paymentBusy = false;
+        }
+    }
+
+
+    async function cancelStagedOrder() {
+        if (!state.selfOrderUuid) {
+            $("#payment-sheet").hidden =
+                true;
+
+            $("#review-sheet").hidden =
+                false;
+
+            return;
+        }
+
+        if (
+            !window.CofiCustomerCheckout
+                .canStartPayment(
+                    state.selfOrderStatus
+                )
+        ) {
+            return;
+        }
+
+        try {
+            await window.CofiCustomerAPI
+                .cancelSelfOrder(
+                    state.selfOrderUuid,
+                    state.deviceCode
+                );
+        } catch {
+            return;
+        }
+
+        state.selfOrderUuid = null;
+        state.selfOrderStatus = null;
+        state.paymentAttemptUuid = null;
+        state.lastSelfOrder = null;
+
+        clearCheckoutSession();
+
+        $("#payment-sheet").hidden =
+            true;
+
+        $("#review-sheet").hidden =
+            false;
+
+        scheduleIdleTracking();
+    }
+
+
+    async function recoverCheckoutSession() {
+        const session =
+            readCheckoutSession();
+
+        if (!session) {
+            return;
+        }
+
+        if (
+            session.branch_code !==
+                state.branchCode ||
+            session.device_code !==
+                state.deviceCode
+        ) {
+            clearCheckoutSession();
+            return;
+        }
+
+        state.selfOrderUuid =
+            session.self_order_uuid;
+
+        state.paymentAttemptUuid =
+            session.payment_attempt_uuid ||
+            null;
+
+        const order =
+            await refreshSelfOrder();
+
+        if (!order) {
+            return;
+        }
+
+        if (
+            [
+                "CANCELLED",
+                "EXPIRED",
+            ].includes(order.status)
+        ) {
+            clearCheckoutSession();
+
+            state.selfOrderUuid = null;
+            state.selfOrderStatus = null;
+            state.paymentAttemptUuid = null;
+            state.lastSelfOrder = null;
+
+            return;
+        }
+
+        $("#start-screen").hidden =
+            true;
+
+        $("#menu-screen").hidden =
+            false;
+
+        renderPaymentView(order);
+    }
+
+
+    function clearIdleTimers() {
+        if (state.idleWarningTimer) {
+            clearTimeout(
+                state.idleWarningTimer
+            );
+        }
+
+        if (state.idleResetTimer) {
+            clearTimeout(
+                state.idleResetTimer
+            );
+        }
+
+        if (state.idleCountdownTimer) {
+            clearInterval(
+                state.idleCountdownTimer
+            );
+        }
+
+        state.idleWarningTimer =
+            null;
+
+        state.idleResetTimer =
+            null;
+
+        state.idleCountdownTimer =
+            null;
+    }
+
+
+    function updateIdleCountdown() {
+        $("#idle-countdown")
+            .textContent =
+                String(
+                    state
+                        .idleSecondsRemaining
+                );
+    }
+
+
+    async function performIdleReset() {
+        if (
+            !window.CofiCustomerCheckout
+                .canIdleReset(
+                    state.selfOrderStatus
+                )
+        ) {
+            $("#idle-warning").hidden =
+                true;
+
+            scheduleIdleTracking();
+            return;
+        }
+
+        if (
+            state.selfOrderUuid &&
+            window.CofiCustomerCheckout
+                .canStartPayment(
+                    state.selfOrderStatus
+                )
+        ) {
+            try {
+                await window.CofiCustomerAPI
+                    .cancelSelfOrder(
+                        state.selfOrderUuid,
+                        state.deviceCode
+                    );
+            } catch {
+                // Local reset remains safe:
+                // cancellable unpaid order can expire.
+            }
+        }
+
+        resetOrder();
+    }
+
+
+    function showIdleWarning() {
+        if (
+            !window.CofiCustomerCheckout
+                .canIdleReset(
+                    state.selfOrderStatus
+                )
+        ) {
+            return;
+        }
+
+        state.idleSecondsRemaining =
+            IDLE_GRACE_SECONDS;
+
+        updateIdleCountdown();
+
+        $("#idle-warning").hidden =
+            false;
+
+        state.idleCountdownTimer =
+            setInterval(
+                () => {
+                    state.idleSecondsRemaining -= 1;
+
+                    updateIdleCountdown();
+
+                    if (
+                        state
+                            .idleSecondsRemaining <=
+                        0
+                    ) {
+                        clearInterval(
+                            state
+                                .idleCountdownTimer
+                        );
+
+                        state.idleCountdownTimer =
+                            null;
+                    }
+                },
+                1000
+            );
+
+        state.idleResetTimer =
+            setTimeout(
+                performIdleReset,
+                IDLE_GRACE_SECONDS *
+                    1000
+            );
+    }
+
+
+    function scheduleIdleTracking() {
+        clearIdleTimers();
+
+        $("#idle-warning").hidden =
+            true;
+
+        if (
+            !window.CofiCustomerCheckout
+                .canIdleReset(
+                    state.selfOrderStatus
+                )
+        ) {
+            return;
+        }
+
+        state.idleWarningTimer =
+            setTimeout(
+                showIdleWarning,
+                IDLE_WARNING_MS
+            );
+    }
+
+
+    function registerActivity() {
+        if (
+            !window.CofiCustomerCheckout
+                .canIdleReset(
+                    state.selfOrderStatus
+                )
+        ) {
+            return;
+        }
+
+        scheduleIdleTracking();
+    }
+
+
     function bindEvents() {
         $("#start-order-button")
             .addEventListener(
@@ -1056,6 +1774,66 @@
                         true;
                 }
             );
+
+        $("#continue-payment-button")
+            .addEventListener(
+                "click",
+                beginCheckout
+            );
+
+        $("#pay-card-button")
+            .addEventListener(
+                "click",
+                startCardPayment
+            );
+
+        $("#retry-payment-button")
+            .addEventListener(
+                "click",
+                startCardPayment
+            );
+
+        $("#recover-payment-button")
+            .addEventListener(
+                "click",
+                () => {
+                    refreshSelfOrder({
+                        uncertainPayment:
+                            true,
+                    });
+                }
+            );
+
+        $("#cancel-payment-button")
+            .addEventListener(
+                "click",
+                cancelStagedOrder
+            );
+
+        $("#new-order-button")
+            .addEventListener(
+                "click",
+                resetOrder
+            );
+
+        $("#continue-idle-button")
+            .addEventListener(
+                "click",
+                scheduleIdleTracking
+            );
+
+        document.addEventListener(
+            "pointerdown",
+            registerActivity,
+            {
+                passive: true,
+            }
+        );
+
+        document.addEventListener(
+            "keydown",
+            registerActivity
+        );
     }
 
 
@@ -1067,6 +1845,17 @@
         renderCart();
 
         await loadCatalog();
+
+        try {
+            await recoverCheckoutSession();
+        } catch (error) {
+            console.warn(
+                "Checkout recovery unavailable:",
+                error
+            );
+        }
+
+        scheduleIdleTracking();
     }
 
 
