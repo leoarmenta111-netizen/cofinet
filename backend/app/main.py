@@ -11,6 +11,7 @@ from app.api.pins import router as pins_router
 from app.api.memberships import router as memberships_router
 from app.api.pos_catalog import router as pos_catalog_router
 from app.api.pos_orders import router as pos_orders_router
+from app.api.self_orders import router as self_orders_router
 from app.api.pos_receipts import router as pos_receipts_router
 from app.api.admin_pos_sales import router as admin_pos_sales_router
 from app.api.admin_pos_catalog import router as admin_pos_catalog_router
@@ -48,6 +49,7 @@ app.include_router(pins_router)
 app.include_router(memberships_router)
 app.include_router(pos_catalog_router)
 app.include_router(pos_orders_router)
+app.include_router(self_orders_router)
 app.include_router(pos_receipts_router)
 app.include_router(admin_pos_sales_router)
 app.include_router(admin_pos_catalog_router)
