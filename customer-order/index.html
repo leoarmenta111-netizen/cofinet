@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+    <meta name="theme-color" content="#f4f1e8">
+    <title>CofiCenter · Ordena aquí</title>
+    <link
+        rel="stylesheet"
+        href="./css/customer-order.css?v=1"
+    >
+</head>
+
+<body>
+<div
+    id="customer-order-app"
+    class="customer-order-app"
+>
+    <header class="customer-header">
+        <img
+            src="/pos/assets/coficenter-logo.png"
+            alt="CofiCenter"
+            class="customer-logo"
+        >
+
+        <div class="pickup-pill">
+            <span class="pickup-dot"></span>
+            Recoge en barra
+        </div>
+    </header>
+
+    <main class="customer-main">
+        <section
+            id="start-screen"
+            class="start-screen"
+        >
+            <div class="start-copy">
+                <p class="eyebrow">
+                    COFICENTER
+                </p>
+
+                <h1>
+                    Tu café,<br>
+                    a tu manera.
+                </h1>
+
+                <p class="start-description">
+                    Elige tus favoritos,
+                    personalízalos y recoge
+                    tu pedido en barra.
+                </p>
+
+                <button
+                    id="start-order-button"
+                    class="customer-primary-button start-button"
+                    type="button"
+                >
+                    Iniciar pedido
+                </button>
+            </div>
+
+            <div class="start-art" aria-hidden="true">
+                <div class="coffee-orbit coffee-orbit-one"></div>
+                <div class="coffee-orbit coffee-orbit-two"></div>
+
+                <div class="hero-cup">
+                    <span class="hero-cup-mark">
+                        C
+                    </span>
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="menu-screen"
+            class="menu-screen"
+            hidden
+        >
+            <div class="menu-topline">
+                <div>
+                    <p class="eyebrow">
+                        MENÚ
+                    </p>
+
+                    <h1>
+                        ¿Qué se te antoja?
+                    </h1>
+
+                    <p id="branch-label">
+                        CofiCenter Ixtapa
+                    </p>
+                </div>
+
+                <button
+                    id="restart-order-button"
+                    class="ghost-button"
+                    type="button"
+                >
+                    Reiniciar
+                </button>
+            </div>
+
+            <nav
+                id="category-tabs"
+                class="category-tabs"
+                aria-label="Categorías del menú"
+            ></nav>
+
+            <div
+                id="catalog-message"
+                class="catalog-message"
+                role="status"
+            >
+                Cargando menú…
+            </div>
+
+            <section
+                id="product-grid"
+                class="product-grid"
+                aria-live="polite"
+            ></section>
+        </section>
+    </main>
+
+
+    <div
+        id="modifier-dialog"
+        class="customer-modal"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modifier-title"
+    >
+        <div class="modal-backdrop"></div>
+
+        <section class="modifier-sheet">
+            <div class="sheet-handle"></div>
+
+            <div class="modifier-heading">
+                <div>
+                    <p class="eyebrow">
+                        PERSONALIZA
+                    </p>
+
+                    <h2 id="modifier-title">
+                        Producto
+                    </h2>
+
+                    <p id="modifier-base-price">
+                        -bash.00
+                    </p>
+                </div>
+
+                <button
+                    id="close-modifier-button"
+                    class="round-icon-button"
+                    type="button"
+                    aria-label="Cerrar personalización"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div
+                id="modifier-groups"
+                class="modifier-groups"
+            ></div>
+
+            <p
+                id="modifier-error"
+                class="modifier-error"
+                hidden
+            ></p>
+
+            <div class="modifier-footer">
+                <div class="quantity-control">
+                    <button
+                        id="modifier-minus"
+                        type="button"
+                        aria-label="Reducir cantidad"
+                    >
+                        −
+                    </button>
+
+                    <strong id="modifier-quantity">
+                        1
+                    </strong>
+
+                    <button
+                        id="modifier-plus"
+                        type="button"
+                        aria-label="Aumentar cantidad"
+                    >
+                        +
+                    </button>
+                </div>
+
+                <button
+                    id="add-customized-product"
+                    class="customer-primary-button modifier-add-button"
+                    type="button"
+                >
+                    <span>Agregar</span>
+                    <strong id="modifier-total">
+                        -bash.00
+                    </strong>
+                </button>
+            </div>
+        </section>
+    </div>
+
+
+    <div
+        id="review-sheet"
+        class="customer-modal"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-title"
+    >
+        <div class="modal-backdrop"></div>
+
+        <section class="review-panel">
+            <div class="sheet-handle"></div>
+
+            <div class="review-heading">
+                <div>
+                    <p class="eyebrow">
+                        TU PEDIDO
+                    </p>
+
+                    <h2 id="review-title">
+                        Revisa antes de continuar
+                    </h2>
+                </div>
+
+                <button
+                    id="close-review-button"
+                    class="round-icon-button"
+                    type="button"
+                    aria-label="Cerrar revisión"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div
+                id="review-items"
+                class="review-items"
+            ></div>
+
+            <div class="review-total">
+                <span>Total</span>
+                <strong id="review-total">
+                    -bash.00
+                </strong>
+            </div>
+
+            <p class="pickup-note">
+                Tu pedido se recogerá en barra.
+            </p>
+
+            <button
+                id="continue-payment-button"
+                class="customer-primary-button"
+                type="button"
+                disabled
+            >
+                Continuar al pago
+            </button>
+
+            <small class="next-block-note">
+                Pago con tarjeta se habilita
+                en el siguiente bloque.
+            </small>
+        </section>
+    </div>
+
+
+    <footer
+        id="customer-cart-bar"
+        class="customer-cart-bar"
+        hidden
+    >
+        <div class="cart-bar-summary">
+            <span id="cart-count">
+                0 productos
+            </span>
+
+            <strong id="cart-total">
+                -bash.00
+            </strong>
+        </div>
+
+        <button
+            id="review-order-button"
+            class="customer-primary-button cart-review-button"
+            type="button"
+        >
+            Revisar pedido
+        </button>
+    </footer>
+</div>
+
+<script src="./js/api.js?v=1"></script>
+<script src="./js/cart.js?v=1"></script>
+<script src="./js/app.js?v=1"></script>
+</body>
+</html>
