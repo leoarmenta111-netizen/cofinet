@@ -52,6 +52,7 @@ services:
       - ./frontend:/usr/share/nginx/html:ro
       - ./admin:/usr/share/nginx/admin:ro
       - ./pos:/usr/share/nginx/pos:ro
+      - ./customer-order:/usr/share/nginx/customer-order:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/api/health || exit 1"]
       interval: 10s
