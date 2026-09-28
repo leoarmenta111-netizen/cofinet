@@ -20,7 +20,7 @@ test(
             'id="order-detail-modal"',
             'id="order-status-action"',
             './js/orders-local.js?v=1',
-            './js/orders.js?v=15',
+            './js/orders.js?v=17',
         ].forEach(value => {
             assert.ok(
                 html.includes(value),

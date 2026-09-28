@@ -18,9 +18,9 @@ test(
 
         assert.ok(
             html.includes(
-                './js/orders.js?v=15'
+                './js/orders.js?v=17'
             ),
-            "orders.js debe usar la version v15"
+            "orders.js debe usar la version v17"
         );
     }
 );

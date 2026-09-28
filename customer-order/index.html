@@ -10,7 +10,7 @@
     <title>CofiCenter · Ordena aquí</title>
     <link
         rel="stylesheet"
-        href="./css/customer-order.css?v=1"
+        href="./css/customer-order.css?v=3"
     >
 </head>
 
@@ -63,13 +63,22 @@
             </div>
 
             <div class="start-art" aria-hidden="true">
-                <div class="coffee-orbit coffee-orbit-one"></div>
-                <div class="coffee-orbit coffee-orbit-two"></div>
+                <div class="start-art-frame">
+                    <div class="start-art-glow"></div>
 
-                <div class="hero-cup">
-                    <span class="hero-cup-mark">
-                        C
-                    </span>
+                    <img
+                        src="./assets/coficenter-hero-combo.png"
+                        alt=""
+                        class="start-art-image"
+                    >
+
+                    <div class="start-art-badge">
+                        <span class="start-art-badge-dot"></span>
+
+                        <span>
+                            Preparado al momento
+                        </span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -129,7 +138,7 @@
 
     <div
         id="modifier-dialog"
-        class="customer-modal"
+        class="customer-modal product-configurator-modal"
         hidden
         role="dialog"
         aria-modal="true"
@@ -137,32 +146,70 @@
     >
         <div class="modal-backdrop"></div>
 
-        <section class="modifier-sheet">
-            <div class="sheet-handle"></div>
+        <section class="modifier-sheet product-configurator">
+            <header class="modifier-topbar">
+                <button
+                    id="close-modifier-button"
+                    class="round-icon-button modifier-back-button"
+                    type="button"
+                    aria-label="Volver al menú"
+                >
+                    ‹
+                </button>
 
-            <div class="modifier-heading">
-                <div>
+                <img
+                    class="modifier-brand-mark"
+                    src="/pos/assets/coficenter-logo.png"
+                    alt="CofiCenter"
+                >
+
+                <span
+                    class="modifier-topbar-spacer"
+                    aria-hidden="true"
+                ></span>
+            </header>
+
+            <div class="modifier-product-hero">
+                <div class="modifier-product-visual">
+                    <img
+                        id="modifier-product-image"
+                        class="modifier-product-image"
+                        alt=""
+                        hidden
+                    >
+
+                    <span
+                        id="modifier-product-fallback"
+                        class="modifier-product-fallback"
+                        aria-hidden="true"
+                    >
+                        C
+                    </span>
+                </div>
+
+                <div class="modifier-heading">
                     <p class="eyebrow">
-                        PERSONALIZA
+                        PERSONALIZA TU PRODUCTO
                     </p>
 
                     <h2 id="modifier-title">
                         Producto
                     </h2>
 
-                    <p id="modifier-base-price">
-                        -bash.00
+                    <p
+                        id="modifier-description"
+                        class="modifier-description"
+                    >
+                        Personaliza tu producto a tu gusto.
+                    </p>
+
+                    <p
+                        id="modifier-base-price"
+                        class="modifier-base-price"
+                    >
+                        $0.00
                     </p>
                 </div>
-
-                <button
-                    id="close-modifier-button"
-                    class="round-icon-button"
-                    type="button"
-                    aria-label="Cerrar personalización"
-                >
-                    ×
-                </button>
             </div>
 
             <div
@@ -170,45 +217,92 @@
                 class="modifier-groups"
             ></div>
 
+            <section class="modifier-note-section">
+                <div class="modifier-note-heading">
+                    <div>
+                        <strong>
+                            Nota especial
+                        </strong>
+
+                        <small>
+                            Opcional
+                        </small>
+                    </div>
+
+                    <span id="modifier-note-count">
+                        0/150
+                    </span>
+                </div>
+
+                <textarea
+                    id="modifier-notes"
+                    class="modifier-notes"
+                    maxlength="150"
+                    rows="2"
+                    placeholder="Ej. aderezo aparte, partir por la mitad…"
+                ></textarea>
+            </section>
+
             <p
                 id="modifier-error"
                 class="modifier-error"
                 hidden
             ></p>
 
-            <div class="modifier-footer">
-                <div class="quantity-control">
-                    <button
-                        id="modifier-minus"
-                        type="button"
-                        aria-label="Reducir cantidad"
-                    >
-                        −
-                    </button>
+            <div class="modifier-footer product-configurator-footer">
+                <div class="modifier-footer-top">
+                    <div class="modifier-order-summary">
+                        <span>Tu orden</span>
+                        <strong id="modifier-cart-count">
+                            Orden vacía
+                        </strong>
+                        <small id="modifier-cart-total">
+                            $0.00
+                        </small>
+                    </div>
 
-                    <strong id="modifier-quantity">
-                        1
-                    </strong>
+                    <div class="quantity-control">
+                        <button
+                            id="modifier-minus"
+                            type="button"
+                            aria-label="Reducir cantidad"
+                        >
+                            −
+                        </button>
 
-                    <button
-                        id="modifier-plus"
-                        type="button"
-                        aria-label="Aumentar cantidad"
-                    >
-                        +
-                    </button>
+                        <strong id="modifier-quantity">
+                            1
+                        </strong>
+
+                        <button
+                            id="modifier-plus"
+                            type="button"
+                            aria-label="Aumentar cantidad"
+                        >
+                            +
+                        </button>
+                    </div>
                 </div>
 
-                <button
-                    id="add-customized-product"
-                    class="customer-primary-button modifier-add-button"
-                    type="button"
-                >
-                    <span>Agregar</span>
-                    <strong id="modifier-total">
-                        -bash.00
-                    </strong>
-                </button>
+                <div class="modifier-footer-action">
+                    <small id="modifier-required-hint">
+                        Completa las opciones obligatorias
+                    </small>
+
+                    <button
+                        id="add-customized-product"
+                        class="customer-primary-button modifier-add-button"
+                        type="button"
+                    >
+                        <span id="modifier-add-label">
+                            Agregar al pedido
+                        </span>
+
+                        <strong id="modifier-total">
+                            $0.00
+                        </strong>
+                    </button>
+                </div>
             </div>
         </section>
     </div>
@@ -256,7 +350,7 @@
             <div class="review-total">
                 <span>Total</span>
                 <strong id="review-total">
-                    -bash.00
+                    $0.00
                 </strong>
             </div>
 
@@ -533,7 +627,7 @@
             </span>
 
             <strong id="cart-total">
-                -bash.00
+                $0.00
             </strong>
         </div>
 
@@ -542,14 +636,14 @@
             class="customer-primary-button cart-review-button"
             type="button"
         >
-            Revisar pedido
+            Ver tu orden
         </button>
     </footer>
 </div>
 
 <script src="./js/api.js?v=1"></script>
-<script src="./js/cart.js?v=1"></script>
+<script src="./js/cart.js?v=2"></script>
 <script src="./js/checkout.js?v=1"></script>
-<script src="./js/app.js?v=1"></script>
+<script src="./js/app.js?v=3"></script>
 </body>
 </html>

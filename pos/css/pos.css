@@ -5853,3 +5853,59 @@ and (max-width: 1366px) {
         backdrop-filter: none !important;
     }
 }
+
+
+/* ORDER SOURCE BADGES */
+.order-source-badge {
+    display: inline-flex !important;
+    width: max-content;
+    max-width: 100%;
+    min-height: 20px;
+    margin-top: 5px !important;
+    padding: 2px 8px;
+    border: 1px solid #e0e4dc;
+    border-radius: 999px;
+    background: #f6f7f4;
+    color: #747c72 !important;
+    align-items: center;
+    font-size: 8px !important;
+    font-weight: 800;
+    letter-spacing: .055em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.order-source-badge.source-kiosk,
+.order-detail-source.source-kiosk {
+    border-color: #cbd9c2;
+    background: #edf5e8;
+    color: #456936 !important;
+}
+
+.order-source-badge.source-bar_tablet,
+.order-detail-source.source-bar_tablet {
+    border-color: #d8d0bf;
+    background: #f7f2e8;
+    color: #80662d !important;
+}
+
+.order-source-badge.source-local {
+    border-color: #ead8b4;
+    background: #fff5dc;
+    color: #9b6812 !important;
+}
+
+.order-detail-source {
+    display: inline-flex;
+    min-height: 24px;
+    padding: 3px 9px;
+    border: 1px solid #e0e4dc;
+    border-radius: 999px;
+    background: #f6f7f4;
+    color: #747c72;
+    align-items: center;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .045em;
+    text-transform: uppercase;
+}

@@ -545,6 +545,21 @@ class PosOrderService:
         if order.status == next_status:
             return cls._response(order)
 
+        # Orders routed to Kitchen/Bar are driven by their
+        # preparation stations. Allowing the whole-order
+        # endpoint to advance them independently can create
+        # impossible states such as DELIVERED while BAR is
+        # still NEW. Station endpoints are the source of truth
+        # for preparation-routed orders.
+        if order.station_states:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "Order status is controlled by "
+                    "preparation stations"
+                ),
+            )
+
         allowed = {
             "NEW": {"PREPARING"},
             "PREPARING": {"READY"},

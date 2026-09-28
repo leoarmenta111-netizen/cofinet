@@ -48,6 +48,56 @@
         }[method] || method || "—";
     }
 
+    function orderSource(order) {
+        if (order?.is_local === true) {
+            return "LOCAL";
+        }
+
+        const explicit =
+            String(order?.source || "")
+                .trim()
+                .toUpperCase();
+
+        if ([
+            "POS",
+            "KIOSK",
+            "BAR_TABLET",
+        ].includes(explicit)) {
+            return explicit;
+        }
+
+        const terminal =
+            String(order?.terminal_id || "")
+                .trim()
+                .toUpperCase();
+
+        if (terminal.startsWith("KIOSK-")) {
+            return "KIOSK";
+        }
+
+        if (terminal.startsWith("BAR-TABLET-")) {
+            return "BAR_TABLET";
+        }
+
+        return "POS";
+    }
+
+    function sourceLabel(source) {
+        return {
+            LOCAL: "Local",
+            POS: "POS",
+            KIOSK: "Kiosk",
+            BAR_TABLET: "Tablet barra",
+        }[source] || source || "POS";
+    }
+
+    function selfServiceSource(source) {
+        return (
+            source === "KIOSK" ||
+            source === "BAR_TABLET"
+        );
+    }
+
     function formatTime(value) {
         if (!value) return "—";
 
@@ -527,11 +577,16 @@
                             )
                             .join(" ");
 
+                    const source =
+                        orderSource(order);
+
                     const haystack = [
                         order.folio,
                         customerName,
                         order.customer_phone,
                         itemText,
+                        source,
+                        sourceLabel(source),
                     ]
                         .filter(Boolean)
                         .join(" ")
@@ -589,6 +644,9 @@
             const isLocal =
                 order.is_local === true;
 
+            const source =
+                orderSource(order);
+
             const visualStatus =
                 isLocal
                     ? "new"
@@ -633,9 +691,12 @@
                 document.createElement("small");
 
             origin.textContent =
-                isLocal
-                    ? "Local"
-                    : "POS";
+                sourceLabel(source);
+
+            origin.className =
+                `order-source-badge source-${
+                    source.toLowerCase()
+                }`;
 
             folioCell.append(
                 folio,
@@ -653,14 +714,21 @@
                 document.createElement("strong");
 
             customer.textContent =
-                customerName;
+                selfServiceSource(source) &&
+                customerName === "Mostrador"
+                    ? "Autoservicio"
+                    : customerName;
 
             const customerMeta =
                 document.createElement("small");
 
             customerMeta.textContent =
                 order.customer_phone ||
-                "Venta en mostrador";
+                (
+                    selfServiceSource(source)
+                        ? sourceLabel(source)
+                        : "Venta en mostrador"
+                );
 
             customerCell.append(
                 customer,
@@ -1082,6 +1150,9 @@
         meta.className =
             "order-detail-meta";
 
+        const source =
+            orderSource(order);
+
         const date =
             document.createElement(
                 "span"
@@ -1102,9 +1173,23 @@
                 order.payment?.method
             );
 
+        const origin =
+            document.createElement(
+                "span"
+            );
+
+        origin.className =
+            `order-detail-source source-${
+                source.toLowerCase()
+            }`;
+
+        origin.textContent =
+            sourceLabel(source);
+
         meta.append(
             date,
-            payment
+            payment,
+            origin
         );
 
         body.append(meta);
@@ -1220,12 +1305,25 @@
         configureStatusAction(order);
     }
 
+    function hasPreparationStations(order) {
+        return Array.isArray(order?.stations) &&
+            order.stations.some(
+                station =>
+                    station?.station === "KITCHEN" ||
+                    station?.station === "BAR"
+            );
+    }
+
+
     function configureStatusAction(order) {
         const action =
             $("#order-status-action");
 
 
-        if (order?.is_local) {
+        if (
+            order?.is_local ||
+            hasPreparationStations(order)
+        ) {
             action.hidden = true;
 
             delete action.dataset

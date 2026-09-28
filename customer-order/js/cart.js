@@ -124,6 +124,27 @@
         }
 
 
+        function normalizeNote(notes) {
+            if (notes === null || notes === undefined) {
+                return null;
+            }
+
+            const value = String(notes).trim();
+
+            if (!value) {
+                return null;
+            }
+
+            if (value.length > 150) {
+                throw new Error(
+                    "La nota no puede exceder 150 caracteres."
+                );
+            }
+
+            return value;
+        }
+
+
         function makeLine({
             product,
             selectedOptionIds = [],
@@ -218,7 +239,7 @@
                     unitPrice *
                     safeQuantity,
                 notes:
-                    notes || null,
+                    normalizeNote(notes),
             };
         }
 

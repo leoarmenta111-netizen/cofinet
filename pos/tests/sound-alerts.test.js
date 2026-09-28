@@ -180,7 +180,7 @@ test(
 
         assert.match(
             index,
-            /orders\.js\?v=15/,
+            /orders\.js\?v=17/,
             "orders.js debe refrescarse"
         );
 

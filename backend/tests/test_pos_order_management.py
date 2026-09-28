@@ -13,7 +13,7 @@ from app.schemas.pos_orders import PosOrderCreate
 from app.services.pos_order_service import PosOrderService
 
 
-def seed_catalog(db):
+def seed_catalog(db, preparation_station="BAR"):
     suffix = uuid4().hex[:8]
 
     branch = Branch(
@@ -35,7 +35,7 @@ def seed_catalog(db):
         category_id=category.id,
         name=f"Americano {suffix}",
         base_price=Decimal("50.00"),
-        preparation_station="BAR",
+        preparation_station=preparation_station,
         is_active=True,
     )
 
@@ -168,11 +168,14 @@ def test_get_order_is_scoped_to_branch(
     assert wrong_branch.json()["detail"] == "Order not found"
 
 
-def test_order_status_progression(
+def test_order_without_preparation_station_can_be_delivered(
     client,
     db_session,
 ):
-    branch, product = seed_catalog(db_session)
+    branch, product = seed_catalog(
+        db_session,
+        preparation_station="NONE",
+    )
 
     order = create_order(
         db_session,
@@ -180,21 +183,21 @@ def test_order_status_progression(
         product,
     )
 
-    for expected_status in (
-        "PREPARING",
-        "READY",
-        "DELIVERED",
-    ):
-        response = client.patch(
-            f"/pos/orders/{order.order_uuid}/status",
-            json={
-                "branch_code": branch.code,
-                "status": expected_status,
-            },
-        )
+    # Orders without Kitchen/Bar work are ready
+    # immediately and can still be delivered from
+    # the whole-order management endpoint.
+    assert order.status == "READY"
 
-        assert response.status_code == 200
-        assert response.json()["status"] == expected_status
+    response = client.patch(
+        f"/pos/orders/{order.order_uuid}/status",
+        json={
+            "branch_code": branch.code,
+            "status": "DELIVERED",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "DELIVERED"
 
     stored = (
         db_session.query(PosOrder)
@@ -211,7 +214,10 @@ def test_invalid_order_status_transition_is_rejected(
     client,
     db_session,
 ):
-    branch, product = seed_catalog(db_session)
+    branch, product = seed_catalog(
+        db_session,
+        preparation_station="NONE",
+    )
 
     order = create_order(
         db_session,
@@ -219,11 +225,13 @@ def test_invalid_order_status_transition_is_rejected(
         product,
     )
 
+    assert order.status == "READY"
+
     response = client.patch(
         f"/pos/orders/{order.order_uuid}/status",
         json={
             "branch_code": branch.code,
-            "status": "READY",
+            "status": "PREPARING",
         },
     )
 
@@ -237,7 +245,7 @@ def test_invalid_order_status_transition_is_rejected(
         .one()
     )
 
-    assert stored.status == "NEW"
+    assert stored.status == "READY"
 
 
 def test_list_orders_can_filter_by_status(
@@ -259,7 +267,10 @@ def test_list_orders_can_filter_by_status(
     )
 
     response = client.patch(
-        f"/pos/orders/{preparing.order_uuid}/status",
+        (
+            f"/pos/orders/{preparing.order_uuid}"
+            "/stations/BAR"
+        ),
         json={
             "branch_code": branch.code,
             "status": "PREPARING",

@@ -250,6 +250,38 @@ test(
 
 
 test(
+    "actividad global no cierra idle warning antes del click",
+    () => {
+        const app = read(
+            "customer-order/js/app.js"
+        );
+
+        assert.match(
+            app,
+            /function registerActivity\(\)[\s\S]*idle-warning[\s\S]*return;/
+        );
+    }
+);
+
+
+
+test(
+    "elementos hidden nunca permanecen visibles por CSS",
+    () => {
+        const css = read(
+            "customer-order/css/customer-order.css"
+        );
+
+        assert.match(
+            css,
+            /\[hidden\]\s*\{[\s\S]*?display:\s*none\s*!important/
+        );
+    }
+);
+
+
+
+test(
     "customer shell carga checkout antes de app",
     () => {
         const html = read(

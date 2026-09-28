@@ -262,3 +262,51 @@ test(
         );
     }
 );
+
+
+
+test(
+    "linea conserva nota especial normalizada",
+    () => {
+        const cart = loadCart();
+        const product = productFixture();
+
+        const line = cart.makeLine({
+            product,
+            selectedOptionIds: [101],
+            quantity: 1,
+            lineUuid: "line-note",
+            notes: "  Aderezo aparte  ",
+        });
+
+        assert.equal(
+            line.notes,
+            "Aderezo aparte"
+        );
+
+        assert.equal(
+            cart.toSelfOrderItems([line])[0].notes,
+            "Aderezo aparte"
+        );
+    }
+);
+
+
+test(
+    "nota especial del kiosk se limita a 150 caracteres",
+    () => {
+        const cart = loadCart();
+        const product = productFixture();
+
+        assert.throws(
+            () => cart.makeLine({
+                product,
+                selectedOptionIds: [101],
+                quantity: 1,
+                lineUuid: "line-note-long",
+                notes: "x".repeat(151),
+            }),
+            /150 caracteres/i
+        );
+    }
+);

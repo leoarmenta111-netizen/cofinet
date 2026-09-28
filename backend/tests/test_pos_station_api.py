@@ -655,3 +655,44 @@ def test_ready_station_can_be_delivered_independently_and_leaves_kds_feed(
         "BAR": "DELIVERED",
         "KITCHEN": "DELIVERED",
     }
+
+
+def test_whole_order_status_cannot_bypass_station_workflow(
+    client,
+    db_session,
+):
+    branch, products = seed_station_catalog(
+        db_session,
+        branch_code="station-api-order-guard",
+    )
+
+    order = create_order(
+        db_session,
+        branch,
+        products,
+        ["BAR"],
+    )
+
+    response = client.patch(
+        f"/pos/orders/{order.order_uuid}/status",
+        json={
+            "branch_code": branch.code,
+            "status": "PREPARING",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "Order status is controlled by "
+        "preparation stations"
+    )
+
+    stored = get_order_model(
+        db_session,
+        order.order_uuid,
+    )
+
+    assert stored.status == "NEW"
+    assert len(stored.station_states) == 1
+    assert stored.station_states[0].station == "BAR"
+    assert stored.station_states[0].status == "NEW"

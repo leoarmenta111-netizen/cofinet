@@ -137,7 +137,7 @@ test(
 
         assert.match(
             html,
-            /Revisar pedido/i
+            /Ver tu orden/i
         );
     }
 );

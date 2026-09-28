@@ -13,6 +13,8 @@
         cart: [],
         modifierProduct: null,
         modifierQuantity: 1,
+        modifierEditingLineUuid: null,
+        modifierReturnToReview: false,
 
         selfOrderUuid: null,
         selfOrderStatus: null,
@@ -123,6 +125,8 @@
         state.cart = [];
         state.modifierProduct = null;
         state.modifierQuantity = 1;
+        state.modifierEditingLineUuid = null;
+        state.modifierReturnToReview = false;
 
         state.selfOrderUuid = null;
         state.selfOrderStatus = null;
@@ -360,6 +364,26 @@
             );
         }
 
+        if (
+            product.modifiers &&
+            product.modifiers.length
+        ) {
+            const badge =
+                document.createElement(
+                    "span"
+                );
+
+            badge.className =
+                "product-badge";
+
+            badge.textContent =
+                "Personalizable";
+
+            visual.append(
+                badge
+            );
+        }
+
         const copy =
             document.createElement(
                 "span"
@@ -372,6 +396,9 @@
             document.createElement(
                 "strong"
             );
+
+        name.className =
+            "product-name";
 
         name.textContent =
             product.name;
@@ -400,6 +427,9 @@
             document.createElement(
                 "strong"
             );
+
+        price.className =
+            "product-price";
 
         price.textContent =
             money(product.price);
@@ -475,11 +505,75 @@
     }
 
 
+    function findProductById(productId) {
+        const numericId = Number(productId);
+
+        for (const category of categories()) {
+            const product =
+                (category.products || [])
+                    .find(
+                        item =>
+                            Number(item.id) ===
+                            numericId
+                    );
+
+            if (product) {
+                return product;
+            }
+        }
+
+        return null;
+    }
+
+
+    function productHasModifiers(product) {
+        return Boolean(
+            product?.modifiers?.length
+        );
+    }
+
+
+    function setModifierProductVisual(product) {
+        const image =
+            $("#modifier-product-image");
+
+        const fallback =
+            $("#modifier-product-fallback");
+
+        const description =
+            $("#modifier-description");
+
+        if (product.image_url) {
+            image.hidden = false;
+            image.src = product.image_url;
+            image.alt = product.name;
+            fallback.hidden = true;
+
+            image.onerror = () => {
+                image.hidden = true;
+                fallback.hidden = false;
+            };
+        } else {
+            image.hidden = true;
+            image.removeAttribute("src");
+            image.alt = "";
+            fallback.hidden = false;
+        }
+
+        fallback.textContent =
+            String(product.name || "C")
+                .trim()
+                .charAt(0)
+                .toUpperCase() || "C";
+
+        description.textContent =
+            product.description ||
+            "Personaliza tu producto a tu gusto.";
+    }
+
+
     function selectProduct(product) {
-        if (
-            !product.modifiers ||
-            !product.modifiers.length
-        ) {
+        if (!productHasModifiers(product)) {
             const line =
                 window.CofiCustomerCart.makeLine({
                     product,
@@ -494,47 +588,54 @@
             return;
         }
 
-        state.modifierProduct =
-            product;
-
-        state.modifierQuantity =
-            1;
-
-        $("#modifier-title")
-            .textContent =
-                product.name;
-
-        $("#modifier-base-price")
-            .textContent =
-                `Desde ${money(
-                    product.price
-                )}`;
-
-        $("#modifier-quantity")
-            .textContent =
-                "1";
-
-        $("#modifier-error").hidden =
-            true;
-
-        renderModifierGroups(product);
-        updateModifierPrice();
-
-        $("#modifier-dialog").hidden =
-            false;
+        openProductCustomizer(product);
     }
 
 
-    function renderModifierGroups(
-        product
-    ) {
+    function modifierGroupHint(group) {
+        const min = Number(
+            group.min_select ??
+            (group.required ? 1 : 0)
+        );
+
+        const max = Number(
+            group.max_select ?? 1
+        );
+
+        if (min > 0 && max === 1) {
+            return "Elige una opción";
+        }
+
+        if (min > 0) {
+            return min === max
+                ? `Elige ${min} opciones`
+                : `Elige entre ${min} y ${max}`;
+        }
+
+        if (max === 1) {
+            return "Elige una opción si quieres";
+        }
+
+        return `Puedes elegir hasta ${max}`;
+    }
+
+
+    function optionMonogram(option) {
+        return String(option.name || "+")
+            .trim()
+            .charAt(0)
+            .toUpperCase() || "+";
+    }
+
+
+    function renderModifierGroups(product) {
         const container =
             $("#modifier-groups");
 
         container.replaceChildren();
 
         (product.modifiers || [])
-            .forEach(group => {
+            .forEach((group, groupIndex) => {
                 const section =
                     document.createElement(
                         "section"
@@ -542,6 +643,18 @@
 
                 section.className =
                     "modifier-group";
+
+                section.dataset.groupId =
+                    String(group.id);
+
+                section.dataset.minSelect =
+                    String(
+                        group.min_select ??
+                        (group.required ? 1 : 0)
+                    );
+
+                section.dataset.maxSelect =
+                    String(group.max_select ?? 1);
 
                 const heading =
                     document.createElement(
@@ -564,49 +677,49 @@
                 strong.textContent =
                     group.name;
 
-                const min =
-                    Number(
-                        group.min_select ??
-                        (
-                            group.required
-                                ? 1
-                                : 0
-                        )
-                    );
-
                 const hint =
                     document.createElement(
                         "small"
                     );
 
                 hint.textContent =
-                    min > 0
-                        ? "Elige una opción"
-                        : "Opcional";
+                    modifierGroupHint(group);
 
                 title.append(
                     strong,
                     hint
                 );
 
-                const badge =
+                const status =
                     document.createElement(
                         "span"
                     );
 
-                badge.textContent =
+                status.className =
+                    "modifier-group-status";
+
+                const min =
+                    Number(
+                        section.dataset.minSelect
+                    );
+
+                status.textContent =
                     min > 0
                         ? "Obligatorio"
                         : "Opcional";
 
                 heading.append(
                     title,
-                    badge
+                    status
                 );
 
-                section.append(
-                    heading
-                );
+                const optionGrid =
+                    document.createElement(
+                        "div"
+                    );
+
+                optionGrid.className =
+                    "modifier-option-grid";
 
                 (group.options || [])
                     .forEach(option => {
@@ -641,56 +754,123 @@
 
                         input.dataset.maxSelect =
                             String(
-                                group.max_select ??
-                                1
+                                group.max_select ?? 1
                             );
 
                         input.addEventListener(
                             "change",
                             event => {
                                 enforceMax(event);
-                                updateModifierPrice();
+                                refreshModifierUi();
                             }
                         );
 
-                        const optionName =
+                        const visual =
                             document.createElement(
                                 "span"
+                            );
+
+                        visual.className =
+                            "modifier-option-visual";
+
+                        if (option.image_url) {
+                            const optionImage =
+                                document.createElement(
+                                    "img"
+                                );
+
+                            optionImage.src =
+                                option.image_url;
+
+                            optionImage.alt = "";
+
+                            visual.append(
+                                optionImage
+                            );
+                        } else {
+                            const monogram =
+                                document.createElement(
+                                    "span"
+                                );
+
+                            monogram.className =
+                                "modifier-option-monogram";
+
+                            monogram.textContent =
+                                optionMonogram(option);
+
+                            visual.append(
+                                monogram
+                            );
+                        }
+
+                        const copy =
+                            document.createElement(
+                                "span"
+                            );
+
+                        copy.className =
+                            "modifier-option-copy";
+
+                        const optionName =
+                            document.createElement(
+                                "strong"
                             );
 
                         optionName.textContent =
                             option.name;
 
-                        const delta =
-                            document.createElement(
-                                "strong"
-                            );
+                        copy.append(optionName);
 
                         const amount =
                             Number(
-                                option.price_delta ||
-                                0
+                                option.price_delta || 0
                             );
 
-                        delta.textContent =
-                            amount
-                                ? `+${money(amount)}`
-                                : "Incluido";
+                        if (amount) {
+                            const delta =
+                                document.createElement(
+                                    "small"
+                                );
+
+                            delta.textContent =
+                                `+${money(amount)}`;
+
+                            copy.append(delta);
+                        }
+
+                        const check =
+                            document.createElement(
+                                "span"
+                            );
+
+                        check.className =
+                            "modifier-option-check";
+
+                        check.textContent = "✓";
 
                         label.append(
                             input,
-                            optionName,
-                            delta
+                            visual,
+                            copy,
+                            check
                         );
 
-                        section.append(
-                            label
-                        );
+                        optionGrid.append(label);
                     });
 
-                container.append(
-                    section
+                section.append(
+                    heading,
+                    optionGrid
                 );
+
+                if (groupIndex > 0) {
+                    section.classList.add(
+                        "modifier-group--separated"
+                    );
+                }
+
+                container.append(section);
             });
     }
 
@@ -711,8 +891,7 @@
 
         const max =
             Number(
-                input.dataset.maxSelect ||
-                1
+                input.dataset.maxSelect || 1
             );
 
         const checked = [
@@ -740,12 +919,33 @@
     }
 
 
-    function updateModifierPrice() {
+    function hydrateModifierSelection(line) {
+        const selected =
+            new Set(
+                (line?.modifiers || [])
+                    .map(
+                        item =>
+                            Number(item.option_id)
+                    )
+            );
+
+        $("#modifier-groups")
+            .querySelectorAll("input")
+            .forEach(input => {
+                input.checked =
+                    selected.has(
+                        Number(input.value)
+                    );
+            });
+    }
+
+
+    function modifierEstimate() {
         const product =
             state.modifierProduct;
 
         if (!product) {
-            return;
+            return 0;
         }
 
         const selected =
@@ -757,8 +957,7 @@
             (product.modifiers || [])
                 .flatMap(
                     group =>
-                        group.options ||
-                        []
+                        group.options || []
                 )
                 .filter(
                     option =>
@@ -770,22 +969,221 @@
                     (sum, option) =>
                         sum +
                         Number(
-                            option.price_delta ||
-                            0
+                            option.price_delta || 0
                         ),
                     0
                 );
 
+        return (
+            Number(product.price) +
+            modifierTotal
+        ) * state.modifierQuantity;
+    }
+
+
+    function updateModifierCompletion() {
+        const selected =
+            selectedOptionIds();
+
+        $("#modifier-groups")
+            .querySelectorAll(
+                ".modifier-group"
+            )
+            .forEach(section => {
+                const min = Number(
+                    section.dataset.minSelect || 0
+                );
+
+                const max = Number(
+                    section.dataset.maxSelect || 1
+                );
+
+                const count =
+                    section
+                        .querySelectorAll(
+                            "input:checked"
+                        )
+                        .length;
+
+                const complete =
+                    count >= min &&
+                    count <= max;
+
+                section.classList.toggle(
+                    "modifier-group--incomplete",
+                    !complete && min > 0
+                );
+
+                const status =
+                    section.querySelector(
+                        ".modifier-group-status"
+                    );
+
+                if (status) {
+                    status.textContent =
+                        complete
+                            ? (
+                                min > 0
+                                    ? "Listo"
+                                    : "Opcional"
+                            )
+                            : "Falta elegir";
+                }
+            });
+
+        const validation =
+            window.CofiCustomerCart.validateModifiers(
+                    state.modifierProduct,
+                    selected
+                );
+
+        const addButton =
+            $("#add-customized-product");
+
+        addButton.disabled =
+            !validation.valid;
+
+        addButton.setAttribute(
+            "aria-disabled",
+            String(!validation.valid)
+        );
+
+        $("#modifier-required-hint")
+            .textContent =
+                validation.valid
+                    ? "Listo para agregar"
+                    : "Completa las opciones obligatorias";
+
+        return validation;
+    }
+
+
+    function updateModifierOrderSummary() {
+        const count =
+            window.CofiCustomerCart.cartCount(
+                state.cart
+            );
+
         const total =
-            (
-                Number(product.price) +
-                modifierTotal
-            ) *
-            state.modifierQuantity;
+            window.CofiCustomerCart.cartTotal(
+                state.cart
+            );
+
+        $("#modifier-cart-count")
+            .textContent =
+                count
+                    ? `${count} ${
+                        count === 1
+                            ? "producto"
+                            : "productos"
+                    }`
+                    : "Orden vacía";
+
+        $("#modifier-cart-total")
+            .textContent = money(total);
+    }
+
+
+    function refreshModifierUi() {
+        if (!state.modifierProduct) {
+            return;
+        }
 
         $("#modifier-total")
             .textContent =
-                money(total);
+                money(modifierEstimate());
+
+        updateModifierCompletion();
+        updateModifierOrderSummary();
+    }
+
+
+    function openProductCustomizer(
+        product,
+        {
+            line = null,
+            returnToReview = false,
+        } = {}
+    ) {
+        state.modifierProduct = product;
+        state.modifierQuantity =
+            Number(line?.quantity || 1);
+        state.modifierEditingLineUuid =
+            line?.line_uuid || null;
+        state.modifierReturnToReview =
+            Boolean(returnToReview);
+
+        $("#modifier-title")
+            .textContent = product.name;
+
+        $("#modifier-base-price")
+            .textContent =
+                `Desde ${money(product.price)}`;
+
+        $("#modifier-quantity")
+            .textContent =
+                String(state.modifierQuantity);
+
+        $("#modifier-notes")
+            .value = line?.notes || "";
+
+        $("#modifier-note-count")
+            .textContent =
+                `${$("#modifier-notes").value.length}/150`;
+
+        $("#modifier-error").hidden =
+            true;
+
+        $("#modifier-add-label")
+            .textContent =
+                state.modifierEditingLineUuid
+                    ? "Guardar cambios"
+                    : "Agregar al pedido";
+
+        setModifierProductVisual(product);
+        renderModifierGroups(product);
+
+        if (line) {
+            hydrateModifierSelection(line);
+        }
+
+        refreshModifierUi();
+
+        $("#review-sheet").hidden =
+            true;
+
+        $("#modifier-dialog").hidden =
+            false;
+
+        const sheet =
+            $("#modifier-dialog .modifier-sheet");
+
+        if (sheet) {
+            sheet.scrollTop = 0;
+        }
+    }
+
+
+    function closeProductCustomizer() {
+        const returnToReview =
+            state.modifierReturnToReview;
+
+        $("#modifier-dialog").hidden =
+            true;
+
+        state.modifierProduct = null;
+        state.modifierQuantity = 1;
+        state.modifierEditingLineUuid = null;
+        state.modifierReturnToReview = false;
+
+        if (
+            returnToReview &&
+            state.cart.length
+        ) {
+            renderReview();
+            $("#review-sheet").hidden =
+                false;
+        }
     }
 
 
@@ -802,9 +1200,9 @@
 
         const validation =
             window.CofiCustomerCart.validateModifiers(
-                product,
-                selected
-            );
+                    product,
+                    selected
+                );
 
         if (!validation.valid) {
             const error =
@@ -813,32 +1211,72 @@
             error.textContent =
                 validation.message;
 
-            error.hidden =
-                false;
+            error.hidden = false;
+
+            const firstIncomplete =
+                $("#modifier-groups")
+                    .querySelector(
+                        ".modifier-group--incomplete"
+                    );
+
+            firstIncomplete?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
 
             return;
         }
 
+        const notes =
+            $("#modifier-notes")
+                .value
+                .trim();
+
+        const editingLineUuid =
+            state.modifierEditingLineUuid;
+
+        const returnToReview =
+            state.modifierReturnToReview;
+
         const line =
             window.CofiCustomerCart.makeLine({
                 product,
-                selectedOptionIds:
-                    selected,
+                selectedOptionIds: selected,
                 quantity:
                     state.modifierQuantity,
                 lineUuid:
-                    uuid(),
+                    editingLineUuid || uuid(),
+                notes,
             });
 
-        state.cart.push(line);
+        if (editingLineUuid) {
+            state.cart =
+                state.cart.map(
+                    item =>
+                        item.line_uuid ===
+                        editingLineUuid
+                            ? line
+                            : item
+                );
+        } else {
+            state.cart.push(line);
+        }
 
-        state.modifierProduct =
-            null;
+        state.modifierProduct = null;
+        state.modifierQuantity = 1;
+        state.modifierEditingLineUuid = null;
+        state.modifierReturnToReview = false;
 
         $("#modifier-dialog").hidden =
             true;
 
         renderCart();
+
+        if (returnToReview) {
+            renderReview();
+            $("#review-sheet").hidden =
+                false;
+        }
     }
 
 
@@ -921,6 +1359,21 @@
                     modifiers
                 );
 
+                if (line.notes) {
+                    const note =
+                        document.createElement(
+                            "small"
+                        );
+
+                    note.className =
+                        "review-item-note";
+
+                    note.textContent =
+                        `Nota: ${line.notes}`;
+
+                    copy.append(note);
+                }
+
                 const actions =
                     document.createElement(
                         "div"
@@ -936,6 +1389,48 @@
 
                 price.textContent =
                     money(line.line_total);
+
+                const actionRow =
+                    document.createElement(
+                        "div"
+                    );
+
+                actionRow.className =
+                    "review-item-action-row";
+
+                const product =
+                    findProductById(
+                        line.product_id
+                    );
+
+                if (productHasModifiers(product)) {
+                    const edit =
+                        document.createElement(
+                            "button"
+                        );
+
+                    edit.type = "button";
+                    edit.className =
+                        "review-edit";
+                    edit.textContent =
+                        "Editar";
+
+                    edit.addEventListener(
+                        "click",
+                        () => {
+                            openProductCustomizer(
+                                product,
+                                {
+                                    line,
+                                    returnToReview:
+                                        true,
+                                }
+                            );
+                        }
+                    );
+
+                    actionRow.append(edit);
+                }
 
                 const remove =
                     document.createElement(
@@ -963,9 +1458,11 @@
                     }
                 );
 
+                actionRow.append(remove);
+
                 actions.append(
                     price,
-                    remove
+                    actionRow
                 );
 
                 row.append(
@@ -1674,6 +2171,17 @@
 
 
     function registerActivity() {
+        /*
+         * Do not dismiss the warning on pointerdown.
+         * Otherwise the button disappears before
+         * its click event can fire.
+         */
+        if (
+            !$("#idle-warning").hidden
+        ) {
+            return;
+        }
+
         if (
             !window.CofiCustomerCheckout
                 .canIdleReset(
@@ -1703,11 +2211,7 @@
         $("#close-modifier-button")
             .addEventListener(
                 "click",
-                () => {
-                    $("#modifier-dialog")
-                        .hidden =
-                            true;
-                }
+                closeProductCustomizer
             );
 
         $("#modifier-minus")
@@ -1728,7 +2232,7 @@
                                     .modifierQuantity
                             );
 
-                    updateModifierPrice();
+                    refreshModifierUi();
                 }
             );
 
@@ -1750,7 +2254,7 @@
                                     .modifierQuantity
                             );
 
-                    updateModifierPrice();
+                    refreshModifierUi();
                 }
             );
 
@@ -1758,6 +2262,16 @@
             .addEventListener(
                 "click",
                 addCustomizedProduct
+            );
+
+        $("#modifier-notes")
+            .addEventListener(
+                "input",
+                event => {
+                    $("#modifier-note-count")
+                        .textContent =
+                            `${event.currentTarget.value.length}/150`;
+                }
             );
 
         $("#review-order-button")
