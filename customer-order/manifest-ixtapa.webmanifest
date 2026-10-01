@@ -1,0 +1,37 @@
+{
+  "name": "CofiCenter Kiosk · Ixtapa",
+  "short_name": "CofiCenter",
+  "description": "Kiosk de autoservicio CofiCenter Ixtapa",
+  "id": "/customer-order/ixtapa-kiosk",
+  "start_url": "./?branch=ixtapa&device=KIOSK-IXTAPA-01&pwa=1",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#f4f1e8",
+  "theme_color": "#f4f1e8",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/pos/assets/pwa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pos/assets/pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pos/assets/pwa/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
