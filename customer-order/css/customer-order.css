@@ -2781,3 +2781,50 @@ body {
         min-height: 48px;
     }
 }
+
+/* =====================================================
+   KIOSK TABLET — COMPACT 4-COLUMN PRODUCT GRID
+   ===================================================== */
+
+@media (min-width: 721px) and (max-width: 1024px) {
+    .product-grid {
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .product-card {
+        border-radius: 18px;
+    }
+
+    .product-visual {
+        aspect-ratio: 1 / 0.72;
+    }
+
+    .product-copy {
+        min-height: 108px;
+        gap: 5px;
+        padding: 10px;
+    }
+
+    .product-name,
+    .product-copy > strong {
+        font-size: 0.9rem;
+        line-height: 1.18;
+    }
+
+    .product-description {
+        font-size: 0.72rem;
+        line-height: 1.25;
+        -webkit-line-clamp: 2;
+    }
+
+    .product-price {
+        font-size: 0.9rem;
+    }
+
+    .product-add {
+        width: 28px;
+        height: 28px;
+    }
+}
