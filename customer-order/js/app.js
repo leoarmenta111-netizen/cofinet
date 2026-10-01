@@ -309,10 +309,9 @@
     function productCard(product) {
         const card =
             document.createElement(
-                "button"
+                "article"
             );
 
-        card.type = "button";
         card.className =
             "product-card";
 
@@ -436,13 +435,28 @@
 
         const add =
             document.createElement(
-                "span"
+                "button"
             );
+
+        add.type = "button";
 
         add.className =
             "product-add";
 
         add.textContent = "+";
+
+        add.setAttribute(
+            "aria-label",
+            `Agregar ${product.name}`
+        );
+
+        add.addEventListener(
+            "click",
+            event => {
+                event.stopPropagation();
+                selectProduct(product);
+            }
+        );
 
         footer.append(
             price,
@@ -458,11 +472,6 @@
         card.append(
             visual,
             copy
-        );
-
-        card.addEventListener(
-            "click",
-            () => selectProduct(product)
         );
 
         return card;

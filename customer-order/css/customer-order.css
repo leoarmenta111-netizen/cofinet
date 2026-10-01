@@ -2879,3 +2879,23 @@ body {
         min-height: 26px !important;
     }
 }
+
+/* =====================================================
+   PRODUCT SELECTION — PLUS BUTTON ONLY
+   ===================================================== */
+
+.product-card {
+    cursor: default !important;
+}
+
+.product-add {
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.product-add:active {
+    transform: scale(0.9);
+}

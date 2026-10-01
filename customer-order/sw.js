@@ -1,4 +1,4 @@
-const SHELL_CACHE = "cofi-customer-kiosk-v3";
+const SHELL_CACHE = "cofi-customer-kiosk-v4";
 
 const APP_SHELL = [
     "./index.html",
@@ -6,7 +6,7 @@ const APP_SHELL = [
     "./js/api.js?v=1",
     "./js/cart.js?v=2",
     "./js/checkout.js?v=1",
-    "./js/app.js?v=3",
+    "./js/app.js?v=4",
     "./js/pwa.js?v=1",
     "./assets/coficenter-hero-combo.png",
     "./manifest-ixtapa.webmanifest",
