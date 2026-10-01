@@ -2828,3 +2828,54 @@ body {
         height: 28px;
     }
 }
+
+/* =====================================================
+   KIOSK TABLET — FORCE 4 PRODUCTS PER ROW
+   Android tablets may report ~600 CSS px due to DPR.
+   ===================================================== */
+
+@media (min-width: 540px) {
+    .product-grid {
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    .product-card {
+        border-radius: 16px !important;
+    }
+
+    .product-visual {
+        aspect-ratio: 1 / 0.76 !important;
+    }
+
+    .product-copy {
+        min-height: 100px !important;
+        padding: 9px !important;
+        gap: 4px !important;
+    }
+
+    .product-name,
+    .product-copy > strong {
+        font-size: 0.82rem !important;
+        line-height: 1.15 !important;
+    }
+
+    .product-description {
+        font-size: 0.68rem !important;
+        line-height: 1.2 !important;
+        -webkit-line-clamp: 2 !important;
+    }
+
+    .product-price,
+    .product-footer > strong {
+        font-size: 0.84rem !important;
+    }
+
+    .product-add {
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
+        min-height: 26px !important;
+    }
+}
