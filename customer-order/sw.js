@@ -1,8 +1,8 @@
-const SHELL_CACHE = "cofi-customer-kiosk-v5";
+const SHELL_CACHE = "cofi-customer-kiosk-v6";
 
 const APP_SHELL = [
     "./index.html",
-    "./css/customer-order.css?v=6",
+    "./css/customer-order.css?v=7",
     "./js/api.js?v=1",
     "./js/cart.js?v=2",
     "./js/checkout.js?v=1",

@@ -2992,3 +2992,64 @@ body {
         font-size: 0.95rem;
     }
 }
+
+/* =====================================================
+   ADD BUTTON TUNE — BIGGER + GREEN
+   ===================================================== */
+
+.product-add {
+    min-width: 98px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+
+    padding: 4px 12px 4px 6px !important;
+
+    background: #174F43 !important;
+    border: 1px solid #174F43 !important;
+    color: #ffffff !important;
+
+    gap: 8px !important;
+
+    font-size: 0.76rem !important;
+    font-weight: 700 !important;
+
+    box-shadow:
+        0 5px 12px rgba(23, 79, 67, 0.20),
+        0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+.product-add-icon {
+    width: 26px !important;
+    height: 26px !important;
+    flex: 0 0 26px !important;
+
+    background: rgba(255, 255, 255, 0.16) !important;
+    font-size: 1rem !important;
+}
+
+.product-add-label {
+    font-size: 0.76rem !important;
+    font-weight: 700 !important;
+}
+
+@media (min-width: 540px) {
+    .product-add {
+        min-width: 92px !important;
+        height: 36px !important;
+        min-height: 36px !important;
+
+        padding: 4px 11px 4px 6px !important;
+
+        font-size: 0.72rem !important;
+    }
+
+    .product-add-icon {
+        width: 24px !important;
+        height: 24px !important;
+        flex-basis: 24px !important;
+    }
+
+    .product-add-label {
+        font-size: 0.72rem !important;
+    }
+}
