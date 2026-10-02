@@ -2899,3 +2899,96 @@ body {
 .product-add:active {
     transform: scale(0.9);
 }
+
+/* =====================================================
+   PREMIUM PRODUCT ADD BUTTON
+   ===================================================== */
+
+.product-add {
+    width: auto !important;
+    min-width: 88px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+
+    padding: 4px 11px 4px 5px !important;
+
+    border: 1px solid rgba(25, 25, 22, 0.12) !important;
+    border-radius: 999px !important;
+
+    background: #171714 !important;
+    color: #ffffff !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+
+    font-size: 0.72rem !important;
+    font-weight: 650 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.01em !important;
+
+    box-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.10),
+        0 1px 2px rgba(0, 0, 0, 0.08) !important;
+
+    cursor: pointer;
+    white-space: nowrap;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+        transform 120ms ease,
+        box-shadow 120ms ease,
+        background 120ms ease;
+}
+
+.product-add-icon {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.product-add-label {
+    display: inline-block;
+    transform: translateY(-0.25px);
+}
+
+.product-add:active {
+    transform: scale(0.96) !important;
+
+    box-shadow:
+        0 2px 5px rgba(0, 0, 0, 0.10) !important;
+}
+
+@media (min-width: 540px) {
+    .product-add {
+        min-width: 82px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+
+        padding: 4px 9px 4px 5px !important;
+        gap: 6px !important;
+
+        font-size: 0.68rem !important;
+    }
+
+    .product-add-icon {
+        width: 22px;
+        height: 22px;
+        flex-basis: 22px;
+
+        font-size: 0.95rem;
+    }
+}

@@ -443,7 +443,10 @@
         add.className =
             "product-add";
 
-        add.textContent = "+";
+        add.innerHTML = `
+            <span class="product-add-icon" aria-hidden="true">+</span>
+            <span class="product-add-label">Agregar</span>
+        `;
 
         add.setAttribute(
             "aria-label",
