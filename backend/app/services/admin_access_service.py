@@ -371,15 +371,14 @@ class AdminAccessService:
                 return
 
             batch = db.get(PinBatch, batch_id)
-            issued_at = datetime.now(UTC)
             purchase = Purchase(
                 branch_id=batch.branch_id,
                 plan_id=plan.id,
                 amount=plan.price,
                 status=PurchaseStatus.PAID,
                 pin_code=pin_code,
-                issued_at=issued_at,
-                expires_at=issued_at + timedelta(minutes=plan.duration_minutes),
+                issued_at=None,
+                expires_at=None,
                 creation_source=PurchaseCreationSource.ADMIN_BATCH,
                 created_by_admin_id=current_admin.id,
                 pin_batch_id=batch_id,
