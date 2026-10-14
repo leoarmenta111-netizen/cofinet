@@ -65,3 +65,10 @@ __all__ += [
     "PosStaff",
     "PosStaffRole",
 ]
+
+
+from app.models.pos_audit import PosAuditEvent
+
+__all__ += [
+    "PosAuditEvent",
+]
