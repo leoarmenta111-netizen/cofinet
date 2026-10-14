@@ -11,6 +11,8 @@ from app.auth.security import get_current_token
 from app.database.deps import get_db
 from app.models.pos_staff import PosStaff
 from app.schemas.pos_cash import (
+    PosCashMovementRequest,
+    PosCashMovementResponse,
     PosCashShiftOpenRequest,
     PosCashShiftResponse,
 )
@@ -113,3 +115,49 @@ def get_current_cash_shift(
         return None
 
     return PosCashShiftResponse.model_validate(shift)
+
+
+@router.post(
+    "/shifts/{shift_uuid}/movements",
+    response_model=PosCashMovementResponse,
+)
+def record_cash_movement(
+    shift_uuid: str,
+    payload: PosCashMovementRequest,
+    requesting_staff: PosStaff = Depends(
+        get_current_pos_staff
+    ),
+    token_payload: dict[str, object] = Depends(
+        get_current_token
+    ),
+    db: Session = Depends(get_db),
+) -> PosCashMovementResponse:
+    branch_code, _ = _session_context(
+        token_payload
+    )
+
+    manager = PosStaffService.authorize_manager(
+        db,
+        staff_id=payload.authorizing_manager_staff_id,
+        pin=payload.manager_pin,
+        branch_code=branch_code,
+    )
+
+    movement = PosCashService.record_movement(
+        db,
+        shift_uuid=shift_uuid,
+        direction=payload.direction,
+        category=payload.category,
+        amount=payload.amount,
+        note=payload.note,
+        idempotency_key=payload.idempotency_key,
+        requesting_staff=requesting_staff,
+        authorizing_manager=manager,
+    )
+
+    db.commit()
+    db.refresh(movement)
+
+    return PosCashMovementResponse.model_validate(
+        movement
+    )

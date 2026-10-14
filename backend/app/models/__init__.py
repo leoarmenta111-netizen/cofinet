@@ -76,10 +76,14 @@ __all__ += [
 
 from app.models.pos_cash import (
     PosCashDenominationCount,
+    PosCashLedgerEntry,
+    PosCashMovement,
     PosCashShift,
 )
 
 __all__ += [
     "PosCashDenominationCount",
+    "PosCashLedgerEntry",
+    "PosCashMovement",
     "PosCashShift",
 ]

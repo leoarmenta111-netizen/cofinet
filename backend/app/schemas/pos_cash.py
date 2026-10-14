@@ -54,3 +54,46 @@ class PosCashShiftResponse(BaseModel):
     variance: Decimal | None = None
     variance_note: str | None = None
     closed_at: datetime | None = None
+
+
+class PosCashMovementRequest(BaseModel):
+    direction: Literal["INFLOW", "OUTFLOW"]
+    category: Literal[
+        "CHANGE",
+        "EXPENSE",
+        "SAFE_WITHDRAWAL",
+        "DEPOSIT",
+        "CORRECTION",
+        "OTHER",
+    ]
+    amount: Decimal = Field(gt=0)
+    note: str = Field(min_length=1, max_length=500)
+    idempotency_key: str = Field(
+        min_length=1,
+        max_length=120,
+    )
+    authorizing_manager_staff_id: int = Field(gt=0)
+    manager_pin: str = Field(min_length=4, max_length=32)
+
+
+class PosCashMovementResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    movement_uuid: str
+    shift_id: int
+    direction: Literal["INFLOW", "OUTFLOW"]
+    category: Literal[
+        "CHANGE",
+        "EXPENSE",
+        "SAFE_WITHDRAWAL",
+        "DEPOSIT",
+        "CORRECTION",
+        "OTHER",
+    ]
+    amount: Decimal
+    note: str
+    requesting_staff_id: int
+    authorizing_staff_id: int
+    idempotency_key: str
+    created_at: datetime
