@@ -72,3 +72,14 @@ from app.models.pos_audit import PosAuditEvent
 __all__ += [
     "PosAuditEvent",
 ]
+
+
+from app.models.pos_cash import (
+    PosCashDenominationCount,
+    PosCashShift,
+)
+
+__all__ += [
+    "PosCashDenominationCount",
+    "PosCashShift",
+]

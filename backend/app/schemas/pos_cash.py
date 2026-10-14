@@ -1,0 +1,56 @@
+from datetime import datetime
+from decimal import Decimal
+from typing import Literal
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+)
+
+
+MxnDenominationCents = Literal[
+    100,
+    200,
+    500,
+    1000,
+    2000,
+    5000,
+    10000,
+    20000,
+    50000,
+    100000,
+]
+
+
+class CashDenominationCount(BaseModel):
+    denomination_cents: MxnDenominationCents
+    quantity: int = Field(ge=0, le=10000)
+
+
+class PosCashShiftOpenRequest(BaseModel):
+    opening_counts: list[CashDenominationCount] = Field(
+        min_length=1,
+        max_length=10,
+    )
+    authorizing_manager_staff_id: int = Field(gt=0)
+    manager_pin: str = Field(min_length=4, max_length=32)
+
+
+class PosCashShiftResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    shift_uuid: str
+    branch_id: int
+    terminal_id: str
+    status: Literal["OPEN", "CLOSING", "CLOSED"]
+    opened_by_staff_id: int
+    opening_authorized_by_staff_id: int
+    opening_total: Decimal
+    opened_at: datetime
+    closing_total: Decimal | None = None
+    expected_total: Decimal | None = None
+    variance: Decimal | None = None
+    variance_note: str | None = None
+    closed_at: datetime | None = None
