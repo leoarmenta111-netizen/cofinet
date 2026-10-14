@@ -49,10 +49,6 @@ class PosCashShiftResponse(BaseModel):
     opening_authorized_by_staff_id: int
     opening_total: Decimal
     opened_at: datetime
-    closing_total: Decimal | None = None
-    expected_total: Decimal | None = None
-    variance: Decimal | None = None
-    variance_note: str | None = None
     closed_at: datetime | None = None
 
 
@@ -97,3 +93,28 @@ class PosCashMovementResponse(BaseModel):
     authorizing_staff_id: int
     idempotency_key: str
     created_at: datetime
+
+
+
+class PosCashClosingCountRequest(BaseModel):
+    closing_counts: list[CashDenominationCount] = Field(
+        min_length=1,
+        max_length=10,
+    )
+
+
+class PosCashReconciliation(BaseModel):
+    shift_uuid: str
+    status: Literal["CLOSING"]
+    counted_cash: Decimal
+    expected_cash: Decimal
+    difference: Decimal
+
+
+class PosCashCloseRequest(BaseModel):
+    authorizing_manager_staff_id: int = Field(gt=0)
+    manager_pin: str = Field(min_length=4, max_length=32)
+    difference_note: str | None = Field(
+        default=None,
+        max_length=500,
+    )
