@@ -54,3 +54,14 @@ __all__ += [
     'SelfOrderItemModifier',
     'SelfOrderPaymentAttempt',
 ]
+
+
+from app.models.pos_staff import (
+    PosStaff,
+    PosStaffRole,
+)
+
+__all__ += [
+    "PosStaff",
+    "PosStaffRole",
+]
