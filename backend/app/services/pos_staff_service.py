@@ -1,7 +1,9 @@
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.security import verify_password
+from app.auth.security import hash_password, verify_password
+from app.models.branch import Branch
 from app.models.pos_staff import (
     PosStaff,
     PosStaffRole,
@@ -10,6 +12,139 @@ from app.services.branch_service import BranchService
 
 
 class PosStaffService:
+    @staticmethod
+    def create_staff(
+        db: Session,
+        *,
+        branch_id: int,
+        display_name: str,
+        role: PosStaffRole,
+        pin: str,
+    ) -> tuple[PosStaff, Branch]:
+        branch = db.get(
+            Branch,
+            branch_id,
+        )
+
+        if branch is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Branch not found",
+            )
+
+        staff = PosStaff(
+            branch_id=branch.id,
+            display_name=display_name,
+            role=role,
+            pin_hash=hash_password(pin),
+            is_active=True,
+        )
+
+        db.add(staff)
+        db.commit()
+        db.refresh(staff)
+
+        return staff, branch
+
+    @staticmethod
+    def list_staff(
+        db: Session,
+    ) -> list[tuple[PosStaff, Branch]]:
+        return list(
+            db.execute(
+                select(
+                    PosStaff,
+                    Branch,
+                )
+                .join(
+                    Branch,
+                    Branch.id == PosStaff.branch_id,
+                )
+                .order_by(PosStaff.id)
+            ).all()
+        )
+
+    @staticmethod
+    def update_staff(
+        db: Session,
+        *,
+        staff_id: int,
+        display_name: str | None = None,
+        role: PosStaffRole | None = None,
+        is_active: bool | None = None,
+    ) -> tuple[PosStaff, Branch]:
+        staff = db.get(
+            PosStaff,
+            staff_id,
+        )
+
+        if staff is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="POS staff not found",
+            )
+
+        if display_name is not None:
+            staff.display_name = display_name
+
+        if role is not None:
+            staff.role = role
+
+        if is_active is not None:
+            staff.is_active = is_active
+
+        branch = db.get(
+            Branch,
+            staff.branch_id,
+        )
+
+        if branch is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Branch not found",
+            )
+
+        db.commit()
+        db.refresh(staff)
+
+        return staff, branch
+
+    @staticmethod
+    def reset_pin(
+        db: Session,
+        *,
+        staff_id: int,
+        pin: str,
+    ) -> tuple[PosStaff, Branch]:
+        staff = db.get(
+            PosStaff,
+            staff_id,
+        )
+
+        if staff is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="POS staff not found",
+            )
+
+        branch = db.get(
+            Branch,
+            staff.branch_id,
+        )
+
+        if branch is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Branch not found",
+            )
+
+        staff.pin_hash = hash_password(pin)
+
+        db.commit()
+        db.refresh(staff)
+
+        return staff, branch
+
     @staticmethod
     def verify_pin(
         db: Session,

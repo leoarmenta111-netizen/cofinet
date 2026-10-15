@@ -38,3 +38,75 @@ class PosStaffSessionResponse(BaseModel):
     role: PosStaffRole
     branch_code: str
     terminal_id: str
+
+
+class AdminPosStaffCreate(BaseModel):
+    branch_id: int = Field(gt=0)
+    display_name: str = Field(
+        min_length=1,
+        max_length=120,
+    )
+    role: PosStaffRole
+    pin: str = Field(
+        min_length=4,
+        max_length=32,
+    )
+
+    @field_validator("display_name")
+    @classmethod
+    def normalize_display_name(
+        cls,
+        value: str,
+    ) -> str:
+        normalized = value.strip()
+
+        if not normalized:
+            raise ValueError(
+                "Display name is required"
+            )
+
+        return normalized
+
+
+class AdminPosStaffResponse(BaseModel):
+    id: int
+    branch_id: int
+    branch_code: str
+    display_name: str
+    role: PosStaffRole
+    is_active: bool
+
+
+class AdminPosStaffUpdate(BaseModel):
+    display_name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=120,
+    )
+    role: PosStaffRole | None = None
+    is_active: bool | None = None
+
+    @field_validator("display_name")
+    @classmethod
+    def normalize_update_display_name(
+        cls,
+        value: str | None,
+    ) -> str | None:
+        if value is None:
+            return None
+
+        normalized = value.strip()
+
+        if not normalized:
+            raise ValueError(
+                "Display name is required"
+            )
+
+        return normalized
+
+
+class AdminPosStaffResetPin(BaseModel):
+    pin: str = Field(
+        min_length=4,
+        max_length=32,
+    )
