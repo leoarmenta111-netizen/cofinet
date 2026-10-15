@@ -5909,3 +5909,243 @@ and (max-width: 1366px) {
     letter-spacing: .045em;
     text-transform: uppercase;
 }
+
+/* =========================================================
+   COFICENTER OPERATIONAL STAFF / CASH V1
+   ========================================================= */
+
+.staff-lock-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background:
+        rgba(10, 17, 30, 0.94);
+    backdrop-filter: blur(12px);
+}
+
+.staff-lock-screen[hidden] {
+    display: none;
+}
+
+.staff-lock-card {
+    width: min(420px, 100%);
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    border-radius: 22px;
+    padding: 28px;
+    background: var(--surface, #fff);
+    box-shadow:
+        0 24px 80px
+        rgba(0, 0, 0, 0.35);
+}
+
+.staff-lock-logo {
+    width: min(210px, 70%);
+    height: auto;
+    display: block;
+    margin: 0 auto 22px;
+}
+
+.staff-lock-help {
+    margin: 4px 0 22px;
+    color: var(--muted, #667085);
+}
+
+.staff-lock-connectivity {
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 13px;
+}
+
+.pos-staff-locked .workspace {
+    user-select: none;
+}
+
+.operator-block {
+    min-width: 150px;
+}
+
+#active-shift-status {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    opacity: 0.72;
+}
+
+.topbar-action {
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 12px;
+    background: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.topbar-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.cash-control-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background:
+        rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(8px);
+}
+
+.cash-control-backdrop[hidden] {
+    display: none;
+}
+
+.cash-control-card {
+    width: min(900px, 100%);
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+    border-radius: 20px;
+    padding: 22px;
+    background: var(--surface, #fff);
+    box-shadow:
+        0 24px 80px
+        rgba(0, 0, 0, 0.28);
+}
+
+.cash-control-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.cash-control-header h2,
+.cash-shift-panel h3 {
+    margin: 0;
+}
+
+.cash-shift-panel {
+    display: grid;
+    gap: 16px;
+}
+
+.cash-shift-panel[hidden] {
+    display: none;
+}
+
+.cash-denominations {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            5,
+            minmax(100px, 1fr)
+        );
+    gap: 10px;
+}
+
+.cash-denominations label {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid
+        rgba(15, 23, 42, 0.12);
+    border-radius: 12px;
+}
+
+.cash-denominations label span {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.cash-denominations input {
+    width: 100%;
+}
+
+.cash-count-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background:
+        rgba(15, 23, 42, 0.05);
+}
+
+.cash-count-total strong {
+    font-size: 24px;
+}
+
+.manager-auth-grid,
+.cash-form-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+    gap: 12px;
+}
+
+.cash-note-field {
+    grid-column: 1 / -1;
+}
+
+.reconciliation-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            5,
+            minmax(0, 1fr)
+        );
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.reconciliation-grid > div {
+    display: grid;
+    gap: 5px;
+    padding: 13px;
+    border-radius: 12px;
+    background:
+        rgba(15, 23, 42, 0.05);
+}
+
+.reconciliation-grid span {
+    font-size: 11px;
+    color: var(--muted, #667085);
+}
+
+.reconciliation-grid strong {
+    font-size: 16px;
+}
+
+@media (max-width: 760px) {
+    .cash-denominations {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+    .manager-auth-grid,
+    .cash-form-grid,
+    .reconciliation-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+    .cash-note-field {
+        grid-column: auto;
+    }
+}

@@ -24,6 +24,10 @@
 
         cloudOnline: null,
         syncing: false,
+
+        staffSession: null,
+        cashShift: null,
+        activeCashShift: null,
     };
 
     const $ = selector =>
@@ -182,6 +186,8 @@
 
         $("#offline-banner").hidden =
             online;
+
+        syncCashActionAvailability();
     }
 
     async function updatePendingCount() {
@@ -219,6 +225,851 @@
             await updatePendingCount();
         } finally {
             setSyncing(false);
+        }
+    }
+
+
+
+    /* =====================================================
+       COFICENTER OPERATIONAL STAFF / CASH V1
+       ===================================================== */
+
+    function operationalOnline() {
+        return (
+            state.cloudOnline !== false &&
+            navigator.onLine
+        );
+    }
+
+
+    function roleLabel(role) {
+        return role === "MANAGER"
+            ? "Manager"
+            : "Cajero";
+    }
+
+
+    function shiftLabel(shift) {
+        if (!shift) {
+            return "Caja sin abrir";
+        }
+
+        if (shift.status === "OPEN") {
+            return "Caja abierta";
+        }
+
+        if (shift.status === "CLOSING") {
+            return "Cierre pendiente";
+        }
+
+        return "Caja cerrada";
+    }
+
+
+    function setActiveCashShift(
+        shift
+    ) {
+        state.activeCashShift =
+            shift || null;
+
+        const label =
+            $("#active-shift-status");
+
+        if (label) {
+            label.textContent =
+                shiftLabel(
+                    state.activeCashShift
+                );
+        }
+    }
+
+
+    function showStaffUnlockError(
+        message = ""
+    ) {
+        const target =
+            $("#staff-unlock-error");
+
+        if (!target) {
+            return;
+        }
+
+        target.textContent =
+            message;
+
+        target.hidden =
+            !message;
+    }
+
+
+    function showCashActionError(
+        message = ""
+    ) {
+        const target =
+            $("#cash-action-error");
+
+        if (!target) {
+            return;
+        }
+
+        target.textContent =
+            message;
+
+        target.hidden =
+            !message;
+    }
+
+
+    function syncCashActionAvailability() {
+        const unlocked =
+            Boolean(
+                state.staffSession
+                    ?.current()
+            );
+
+        const online =
+            operationalOnline();
+
+        const rules = [
+            {
+                selector:
+                    "#cash-opening-submit",
+                reason:
+                    "Abrir caja requiere conexión",
+            },
+            {
+                selector:
+                    "#cash-movement-submit",
+                reason:
+                    "Movimiento de caja requiere conexión",
+            },
+            {
+                selector:
+                    "#cash-closing-count-submit",
+                reason:
+                    "Cerrar caja requiere conexión",
+            },
+            {
+                selector:
+                    "#cash-final-close-submit",
+                reason:
+                    "Cerrar caja requiere conexión",
+            },
+        ];
+
+        rules.forEach(
+            ({
+                selector,
+                reason,
+            }) => {
+                const element =
+                    $(selector);
+
+                if (!element) {
+                    return;
+                }
+
+                element.disabled =
+                    !unlocked ||
+                    !online;
+
+                element.title =
+                    online
+                        ? ""
+                        : reason;
+            }
+        );
+
+        const cashButton =
+            $("#cash-control-button");
+
+        if (cashButton) {
+            cashButton.disabled =
+                !unlocked;
+        }
+
+        const lockButton =
+            $("#staff-lock-button");
+
+        if (lockButton) {
+            lockButton.disabled =
+                !unlocked;
+        }
+
+        const lockConnectivity =
+            $("#staff-lock-connectivity");
+
+        if (lockConnectivity) {
+            lockConnectivity.textContent =
+                online
+                    ? "En línea"
+                    : "Sin conexión";
+        }
+    }
+
+
+    function renderOperationalStaffState() {
+        const session =
+            state.staffSession
+                ?.current() ||
+            null;
+
+        const lockScreen =
+            $("#staff-lock-screen");
+
+        const workspace =
+            $(".workspace");
+
+        if (!session) {
+            if (lockScreen) {
+                lockScreen.hidden =
+                    false;
+            }
+
+            if (workspace) {
+                workspace.inert =
+                    true;
+            }
+
+            document.body
+                .classList
+                .add(
+                    "pos-staff-locked"
+                );
+
+            $("#operator-name")
+                .textContent =
+                "POS bloqueado";
+
+            $("#operator-role")
+                .textContent =
+                "PIN requerido";
+
+            $("#operator-avatar")
+                .textContent =
+                "—";
+
+            $("#cash-control-backdrop")
+                .hidden = true;
+
+            [
+                "#payment-modal",
+                "#modifier-modal",
+            ].forEach(selector => {
+                const modal =
+                    $(selector);
+
+                if (modal) {
+                    modal.hidden =
+                        true;
+                }
+            });
+        } else {
+            if (lockScreen) {
+                lockScreen.hidden =
+                    true;
+            }
+
+            if (workspace) {
+                workspace.inert =
+                    false;
+            }
+
+            document.body
+                .classList
+                .remove(
+                    "pos-staff-locked"
+                );
+
+            $("#operator-name")
+                .textContent =
+                session.display_name ||
+                `Empleado ${
+                    session.staff_id
+                }`;
+
+            $("#operator-role")
+                .textContent =
+                `${
+                    roleLabel(
+                        session.role
+                    )
+                }${
+                    session.offline
+                        ? " · Sin conexión"
+                        : ""
+                }`;
+
+            $("#operator-avatar")
+                .textContent =
+                String(
+                    session.display_name ||
+                    "E"
+                )
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase();
+        }
+
+        syncCashActionAvailability();
+    }
+
+
+    async function cachedCashShift() {
+        return window.CofiPosDB
+            .getCachedCashShift(
+                state.branchCode,
+                state.terminalId
+            );
+    }
+
+
+    async function persistCashShift(
+        shift
+    ) {
+        await window.CofiPosDB
+            .setCachedCashShift(
+                state.branchCode,
+                state.terminalId,
+                shift || null
+            );
+
+        setActiveCashShift(
+            shift
+        );
+    }
+
+
+    async function setupOperationalSession() {
+        state.staffSession =
+            window
+                .CofiPosStaffSessionModule
+                .createStaffSession({
+                    branchCode:
+                        state.branchCode,
+                    terminalId:
+                        state.terminalId,
+                    api:
+                        window.CofiPosAPI,
+                    db:
+                        window.CofiPosDB,
+                    isOnline:
+                        operationalOnline,
+                    getActiveShift:
+                        cachedCashShift,
+                    onLock:
+                        () => {
+                            renderOperationalStaffState();
+                        },
+                    onUnlock:
+                        () => {
+                            renderOperationalStaffState();
+                        },
+                });
+
+        state.cashShift =
+            window
+                .CofiPosCashShiftModule
+                .createCashShift({
+                    api:
+                        window.CofiPosAPI,
+                    staffSession:
+                        state.staffSession,
+                    isOnline:
+                        operationalOnline,
+                });
+
+        setActiveCashShift(
+            await cachedCashShift()
+        );
+
+        /*
+         * Deliberately do not restore staff authentication
+         * from localStorage/sessionStorage/IndexedDB.
+         * Every page refresh starts visibly locked.
+         */
+        renderOperationalStaffState();
+    }
+
+
+    async function refreshCashShiftAfterUnlock(
+        session
+    ) {
+        let shift = null;
+
+        if (
+            !session.offline &&
+            operationalOnline()
+        ) {
+            shift =
+                await state.cashShift
+                    .loadCurrent();
+
+            await persistCashShift(
+                shift
+            );
+        } else {
+            shift =
+                await cachedCashShift();
+
+            setActiveCashShift(
+                shift
+            );
+        }
+
+        return shift;
+    }
+
+
+    async function handleStaffUnlock(
+        event
+    ) {
+        event.preventDefault();
+
+        showStaffUnlockError();
+
+        const staffId =
+            Number(
+                $("#staff-id").value
+            );
+
+        const pin =
+            $("#staff-pin").value;
+
+        const button =
+            $("#staff-unlock-submit");
+
+        button.disabled = true;
+
+        try {
+            const session =
+                await state.staffSession
+                    .unlock(
+                        staffId,
+                        pin
+                    );
+
+            $("#staff-pin").value =
+                "";
+
+            await refreshCashShiftAfterUnlock(
+                session
+            );
+
+            renderOperationalStaffState();
+
+        } catch (error) {
+            showStaffUnlockError(
+                error.message ||
+                "No se pudo desbloquear el POS"
+            );
+
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+
+    function readCashCounts(
+        selector,
+        attribute
+    ) {
+        return [
+            ...document
+                .querySelectorAll(
+                    selector
+                ),
+        ].map(input => ({
+            denomination_cents:
+                Number(
+                    input.getAttribute(
+                        attribute
+                    )
+                ),
+            quantity:
+                Math.max(
+                    0,
+                    Number.parseInt(
+                        input.value ||
+                        "0",
+                        10
+                    ) || 0
+                ),
+        }));
+    }
+
+
+    function openingCounts() {
+        return readCashCounts(
+            "[data-denomination-cents]",
+            "data-denomination-cents"
+        );
+    }
+
+
+    function closingCounts() {
+        return readCashCounts(
+            "[data-closing-denomination-cents]",
+            "data-closing-denomination-cents"
+        );
+    }
+
+
+    function updateOpeningTotal() {
+        if (!state.cashShift) {
+            return;
+        }
+
+        const total =
+            state.cashShift
+                .calculateDenominationTotal(
+                    openingCounts()
+                );
+
+        $("#cash-opening-total")
+            .textContent =
+            money(total);
+    }
+
+
+    function renderCashPanels(
+        shift
+    ) {
+        const opening =
+            $("#cash-shift-opening");
+
+        const movement =
+            $("#cash-movement-panel");
+
+        const closing =
+            $("#cash-shift-closing");
+
+        opening.hidden =
+            Boolean(shift);
+
+        movement.hidden =
+            !shift ||
+            shift.status !== "OPEN";
+
+        closing.hidden =
+            !shift ||
+            ![
+                "OPEN",
+                "CLOSING",
+            ].includes(
+                shift.status
+            );
+
+        $("#cash-control-status")
+            .textContent =
+            shiftLabel(shift);
+
+        if (
+            shift?.status ===
+            "CLOSING" &&
+            !state.cashShift
+                .reconciliation()
+        ) {
+            $("#cash-closing-count-area")
+                .hidden = true;
+
+            showCashActionError(
+                "Este turno ya está en cierre. La conciliación permanece protegida; continúa el cierre desde la sesión que envió el conteo."
+            );
+        } else {
+            $("#cash-closing-count-area")
+                .hidden = false;
+        }
+
+        syncCashActionAvailability();
+    }
+
+
+    async function openCashControl() {
+        if (
+            !state.staffSession
+                ?.current()
+        ) {
+            return;
+        }
+
+        showCashActionError();
+
+        let shift =
+            state.activeCashShift;
+
+        if (operationalOnline()) {
+            try {
+                shift =
+                    await state.cashShift
+                        .loadCurrent();
+
+                await persistCashShift(
+                    shift
+                );
+            } catch (error) {
+                showCashActionError(
+                    error.message
+                );
+            }
+        } else {
+            shift =
+                await cachedCashShift();
+
+            setActiveCashShift(
+                shift
+            );
+        }
+
+        renderCashPanels(
+            shift
+        );
+
+        $("#cash-control-backdrop")
+            .hidden = false;
+
+        updateOpeningTotal();
+    }
+
+
+    async function handleCashOpening() {
+        showCashActionError();
+
+        try {
+            const shift =
+                await state.cashShift
+                    .open(
+                        openingCounts(),
+                        {
+                            staffId:
+                                Number(
+                                    $("#cash-opening-manager-id")
+                                        .value
+                                ),
+                            pin:
+                                $("#cash-opening-manager-pin")
+                                    .value,
+                        }
+                    );
+
+            $("#cash-opening-manager-pin")
+                .value = "";
+
+            await persistCashShift(
+                shift
+            );
+
+            renderCashPanels(
+                shift
+            );
+
+        } catch (error) {
+            showCashActionError(
+                error.message
+            );
+        }
+    }
+
+
+    async function handleCashMovement() {
+        showCashActionError();
+
+        try {
+            await state.cashShift
+                .recordMovement(
+                    {
+                        direction:
+                            $("#cash-movement-direction")
+                                .value,
+                        category:
+                            $("#cash-movement-category")
+                                .value,
+                        amount:
+                            Number(
+                                $("#cash-movement-amount")
+                                    .value
+                            ),
+                        note:
+                            $("#cash-movement-note")
+                                .value
+                                .trim(),
+                        idempotency_key:
+                            window.CofiUUID
+                                .v4(),
+                    },
+                    {
+                        staffId:
+                            Number(
+                                $("#cash-movement-manager-id")
+                                    .value
+                            ),
+                        pin:
+                            $("#cash-movement-manager-pin")
+                                .value,
+                    }
+                );
+
+            $("#cash-movement-manager-pin")
+                .value = "";
+
+            $("#cash-movement-amount")
+                .value = "";
+
+            $("#cash-movement-note")
+                .value = "";
+
+        } catch (error) {
+            showCashActionError(
+                error.message
+            );
+        }
+    }
+
+
+    function showCashReconciliation(
+        reconciliation
+    ) {
+        const opening =
+            Number(
+                state.activeCashShift
+                    ?.opening_total ||
+                0
+            );
+
+        const expected =
+            Number(
+                reconciliation
+                    .expected_cash ||
+                0
+            );
+
+        const counted =
+            Number(
+                reconciliation
+                    .counted_cash ||
+                0
+            );
+
+        const difference =
+            Number(
+                reconciliation
+                    .difference ||
+                0
+            );
+
+        const ledgerActivity =
+            expected - opening;
+
+        $("#cash-reconciliation-opening")
+            .textContent =
+            money(opening);
+
+        $("#cash-reconciliation-ledger")
+            .textContent =
+            money(
+                ledgerActivity
+            );
+
+        $("#cash-reconciliation-expected")
+            .textContent =
+            money(expected);
+
+        $("#cash-reconciliation-counted")
+            .textContent =
+            money(counted);
+
+        $("#cash-reconciliation-difference")
+            .textContent =
+            money(difference);
+
+        $("#cash-difference-note-field")
+            .hidden =
+            difference === 0;
+
+        $("#cash-reconciliation")
+            .hidden = false;
+
+        $("#cash-closing-count-area")
+            .hidden = true;
+    }
+
+
+    async function handleClosingCount() {
+        showCashActionError();
+
+        try {
+            const reconciliation =
+                await state.cashShift
+                    .submitClosingCount(
+                        closingCounts()
+                    );
+
+            const shift = {
+                ...state.activeCashShift,
+                status:
+                    "CLOSING",
+            };
+
+            await persistCashShift(
+                shift
+            );
+
+            showCashReconciliation(
+                reconciliation
+            );
+
+            renderCashPanels(
+                shift
+            );
+
+        } catch (error) {
+            showCashActionError(
+                error.message
+            );
+        }
+    }
+
+
+    async function handleFinalClose() {
+        showCashActionError();
+
+        try {
+            const shift =
+                await state.cashShift
+                    .finalizeClose(
+                        {
+                            staffId:
+                                Number(
+                                    $("#cash-close-manager-id")
+                                        .value
+                                ),
+                            pin:
+                                $("#cash-close-manager-pin")
+                                    .value,
+                        },
+                        $("#cash-difference-note")
+                            .value
+                            .trim()
+                    );
+
+            $("#cash-close-manager-pin")
+                .value = "";
+
+            await persistCashShift(
+                shift
+            );
+
+            $("#cash-reconciliation")
+                .hidden = true;
+
+            renderCashPanels(
+                shift
+            );
+
+        } catch (error) {
+            showCashActionError(
+                error.message
+            );
         }
     }
 
@@ -2908,6 +3759,7 @@
 
         await window.CofiPosDB.open();
         await configureTerminal();
+        await setupOperationalSession();
 
         await loadReceiptSettingsForBranch(
             state.branchCode
@@ -2952,6 +3804,122 @@
     /* =====================================================
        EVENTS
        ===================================================== */
+
+
+    $("#staff-unlock-form")
+        ?.addEventListener(
+            "submit",
+            handleStaffUnlock
+        );
+
+
+    $("#staff-lock-button")
+        ?.addEventListener(
+            "click",
+            () => {
+                state.staffSession
+                    ?.lock(
+                        "manual"
+                    );
+
+                renderOperationalStaffState();
+            }
+        );
+
+
+    $("#cash-control-button")
+        ?.addEventListener(
+            "click",
+            openCashControl
+        );
+
+
+    $("#cash-control-close")
+        ?.addEventListener(
+            "click",
+            () => {
+                $("#cash-control-backdrop")
+                    .hidden = true;
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            "[data-denomination-cents]"
+        )
+        .forEach(input => {
+            input.addEventListener(
+                "input",
+                updateOpeningTotal
+            );
+        });
+
+
+    $("#cash-opening-submit")
+        ?.addEventListener(
+            "click",
+            handleCashOpening
+        );
+
+
+    $("#cash-movement-submit")
+        ?.addEventListener(
+            "click",
+            handleCashMovement
+        );
+
+
+    $("#cash-closing-count-submit")
+        ?.addEventListener(
+            "click",
+            handleClosingCount
+        );
+
+
+    $("#cash-final-close-submit")
+        ?.addEventListener(
+            "click",
+            handleFinalClose
+        );
+
+
+    /*
+     * Normal POS activity extends only the operational
+     * employee session. It does not alter cart or shift state.
+     */
+    document.addEventListener(
+        "pointerdown",
+        () => {
+            state.staffSession
+                ?.resetActivityTimer();
+        },
+        {
+            passive: true,
+        }
+    );
+
+
+    document.addEventListener(
+        "touchstart",
+        () => {
+            state.staffSession
+                ?.resetActivityTimer();
+        },
+        {
+            passive: true,
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        () => {
+            state.staffSession
+                ?.resetActivityTimer();
+        }
+    );
+
 
     $("#refresh-catalog")
         .addEventListener(

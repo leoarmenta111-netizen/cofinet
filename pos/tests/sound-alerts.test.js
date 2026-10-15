@@ -224,7 +224,7 @@ test(
 
         assert.match(
             sw,
-            /cofi-pos-shell-v23/
+            /cofi-pos-shell-v24/
         );
 
         assert.match(

@@ -553,6 +553,161 @@ window.CofiPosDB = (() => {
         return terminalId;
     }
 
+
+    function staffVerifierKey(
+        terminalId,
+        staffId
+    ) {
+        return (
+            "staff_verifier:" +
+            String(terminalId) +
+            ":" +
+            String(staffId)
+        );
+    }
+
+
+    async function putStaffVerifier(
+        record
+    ) {
+        if (
+            !record ||
+            !record.terminal_id ||
+            !record.staff_id
+        ) {
+            throw new Error(
+                "Invalid staff verifier"
+            );
+        }
+
+        [
+            "pin",
+            "pin_hash",
+            "access_token",
+            "server_hash",
+        ].forEach(key => {
+            if (
+                Object.prototype
+                    .hasOwnProperty
+                    .call(
+                        record,
+                        key
+                    )
+            ) {
+                throw new Error(
+                    "Unsafe staff verifier field"
+                );
+            }
+        });
+
+        return put(
+            "meta",
+            record,
+            staffVerifierKey(
+                record.terminal_id,
+                record.staff_id
+            )
+        );
+    }
+
+
+    async function getStaffVerifier(
+        terminalId,
+        staffId
+    ) {
+        return (
+            await get(
+                "meta",
+                staffVerifierKey(
+                    terminalId,
+                    staffId
+                )
+            )
+        ) || null;
+    }
+
+
+    async function deleteStaffVerifier(
+        terminalId,
+        staffId
+    ) {
+        const db = await open();
+
+        return new Promise(
+            (resolve, reject) => {
+                const tx =
+                    db.transaction(
+                        "meta",
+                        "readwrite"
+                    );
+
+                const request =
+                    tx.objectStore(
+                        "meta"
+                    ).delete(
+                        staffVerifierKey(
+                            terminalId,
+                            staffId
+                        )
+                    );
+
+                request.onsuccess =
+                    () => resolve(true);
+
+                request.onerror =
+                    () => reject(
+                        request.error
+                    );
+            }
+        );
+    }
+
+
+    function cashShiftKey(
+        branchCode,
+        terminalId
+    ) {
+        return (
+            "cash_shift:" +
+            String(branchCode) +
+            ":" +
+            String(terminalId)
+        );
+    }
+
+
+    async function setCachedCashShift(
+        branchCode,
+        terminalId,
+        shift
+    ) {
+        return put(
+            "meta",
+            shift || null,
+            cashShiftKey(
+                branchCode,
+                terminalId
+            )
+        );
+    }
+
+
+    async function getCachedCashShift(
+        branchCode,
+        terminalId
+    ) {
+        return (
+            await get(
+                "meta",
+                cashShiftKey(
+                    branchCode,
+                    terminalId
+                )
+            )
+        ) || null;
+    }
+
+
     return {
         open,
         get,
@@ -566,5 +721,10 @@ window.CofiPosDB = (() => {
         countPending,
         getPendingEvents,
         getOrCreateTerminalId,
+        putStaffVerifier,
+        getStaffVerifier,
+        deleteStaffVerifier,
+        setCachedCashShift,
+        getCachedCashShift,
     };
 })();

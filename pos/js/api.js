@@ -3,6 +3,7 @@ window.CofiPosAPI = (() => {
         path,
         {
             timeout = 8000,
+            accessToken = null,
             ...options
         } = {}
     ) {
@@ -20,6 +21,12 @@ window.CofiPosAPI = (() => {
                     ...options,
                     headers: {
                         Accept: "application/json",
+                        ...(accessToken
+                            ? {
+                                Authorization:
+                                    `Bearer ${accessToken}`,
+                            }
+                            : {}),
                         ...(options.body
                             ? { "Content-Type": "application/json" }
                             : {}),
@@ -267,6 +274,153 @@ window.CofiPosAPI = (() => {
     }
 
 
+
+    function unlockStaff(
+        staffId,
+        pin,
+        {
+            branchCode,
+            terminalId,
+        }
+    ) {
+        return request(
+            "/pos/staff/unlock",
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    staff_id:
+                        Number(staffId),
+                    pin:
+                        String(pin),
+                    branch_code:
+                        branchCode,
+                    terminal_id:
+                        terminalId,
+                }),
+            }
+        );
+    }
+
+
+    function getStaffSession(
+        accessToken
+    ) {
+        return request(
+            "/pos/staff/session",
+            {
+                accessToken,
+            }
+        );
+    }
+
+
+    function getCurrentCashShift({
+        accessToken,
+    }) {
+        return request(
+            "/pos/cash/shifts/current",
+            {
+                accessToken,
+            }
+        );
+    }
+
+
+    function openCashShift(
+        payload,
+        {
+            accessToken,
+        }
+    ) {
+        return request(
+            "/pos/cash/shifts/open",
+            {
+                method: "POST",
+                body:
+                    JSON.stringify(
+                        payload
+                    ),
+                accessToken,
+            }
+        );
+    }
+
+
+    function recordCashMovement(
+        shiftUuid,
+        payload,
+        {
+            accessToken,
+        }
+    ) {
+        return request(
+            `/pos/cash/shifts/${
+                encodeURIComponent(
+                    shiftUuid
+                )
+            }/movements`,
+            {
+                method: "POST",
+                body:
+                    JSON.stringify(
+                        payload
+                    ),
+                accessToken,
+            }
+        );
+    }
+
+
+    function submitCashClosingCount(
+        shiftUuid,
+        payload,
+        {
+            accessToken,
+        }
+    ) {
+        return request(
+            `/pos/cash/shifts/${
+                encodeURIComponent(
+                    shiftUuid
+                )
+            }/closing-count`,
+            {
+                method: "POST",
+                body:
+                    JSON.stringify(
+                        payload
+                    ),
+                accessToken,
+            }
+        );
+    }
+
+
+    function finalizeCashShift(
+        shiftUuid,
+        payload,
+        {
+            accessToken,
+        }
+    ) {
+        return request(
+            `/pos/cash/shifts/${
+                encodeURIComponent(
+                    shiftUuid
+                )
+            }/close`,
+            {
+                method: "POST",
+                body:
+                    JSON.stringify(
+                        payload
+                    ),
+                accessToken,
+            }
+        );
+    }
+
+
     function checkHealth() {
         return request(
             "/health",
@@ -289,6 +443,13 @@ window.CofiPosAPI = (() => {
         searchCustomers,
         createCustomer,
         getCustomer,
+        unlockStaff,
+        getStaffSession,
+        getCurrentCashShift,
+        openCashShift,
+        recordCashMovement,
+        submitCashClosingCount,
+        finalizeCashShift,
         checkHealth,
     };
 })();
