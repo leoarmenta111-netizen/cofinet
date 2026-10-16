@@ -825,6 +825,20 @@
             shift
         );
 
+        const reconciliation =
+            state.cashShift
+                .reconciliation();
+
+        if (
+            shift?.status ===
+                "CLOSING" &&
+            reconciliation
+        ) {
+            showCashReconciliation(
+                reconciliation
+            );
+        }
+
         $("#cash-control-backdrop")
             .hidden = false;
 

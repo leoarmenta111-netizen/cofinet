@@ -190,7 +190,24 @@
                     );
 
                 reconciliationState =
-                    null;
+                    result?.status ===
+                        "CLOSING" &&
+                    result.counted_cash != null &&
+                    result.expected_cash != null &&
+                    result.difference != null
+                        ? {
+                            shift_uuid:
+                                result.shift_uuid,
+                            status:
+                                "CLOSING",
+                            counted_cash:
+                                result.counted_cash,
+                            expected_cash:
+                                result.expected_cash,
+                            difference:
+                                result.difference,
+                        }
+                        : null;
 
                 return currentShift
                     ? {

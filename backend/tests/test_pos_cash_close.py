@@ -555,3 +555,93 @@ def test_closed_shift_cannot_be_closed_twice(
         )
 
     assert exc_info.value.status_code == 409
+
+
+def test_current_open_shift_does_not_expose_reconciliation(
+    db_session,
+):
+    from app.api.pos_cash import get_current_cash_shift
+
+    branch, cashier, manager = _seed_staff(db_session)
+
+    _open_shift(
+        db_session,
+        branch=branch,
+        cashier=cashier,
+        manager=manager,
+    )
+
+    current = get_current_cash_shift(
+        requesting_staff=cashier,
+        token_payload={
+            "branch_code": branch.code,
+            "terminal_id": TERMINAL_ID,
+        },
+        db=db_session,
+    )
+
+    assert current is not None
+
+    payload = current.model_dump()
+
+    assert current.status == "OPEN"
+    assert "counted_cash" not in payload
+    assert "expected_cash" not in payload
+    assert "difference" not in payload
+
+
+def test_current_closing_shift_exposes_saved_reconciliation(
+    db_session,
+):
+    from app.api.pos_cash import get_current_cash_shift
+
+    branch, cashier, manager = _seed_staff(db_session)
+
+    shift = _open_shift(
+        db_session,
+        branch=branch,
+        cashier=cashier,
+        manager=manager,
+    )
+
+    _record_outflow(
+        db_session,
+        shift=shift,
+        cashier=cashier,
+        manager=manager,
+    )
+
+    PosCashService.submit_closing_count(
+        db_session,
+        shift_uuid=shift.shift_uuid,
+        closing_counts=_mismatch_700_counts(),
+        staff=cashier,
+    )
+
+    db_session.commit()
+    db_session.refresh(shift)
+
+    assert shift.status == "CLOSING"
+
+    current = get_current_cash_shift(
+        requesting_staff=cashier,
+        token_payload={
+            "branch_code": branch.code,
+            "terminal_id": TERMINAL_ID,
+        },
+        db=db_session,
+    )
+
+    assert current is not None
+
+    payload = current.model_dump()
+
+    assert current.status == "CLOSING"
+
+    assert "counted_cash" in payload
+    assert "expected_cash" in payload
+    assert "difference" in payload
+
+    assert payload["counted_cash"] == Decimal("700.00")
+    assert payload["expected_cash"] == Decimal("800.00")
+    assert payload["difference"] == Decimal("-100.00")

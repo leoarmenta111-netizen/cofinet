@@ -6,6 +6,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    model_serializer,
 )
 
 
@@ -50,6 +51,30 @@ class PosCashShiftResponse(BaseModel):
     opening_total: Decimal
     opened_at: datetime
     closed_at: datetime | None = None
+
+    counted_cash: Decimal | None = Field(
+        default=None,
+        validation_alias="closing_total",
+    )
+    expected_cash: Decimal | None = Field(
+        default=None,
+        validation_alias="expected_total",
+    )
+    difference: Decimal | None = Field(
+        default=None,
+        validation_alias="variance",
+    )
+
+    @model_serializer(mode="wrap")
+    def serialize_shift(self, handler):
+        payload = handler(self)
+
+        if self.status != "CLOSING":
+            payload.pop("counted_cash", None)
+            payload.pop("expected_cash", None)
+            payload.pop("difference", None)
+
+        return payload
 
 
 class PosCashMovementRequest(BaseModel):

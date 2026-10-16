@@ -336,3 +336,158 @@ test(
         );
     }
 );
+
+
+test(
+    "CLOSING shift reload restores reconciliation and can finalize",
+    async () => {
+        let closeCalls = 0;
+
+        const api = {
+            async getCurrentCashShift() {
+                return {
+                    shift_uuid: "shift-refresh-001",
+                    status: "CLOSING",
+                    opening_total: "1000.00",
+                    counted_cash: "700.00",
+                    expected_cash: "800.00",
+                    difference: "-100.00",
+                };
+            },
+
+            async finalizeCashShift() {
+                closeCalls += 1;
+
+                return {
+                    shift_uuid: "shift-refresh-001",
+                    status: "CLOSED",
+                    opening_total: "1000.00",
+                };
+            },
+        };
+
+        const staffSession = {
+            current() {
+                return {
+                    staff_id: 7,
+                    role: "CASHIER",
+                    access_token: "token",
+                };
+            },
+        };
+
+        const createCashShift =
+            loadFactory();
+
+        const shift =
+            createCashShift({
+                api,
+                staffSession,
+                isOnline: () => true,
+            });
+
+        const current =
+            await shift.loadCurrent();
+
+        assert.equal(
+            current.status,
+            "CLOSING"
+        );
+
+        const reconciliation =
+            shift.reconciliation();
+
+        assert.ok(
+            reconciliation,
+            "Reload must restore CLOSING reconciliation"
+        );
+
+        assert.equal(
+            reconciliation.counted_cash,
+            "700.00"
+        );
+
+        assert.equal(
+            reconciliation.expected_cash,
+            "800.00"
+        );
+
+        assert.equal(
+            reconciliation.difference,
+            "-100.00"
+        );
+
+        const closed =
+            await shift.finalizeClose(
+                {
+                    staffId: 2,
+                    pin: "9999",
+                },
+                "Diferencia validada"
+            );
+
+        assert.equal(
+            closeCalls,
+            1
+        );
+
+        assert.equal(
+            closed.status,
+            "CLOSED"
+        );
+    }
+);
+
+
+test(
+    "opening cash control restores visible reconciliation for CLOSING shift",
+    () => {
+        const app =
+            fs.readFileSync(
+                path.resolve(
+                    __dirname,
+                    "../js/app.js"
+                ),
+                "utf8"
+            );
+
+        const start =
+            app.indexOf(
+                "async function openCashControl()"
+            );
+
+        assert.notEqual(
+            start,
+            -1,
+            "Falta openCashControl"
+        );
+
+        const end =
+            app.indexOf(
+                "async function handleCashOpening()",
+                start
+            );
+
+        assert.notEqual(
+            end,
+            -1,
+            "No se pudo aislar openCashControl"
+        );
+
+        const source =
+            app.slice(
+                start,
+                end
+            );
+
+        assert.match(
+            source,
+            /state\.cashShift[\s\S]*?\.reconciliation\(\)/
+        );
+
+        assert.match(
+            source,
+            /showCashReconciliation\([\s\S]*?reconciliation/
+        );
+    }
+);
