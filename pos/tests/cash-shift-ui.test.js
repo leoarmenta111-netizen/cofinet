@@ -491,3 +491,79 @@ test(
         );
     }
 );
+
+
+test(
+    "closing count marks cached shift CLOSING before server submission",
+    () => {
+        const app =
+            fs.readFileSync(
+                path.resolve(
+                    __dirname,
+                    "../js/app.js"
+                ),
+                "utf8"
+            );
+
+        const start =
+            app.indexOf(
+                "async function handleClosingCount()"
+            );
+
+        assert.notEqual(
+            start,
+            -1,
+            "Falta handleClosingCount"
+        );
+
+        const end =
+            app.indexOf(
+                "async function handleFinalClose()",
+                start
+            );
+
+        assert.notEqual(
+            end,
+            -1,
+            "No se pudo aislar handleClosingCount"
+        );
+
+        const source =
+            app.slice(
+                start,
+                end
+            );
+
+        const persistIndex =
+            source.indexOf(
+                "persistCashShift("
+            );
+
+        const submitIndex =
+            source.indexOf(
+                ".submitClosingCount("
+            );
+
+        assert.notEqual(
+            persistIndex,
+            -1,
+            "El cierre debe persistir estado local provisional"
+        );
+
+        assert.notEqual(
+            submitIndex,
+            -1,
+            "Falta envío del conteo de cierre"
+        );
+
+        assert.match(
+            source,
+            /status:\s*"CLOSING"/
+        );
+
+        assert.ok(
+            persistIndex < submitIndex,
+            "El cache local debe quedar CLOSING antes de enviar el conteo al servidor"
+        );
+    }
+);

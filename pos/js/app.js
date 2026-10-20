@@ -1012,12 +1012,6 @@
         showCashActionError();
 
         try {
-            const reconciliation =
-                await state.cashShift
-                    .submitClosingCount(
-                        closingCounts()
-                    );
-
             const shift = {
                 ...state.activeCashShift,
                 status:
@@ -1027,6 +1021,12 @@
             await persistCashShift(
                 shift
             );
+
+            const reconciliation =
+                await state.cashShift
+                    .submitClosingCount(
+                        closingCounts()
+                    );
 
             showCashReconciliation(
                 reconciliation

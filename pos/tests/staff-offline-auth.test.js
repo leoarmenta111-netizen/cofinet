@@ -349,3 +349,50 @@ test(
         );
     }
 );
+
+
+test(
+    "offline unlock is rejected when cached shift is CLOSING",
+    async () => {
+        const fixture =
+            createFixture();
+
+        await fixture.session.unlock(
+            7,
+            "2468"
+        );
+
+        fixture.session.lock();
+
+        fixture.setActiveShift({
+            shift_uuid:
+                "shift-existing",
+            status:
+                "CLOSING",
+        });
+
+        fixture.setOnline(false);
+
+        assert.equal(
+            await fixture.session
+                .canUnlockOffline(
+                    7,
+                    "2468"
+                ),
+            false
+        );
+
+        await assert.rejects(
+            fixture.session.unlock(
+                7,
+                "2468"
+            )
+        );
+
+        assert.equal(
+            fixture.apiCallCount(),
+            1,
+            "offline rejection must not call server authorization"
+        );
+    }
+);
