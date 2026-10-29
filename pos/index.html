@@ -679,6 +679,16 @@
 <div id="modifier-modal" class="modal-backdrop" hidden>
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modifier-product-name">
         <div class="modal-header"><div><p class="eyebrow">PERSONALIZAR PRODUCTO</p><h2 id="modifier-product-name">Producto</h2><span id="modifier-base-price" class="modal-subtitle"></span></div><button id="modifier-close" class="modal-close" type="button" aria-label="Cerrar">×</button></div>
+        <section id="variant-section" class="variant-section" hidden>
+            <div class="modifier-group-title">
+                <div>
+                    <strong>Tamaño</strong>
+                    <small>Selecciona una opción</small>
+                </div>
+                <span class="modifier-rule is-required">Obligatorio</span>
+            </div>
+            <div id="variant-options" class="variant-options"></div>
+        </section>
         <div id="modifier-groups" class="modifier-groups"></div>
         <div class="quantity-row"><div><strong>Cantidad</strong><span>Unidades para agregar</span></div><div class="quantity-control"><button id="modifier-qty-minus" type="button" aria-label="Reducir cantidad">−</button><strong id="modifier-qty">1</strong><button id="modifier-qty-plus" type="button" aria-label="Aumentar cantidad">+</button></div></div>
         <div id="modifier-error" class="form-error" hidden></div>

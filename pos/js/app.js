@@ -13,6 +13,7 @@
         cart: [],
 
         modifierProduct: null,
+        modifierVariant: null,
         modifierQuantity: 1,
 
         paymentMethod: "CASH",
@@ -501,7 +502,9 @@
                 "product-price";
 
             price.textContent =
-                money(product.price);
+                productHasVariants(product)
+                    ? `Desde ${money(product.display_price)}`
+                    : money(product.price);
 
             const footer = document.createElement("span");
             footer.className = "product-footer";
@@ -536,10 +539,148 @@
        MODIFIERS
        ===================================================== */
 
+    function productHasVariants(product) {
+        return (
+            product?.has_variants === true &&
+            Array.isArray(product.variants) &&
+            product.variants.length > 0
+        );
+    }
+
+    function selectedVariant() {
+        return state.modifierVariant;
+    }
+
+    function configuredBasePrice(product) {
+        const variant =
+            selectedVariant();
+
+        if (productHasVariants(product)) {
+            return variant
+                ? Number(variant.price)
+                : Number(
+                    product.display_price ??
+                    product.price
+                );
+        }
+
+        return Number(product.price);
+    }
+
+    function renderVariantOptions(product) {
+        const section =
+            $("#variant-section");
+
+        const container =
+            $("#variant-options");
+
+        container.replaceChildren();
+
+        if (!productHasVariants(product)) {
+            section.hidden = true;
+            state.modifierVariant = null;
+            return;
+        }
+
+        section.hidden = false;
+
+        product.variants.forEach(variant => {
+            const label =
+                document.createElement("label");
+
+            label.className =
+                "modifier-option variant-option";
+
+            const input =
+                document.createElement("input");
+
+            input.type = "radio";
+            input.name = "product-variant";
+
+            input.value =
+                String(
+                    variant.product_variant_id
+                );
+
+            input.dataset.productVariantId =
+                String(
+                    variant.product_variant_id
+                );
+
+            input.dataset.variantName =
+                variant.name;
+
+            input.dataset.variantPrice =
+                String(variant.price);
+
+            const name =
+                document.createElement("span");
+
+            name.className =
+                "modifier-option-name";
+
+            name.textContent =
+                variant.name;
+
+            const price =
+                document.createElement("span");
+
+            price.className =
+                "modifier-option-price";
+
+            price.textContent =
+                money(variant.price);
+
+            input.addEventListener(
+                "change",
+                () => {
+                    state.modifierVariant =
+                        variant;
+
+                    container
+                        .querySelectorAll(
+                            ".variant-option"
+                        )
+                        .forEach(option => {
+                            option.classList.toggle(
+                                "is-selected",
+                                option
+                                    .querySelector(
+                                        "input"
+                                    )
+                                    .checked
+                            );
+                        });
+
+                    $("#modifier-base-price")
+                        .textContent =
+                            `${variant.name} · ${money(variant.price)}`;
+
+                    $("#modifier-error")
+                        .hidden = true;
+
+                    updateModifierTotal();
+                }
+            );
+
+            label.append(
+                input,
+                name,
+                price
+            );
+
+            container.append(label);
+        });
+    }
+
     function selectProduct(product) {
-        if (!product.modifiers?.length) {
+        if (
+            !productHasVariants(product) &&
+            !product.modifiers?.length
+        ) {
             addCartItem(
                 product,
+                null,
                 [],
                 1
             );
@@ -550,6 +691,9 @@
         state.modifierProduct =
             product;
 
+        state.modifierVariant =
+            null;
+
         state.modifierQuantity =
             1;
 
@@ -557,20 +701,26 @@
             .textContent =
                 product.name;
 
-        $("#modifier-base-price").textContent =
-            `Precio base ${money(product.price)}`;
+        $("#modifier-base-price")
+            .textContent =
+                productHasVariants(product)
+                    ? `Desde ${money(product.display_price)}`
+                    : `Precio base ${money(product.price)}`;
 
         $("#modifier-qty")
             .textContent = "1";
 
+        renderVariantOptions(product);
         renderModifierGroups(product);
         updateModifierTotal();
 
-        $("#modifier-error").hidden = true;
+        $("#modifier-error").hidden =
+            true;
 
         $("#modifier-modal").hidden =
             false;
     }
+
 
     function renderModifierGroups(product) {
         const container =
@@ -578,7 +728,7 @@
 
         container.replaceChildren();
 
-        product.modifiers.forEach(group => {
+        (product.modifiers || []).forEach(group => {
             const section =
                 document.createElement("section");
 
@@ -724,7 +874,10 @@
         );
 
         $("#modifier-add-total").textContent = money(
-            (Number(product.price) + optionsTotal) *
+            (
+                configuredBasePrice(product) +
+                optionsTotal
+            ) *
             state.modifierQuantity
         );
     }
@@ -821,6 +974,7 @@
 
     function addCartItem(
         product,
+        variant,
         modifiers,
         quantity
     ) {
@@ -831,6 +985,11 @@
                 0
             );
 
+        const basePrice =
+            variant
+                ? Number(variant.price)
+                : Number(product.price);
+
         state.cart.push({
             line_uuid:
                 window.CofiUUID.v4(),
@@ -838,18 +997,28 @@
             product_id:
                 product.id,
 
+            product_variant_id:
+                variant
+                    ? variant.product_variant_id
+                    : null,
+
+            variant_name:
+                variant
+                    ? variant.name
+                    : null,
+
             product_name:
                 product.name,
 
             base_price:
-                Number(product.price),
+                basePrice,
 
             modifiers,
 
             quantity,
 
             unit_price:
-                Number(product.price) +
+                basePrice +
                 modifierTotal,
         });
 
@@ -858,6 +1027,7 @@
         $("#modifier-modal").hidden =
             true;
     }
+
 
     function calculateCheckoutTotals({
         merchandiseCents,
@@ -1107,7 +1277,9 @@
                 "cart-item-name";
 
             name.textContent =
-                item.product_name;
+                item.variant_name
+                    ? `${item.product_name} · ${item.variant_name}`
+                    : item.product_name;
 
             const price =
                 document.createElement("span");
@@ -1448,6 +1620,11 @@
                 state.cart.map(item => ({
                     product_id:
                         item.product_id,
+
+
+                        product_variant_id:
+                            item.product_variant_id ??
+                            null,
 
                     quantity:
                         item.quantity,
@@ -3073,6 +3250,26 @@
                 const selected =
                     selectedModifiers();
 
+                const variant =
+                    selectedVariant();
+
+                if (
+                    productHasVariants(
+                        state.modifierProduct
+                    ) &&
+                    !variant
+                ) {
+                    $("#modifier-error")
+                        .textContent =
+                            "Selecciona un tamaño para continuar.";
+
+                    $("#modifier-error")
+                        .hidden =
+                            false;
+
+                    return;
+                }
+
                 if (
                     !validateModifiers(
                         state.modifierProduct,
@@ -3084,6 +3281,7 @@
 
                 addCartItem(
                     state.modifierProduct,
+                    variant,
                     selected,
                     state.modifierQuantity
                 );

@@ -5853,3 +5853,24 @@ and (max-width: 1366px) {
         backdrop-filter: none !important;
     }
 }
+
+
+/* PRODUCT VARIANTS V1 */
+.variant-section {
+    display: grid;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.variant-section[hidden] {
+    display: none;
+}
+
+.variant-options {
+    display: grid;
+    gap: .6rem;
+}
+
+.variant-option {
+    cursor: pointer;
+}
