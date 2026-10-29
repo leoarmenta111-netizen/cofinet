@@ -718,6 +718,19 @@ class PosOrderService:
                         ),
                     )
 
+            if (
+                snapshot_item is not None
+                and snapshot_item.product_variant_id
+                != requested_item.product_variant_id
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Receipt product variant does not "
+                        "match order item"
+                    ),
+                )
+
             if not product.category.is_active:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -848,6 +861,11 @@ class PosOrderService:
                 )
 
                 variant_name = variant.name
+
+            if snapshot_item is not None:
+                variant_name = (
+                    snapshot_item.variant_name
+                )
 
             requested_option_ids = list(
                 dict.fromkeys(

@@ -1832,6 +1832,14 @@
                                     item.product_id
                                 ),
 
+                            product_variant_id:
+                                item.product_variant_id ??
+                                null,
+
+                            variant_name:
+                                item.variant_name ??
+                                null,
+
                             product_name:
                                 String(
                                     item.product_name ||

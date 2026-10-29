@@ -285,6 +285,22 @@
                 product_id:
                     item.product_id,
 
+                ...(
+                    item.product_variant_id == null
+                        ? {}
+                        : {
+                            product_variant_id:
+                                item.product_variant_id,
+
+                            variant_name:
+                                item.variant_name == null
+                                    ? null
+                                    : String(
+                                        item.variant_name
+                                    ),
+                        }
+                ),
+
                 product_name:
                     String(
                         item.product_name ??
@@ -629,6 +645,41 @@
             requireNonnegativeCents(
                 modifier.price_delta_cents,
                 "modifier.price_delta_cents"
+            );
+        }
+
+        const hasProductVariantId =
+            item.product_variant_id !== null &&
+            item.product_variant_id !== undefined;
+
+        const hasVariantName =
+            item.variant_name !== null &&
+            item.variant_name !== undefined;
+
+        if (
+            hasProductVariantId !==
+            hasVariantName
+        ) {
+            throw new Error(
+                "Invalid variant identity"
+            );
+        }
+
+        if (
+            hasProductVariantId &&
+            !Number.isInteger(
+                item.product_variant_id
+            )
+        ) {
+            throw new Error(
+                "Invalid product_variant_id"
+            );
+        }
+
+        if (hasVariantName) {
+            requireText(
+                item.variant_name,
+                "item.variant_name"
             );
         }
 
