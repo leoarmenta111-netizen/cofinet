@@ -43,6 +43,7 @@ from app.schemas.pos_orders import (
 )
 
 
+from app.services.pos_cash_service import PosCashService
 from app.services.pos_pricing_service import (
     PosPricingService,
     PricingItemRequest,
@@ -1458,6 +1459,29 @@ class PosOrderService:
         )
 
         db.add(payment)
+
+        if payment_method == "CASH":
+            cash_shift = PosCashService.current_shift(
+                db,
+                branch_code=branch.code,
+                terminal_id=payload.terminal_id,
+            )
+
+            if (
+                cash_shift is not None
+                and cash_shift.status == "OPEN"
+            ):
+                PosCashService.append_ledger_entry(
+                    db,
+                    shift_id=cash_shift.id,
+                    entry_type="CASH_SALE",
+                    amount=total,
+                    idempotency_key=(
+                        f"CASH_SALE:{payment.payment_uuid}"
+                    ),
+                    reference_type="pos_order",
+                    reference_id=order_uuid,
+                )
 
         if payload.receipt_snapshot is not None:
             PosReceiptService.create_for_order(
