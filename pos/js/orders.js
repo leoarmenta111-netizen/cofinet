@@ -536,6 +536,92 @@
     }
 
 
+    const orderTypeLabels = {
+        DINE_IN: "Para aquí",
+        TAKEOUT: "Para llevar",
+        DELIVERY: "A domicilio",
+    };
+
+    function normalizedOrderType(order) {
+        const value = String(
+            order?.order_type || ""
+        ).toUpperCase();
+
+        return orderTypeLabels[value]
+            ? value
+            : null;
+    }
+
+    function orderContextText(
+        order,
+        source
+    ) {
+        const type =
+            normalizedOrderType(order);
+
+        const parts = [];
+
+        if (type) {
+            parts.push(
+                orderTypeLabels[type]
+            );
+        }
+
+        if (
+            type === "DINE_IN" &&
+            order?.table_number
+        ) {
+            parts.push(
+                `Mesa ${order.table_number}`
+            );
+        }
+
+        if (parts.length) {
+            return parts.join(" · ");
+        }
+
+        return selfServiceSource(source)
+            ? sourceLabel(source)
+            : "Venta en mostrador";
+    }
+
+    function orderDisplayName(
+        order,
+        source
+    ) {
+        const orderName =
+            String(
+                order?.order_name || ""
+            ).trim();
+
+        if (orderName) {
+            return orderName;
+        }
+
+        const customerName =
+            order?.customer_name ||
+            order?.customer?.name ||
+            order?.customer?.full_name;
+
+        if (customerName) {
+            return customerName;
+        }
+
+        const type =
+            normalizedOrderType(order);
+
+        if (
+            type === "DINE_IN" &&
+            order?.table_number
+        ) {
+            return `Mesa ${order.table_number}`;
+        }
+
+        return selfServiceSource(source)
+            ? "Autoservicio"
+            : "Mostrador";
+    }
+
     function renderOrders() {
         const list =
             $("#orders-list");
@@ -588,6 +674,13 @@
                     const haystack = [
                         order.folio,
                         customerName,
+                        order.order_name,
+                        order.table_number,
+                        normalizedOrderType(order)
+                            ? orderTypeLabels[
+                                normalizedOrderType(order)
+                            ]
+                            : null,
                         order.customer_phone,
                         itemText,
                         source,
@@ -719,20 +812,18 @@
                 document.createElement("strong");
 
             customer.textContent =
-                selfServiceSource(source) &&
-                customerName === "Mostrador"
-                    ? "Autoservicio"
-                    : customerName;
+                orderDisplayName(
+                    order,
+                    source
+                );
 
             const customerMeta =
                 document.createElement("small");
 
             customerMeta.textContent =
-                order.customer_phone ||
-                (
-                    selfServiceSource(source)
-                        ? sourceLabel(source)
-                        : "Venta en mostrador"
+                orderContextText(
+                    order,
+                    source
                 );
 
             customerCell.append(
@@ -1195,10 +1286,31 @@
         origin.textContent =
             sourceLabel(source);
 
+        const orderContext =
+            document.createElement(
+                "span"
+            );
+
+        orderContext.textContent =
+            [
+                orderContextText(
+                    order,
+                    source
+                ),
+                order.order_name
+                    ? `Nombre: ${
+                        order.order_name
+                    }`
+                    : null,
+            ]
+                .filter(Boolean)
+                .join(" · ");
+
         meta.append(
             date,
             payment,
-            origin
+            origin,
+            orderContext
         );
 
         body.append(meta);

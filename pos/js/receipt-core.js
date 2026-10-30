@@ -423,6 +423,24 @@
                     ),
             },
 
+            order_type:
+                String(
+                    input.order_type ||
+                    "DINE_IN"
+                ).toUpperCase(),
+
+            order_name:
+                input.order_name == null ||
+                String(input.order_name).trim() === ""
+                    ? null
+                    : String(input.order_name).trim(),
+
+            table_number:
+                input.table_number == null ||
+                String(input.table_number).trim() === ""
+                    ? null
+                    : String(input.table_number).trim(),
+
             customer:
                 buildCustomer(
                     input.customer
@@ -770,6 +788,39 @@
             snapshot.terminal.terminal_id,
             "terminal.terminal_id"
         );
+
+        if (
+            snapshot.order_type !== undefined &&
+            ![
+                "DINE_IN",
+                "TAKEOUT",
+                "DELIVERY",
+            ].includes(snapshot.order_type)
+        ) {
+            throw new Error(
+                "Unsupported receipt order_type"
+            );
+        }
+
+        if (
+            snapshot.order_name !== null &&
+            snapshot.order_name !== undefined
+        ) {
+            requireText(
+                snapshot.order_name,
+                "order_name"
+            );
+        }
+
+        if (
+            snapshot.table_number !== null &&
+            snapshot.table_number !== undefined
+        ) {
+            requireText(
+                snapshot.table_number,
+                "table_number"
+            );
+        }
 
         validateCustomer(
             snapshot.customer

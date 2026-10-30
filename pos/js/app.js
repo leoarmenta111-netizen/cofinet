@@ -2955,6 +2955,18 @@ function updateOpeningTotal() {
                                 state.terminalId,
                         },
 
+                        order_type:
+                            payload.order_type ||
+                            "DINE_IN",
+
+                        order_name:
+                            payload.order_name ??
+                            null,
+
+                        table_number:
+                            payload.table_number ??
+                            null,
+
                         customer:
                             state.selectedCustomer
                                 ? {

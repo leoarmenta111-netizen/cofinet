@@ -433,6 +433,26 @@
             snapshot.customer
                 ?.name;
 
+        const orderType =
+            snapshot.order_type
+                ? String(
+                    snapshot.order_type
+                ).toUpperCase()
+                : null;
+
+        const orderTypeLabel =
+            {
+                DINE_IN: "Para aquí",
+                TAKEOUT: "Para llevar",
+                DELIVERY: "A domicilio",
+            }[orderType] || null;
+
+        const orderName =
+            snapshot.order_name || null;
+
+        const tableNumber =
+            snapshot.table_number || null;
+
         const branchLines = [
             branch.branch_name,
             branch.address,
@@ -578,6 +598,46 @@
                             snapshot
                         )}</strong>
                     </div>
+
+                    ${
+                        orderTypeLabel
+                            ? `
+                                <div class="receipt-row">
+                                    <span>Tipo</span>
+                                    <strong>${escapeHtml(
+                                        orderTypeLabel
+                                    )}</strong>
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        orderType === "DINE_IN" &&
+                        tableNumber
+                            ? `
+                                <div class="receipt-row">
+                                    <span>Mesa</span>
+                                    <strong>${escapeHtml(
+                                        tableNumber
+                                    )}</strong>
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        orderName
+                            ? `
+                                <div class="receipt-row">
+                                    <span>Nombre</span>
+                                    <strong>${escapeHtml(
+                                        orderName
+                                    )}</strong>
+                                </div>
+                            `
+                            : ""
+                    }
 
                     ${
                         customerName
