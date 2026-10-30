@@ -1110,7 +1110,7 @@
                     <div>
                         <h3>Configuración avanzada</h3>
                         <p>
-                            Precios por sucursal y modificadores.
+                            Precios por sucursal, variantes y modificadores.
                         </p>
                     </div>
                 </div>
@@ -1132,6 +1132,38 @@
                         class="branch-settings"
                     ></div>
                 </section>
+                <section
+                    id="product-variants-section"
+                    class="catalog-editor-section"
+                    hidden
+                >
+                    <h3>Variantes de precio</h3>
+
+                    <p class="muted">
+                        Asigna un grupo como Tamaños de bebida
+                        y define el precio de cada opción.
+                    </p>
+
+                    <div class="field">
+                        <label for="product-variant-group">
+                            Grupo de variantes
+                        </label>
+
+                        <select id="product-variant-group">
+                            <option value="">
+                                Sin variantes de precio
+                            </option>
+                        </select>
+                    </div>
+
+                    <div
+                        id="product-variants"
+                        class="product-variant-settings"
+                    ></div>
+                </section>
+
+
+
 
 
                 <section
@@ -3680,6 +3712,374 @@
             "product-dialog"
         ).showModal();
     }
+    function renderProductVariants(product) {
+        const section =
+            document.getElementById(
+                "product-variants-section"
+            );
+
+        const select =
+            document.getElementById(
+                "product-variant-group"
+            );
+
+        const container =
+            document.getElementById(
+                "product-variants"
+            );
+
+        section.hidden = !product;
+        select.replaceChildren();
+
+        const emptyOption =
+            document.createElement("option");
+
+        emptyOption.value = "";
+        emptyOption.textContent =
+            "Sin variantes de precio";
+
+        select.append(emptyOption);
+
+        for (
+            const group
+            of catalog.variant_groups || []
+        ) {
+            const isSelected =
+                Number(group.id) ===
+                Number(
+                    product?.variant_group_id
+                );
+
+            if (
+                !group.is_active &&
+                !isSelected
+            ) {
+                continue;
+            }
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                String(group.id);
+
+            option.textContent =
+                group.name;
+
+            select.append(option);
+        }
+
+        select.value =
+            product?.variant_group_id == null
+                ? ""
+                : String(
+                    product.variant_group_id
+                );
+
+        renderProductVariantRows(
+            product,
+            select.value
+        );
+    }
+
+
+    function renderProductVariantRows(
+        product,
+        groupId
+    ) {
+        const container =
+            document.getElementById(
+                "product-variants"
+            );
+
+        container.replaceChildren();
+
+        if (!groupId) {
+            const message =
+                document.createElement("p");
+
+            message.className =
+                "muted";
+
+            message.textContent =
+                "Selecciona un grupo para configurar precios.";
+
+            container.append(message);
+            return;
+        }
+
+        const group =
+            (catalog.variant_groups || [])
+                .find(
+                    item =>
+                        String(item.id) ===
+                        String(groupId)
+                );
+
+        if (!group) {
+            return;
+        }
+
+        const existingVariants =
+            new Map(
+                (product?.variants || [])
+                    .map(
+                        item => [
+                            Number(
+                                item.variant_id
+                            ),
+                            item
+                        ]
+                    )
+            );
+
+        for (
+            const variant
+            of group.variants || []
+        ) {
+            if (!variant.is_active) {
+                continue;
+            }
+
+            const existing =
+                existingVariants.get(
+                    Number(variant.id)
+                );
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "product-variant-setting-row";
+
+            row.dataset.variantId =
+                String(variant.id);
+
+            row.dataset.sortOrder =
+                String(
+                    variant.sort_order ?? 0
+                );
+
+            const name =
+                document.createElement(
+                    "strong"
+                );
+
+            name.className =
+                "product-variant-setting-name";
+
+            name.textContent =
+                variant.name;
+
+            const money =
+                document.createElement(
+                    "label"
+                );
+
+            money.className =
+                "product-variant-money";
+
+            const currency =
+                document.createElement(
+                    "span"
+                );
+
+            currency.textContent = "$";
+
+            const price =
+                document.createElement(
+                    "input"
+                );
+
+            price.type = "number";
+            price.min = "0";
+            price.step = "0.01";
+            price.required = true;
+
+            price.dataset.variantPrice =
+                "";
+
+            price.value =
+                existing
+                    ? Number(
+                        existing.price
+                    )
+                    : Number(
+                        product?.base_price ??
+                        0
+                    );
+
+            money.append(
+                currency,
+                price
+            );
+
+            const activeLabel =
+                document.createElement(
+                    "label"
+                );
+
+            activeLabel.className =
+                "product-variant-active";
+
+            const active =
+                document.createElement(
+                    "input"
+                );
+
+            active.type = "checkbox";
+
+            active.dataset.variantActive =
+                "";
+
+            active.checked =
+                existing
+                    ? existing.is_active
+                    : true;
+
+            const activeText =
+                document.createElement(
+                    "span"
+                );
+
+            activeText.textContent =
+                "Activo";
+
+            activeLabel.append(
+                active,
+                activeText
+            );
+
+            row.append(
+                name,
+                money,
+                activeLabel
+            );
+
+            container.append(row);
+        }
+    }
+
+
+    async function saveProductVariants(productId) {
+        const select =
+            document.getElementById(
+                "product-variant-group"
+            );
+
+        const groupId =
+            select.value
+                ? Number(select.value)
+                : null;
+
+        const product =
+            catalog.products.find(
+                item =>
+                    String(item.id) ===
+                    String(productId)
+            );
+
+        const currentGroupId =
+            product?.variant_group_id == null
+                ? null
+                : Number(
+                    product.variant_group_id
+                );
+
+        if (groupId === null) {
+            if (
+                currentGroupId !== null
+            ) {
+                catalog =
+                    await adminRequest(
+                        `/admin/pos/catalog/products/${productId}/variant-group`,
+                        {
+                            method: "DELETE"
+                        }
+                    );
+            }
+
+            return;
+        }
+
+        if (
+            currentGroupId !==
+            groupId
+        ) {
+            catalog =
+                await adminRequest(
+                    `/admin/pos/catalog/products/${productId}/variant-group/${groupId}`,
+                    {
+                        method: "PUT"
+                    }
+                );
+        }
+
+        const rows =
+            document.querySelectorAll(
+                "#product-variants [data-variant-id]"
+            );
+
+        for (const row of rows) {
+            const variantId =
+                Number(
+                    row.dataset.variantId
+                );
+
+            const price =
+                row.querySelector(
+                    "[data-variant-price]"
+                );
+
+            const active =
+                row.querySelector(
+                    "[data-variant-active]"
+                );
+
+            if (
+                price.value === "" ||
+                !Number.isFinite(
+                    Number(price.value)
+                ) ||
+                Number(price.value) < 0
+            ) {
+                throw new Error(
+                    "Captura un precio válido para cada variante."
+                );
+            }
+
+            catalog =
+                await adminRequest(
+                    `/admin/pos/catalog/products/${productId}/variants/${variantId}`,
+                    {
+                        method: "PUT",
+
+                        body:
+                            JSON.stringify({
+                                price:
+                                    Number(
+                                        price.value
+                                    ),
+
+                                is_active:
+                                    active.checked,
+
+                                sort_order:
+                                    Number(
+                                        row.dataset
+                                            .sortOrder ||
+                                        0
+                                    )
+                            })
+                    }
+                );
+        }
+    }
+
+
+
 
 
     async function saveBranchSettings(
@@ -3774,6 +4174,20 @@
                 );
         }
     }
+    document.getElementById(
+        "product-variant-group"
+    ).addEventListener(
+        "change",
+        event => {
+            renderProductVariantRows(
+                currentProduct(),
+                event.currentTarget.value
+            );
+        }
+    );
+
+
+
 
 
     document.getElementById(
@@ -3974,6 +4388,10 @@
 
 
                 await saveProductModifiers(
+                    id
+                );
+
+                await saveProductVariants(
                     id
                 );
 
