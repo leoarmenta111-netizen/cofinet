@@ -523,7 +523,12 @@
                     const itemText =
                         (order.items || [])
                             .map(item =>
-                                item.product_name || ""
+                                [
+                                    item.product_name,
+                                    item.variant_name
+                                ]
+                                    .filter(Boolean)
+                                    .join(" ")
                             )
                             .join(" ");
 
@@ -681,7 +686,11 @@
                 orderItems
                     .slice(0, 2)
                     .map(item =>
-                        `${item.quantity} × ${item.product_name}`
+                        `${item.quantity} × ${
+                            item.variant_name
+                                ? `${item.product_name} · ${item.variant_name}`
+                                : item.product_name
+                        }`
                     );
 
             const itemPrimary =
@@ -1138,7 +1147,11 @@
                     );
 
                 name.textContent =
-                    `${item.quantity} × ${item.product_name}`;
+                    `${item.quantity} × ${
+                        item.variant_name
+                            ? `${item.product_name} · ${item.variant_name}`
+                            : item.product_name
+                    }`;
 
                 const price =
                     document.createElement(
