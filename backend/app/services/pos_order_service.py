@@ -42,6 +42,7 @@ from app.schemas.pos_orders import (
 )
 
 
+from app.services.pos_inventory_service import PosInventoryService
 from app.services.pos_receipt_service import PosReceiptService
 
 CENT = Decimal("0.01")
@@ -566,6 +567,32 @@ class PosOrderService:
         cls,
         db: Session,
         payload: PosOrderCreate,
+    ) -> PosOrderResponse:
+        return cls._create_paid_order(
+            db,
+            payload,
+            allow_inventory_negative=False,
+        )
+
+    @classmethod
+    def sync_offline(
+        cls,
+        db: Session,
+        payload: PosOrderCreate,
+    ) -> PosOrderResponse:
+        return cls._create_paid_order(
+            db,
+            payload,
+            allow_inventory_negative=True,
+        )
+
+    @classmethod
+    def _create_paid_order(
+        cls,
+        db: Session,
+        payload: PosOrderCreate,
+        *,
+        allow_inventory_negative: bool,
     ) -> PosOrderResponse:
         order_uuid = str(payload.order_uuid)
 
@@ -1229,7 +1256,15 @@ class PosOrderService:
             )
 
         try:
+            PosInventoryService.apply_sale(
+                db,
+                order=order,
+                allow_negative=allow_inventory_negative,
+            )
             db.commit()
+        except HTTPException:
+            db.rollback()
+            raise
         except IntegrityError:
             db.rollback()
 

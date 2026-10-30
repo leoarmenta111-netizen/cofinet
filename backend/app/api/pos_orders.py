@@ -40,6 +40,21 @@ def create_pos_order(
     )
 
 
+@router.post(
+    "/sync",
+    response_model=PosOrderResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def sync_pos_order(
+    payload: PosOrderCreate,
+    db: Session = Depends(get_db),
+) -> PosOrderResponse:
+    return PosOrderService.sync_offline(
+        db=db,
+        payload=payload,
+    )
+
+
 @router.get(
     "",
     response_model=PosOrderListResponse,
