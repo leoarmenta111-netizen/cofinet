@@ -14,6 +14,7 @@ class PosModifierOptionResponse(BaseModel):
     id: int
     name: str
     price_delta: Decimal
+    image_url: str | None
     sort_order: int
 
 

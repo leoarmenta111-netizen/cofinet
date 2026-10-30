@@ -14,6 +14,74 @@
         rel="stylesheet"
         href="admin.css?v=20260826-product-description-v2"
     >
+
+<style id="modifier-option-image-styles">
+
+.option-image-section {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.option-image-editor {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.option-image-preview-wrap {
+    width: 92px;
+    height: 92px;
+    flex: 0 0 92px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid #d7ddd8;
+    border-radius: 18px;
+    background: #f5f1e7;
+}
+
+.option-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.option-image-placeholder {
+    padding: 8px;
+    color: #68726c;
+    font-size: .78rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.option-image-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.modifier-option-thumbnail {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 13px;
+    background: #f5f1e7;
+    color: #24483c;
+    font-weight: 800;
+}
+
+.modifier-option-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+</style>
+
 </head>
 
 <body
@@ -1768,6 +1836,66 @@
             Opción activa
         </label>
 
+          <div
+              id="option-image-section"
+              class="option-image-section"
+          >
+              <label>
+                  Imagen del complemento
+              </label>
+
+              <input
+                  id="option-image-file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  hidden
+              >
+
+              <div class="option-image-editor">
+                  <div class="option-image-preview-wrap">
+                      <img
+                          id="option-image-preview"
+                          class="option-image-preview"
+                          alt="Imagen del complemento"
+                          hidden
+                      >
+
+                      <div
+                          id="option-image-placeholder"
+                          class="option-image-placeholder"
+                      >
+                          Sin imagen
+                      </div>
+                  </div>
+
+                  <div class="option-image-controls">
+                      <button
+                          id="select-option-image"
+                          class="button button-secondary button-small"
+                          type="button"
+                      >
+                          Subir imagen
+                      </button>
+
+                      <button
+                          id="remove-option-image"
+                          class="button button-ghost button-small"
+                          type="button"
+                          hidden
+                      >
+                          Eliminar imagen
+                      </button>
+                  </div>
+              </div>
+
+              <small
+                  id="option-image-help"
+                  class="field-help"
+              >
+                  JPG, PNG o WebP. Máximo 5 MB.
+              </small>
+          </div>
+
     </div>
 
 
@@ -2570,6 +2698,40 @@
             row.className =
                 "modifier-editor-option";
 
+            const visual =
+                document.createElement(
+                    "div"
+                );
+
+            visual.className =
+                "modifier-option-thumbnail";
+
+            if (option.image_url) {
+                const image =
+                    document.createElement(
+                        "img"
+                    );
+
+                image.src =
+                    option.image_url;
+
+                image.alt =
+                    option.name ||
+                    "Complemento";
+
+                visual.append(
+                    image
+                );
+            } else {
+                visual.textContent =
+                    String(
+                        option.name || "?"
+                    )
+                        .trim()
+                        .charAt(0)
+                        .toUpperCase();
+            }
+
             const copy =
                 document.createElement(
                     "div"
@@ -2622,6 +2784,7 @@
             );
 
             row.append(
+                visual,
                 copy,
                 edit
             );
@@ -5925,6 +6088,221 @@
        OPTIONS
        ============================================== */
 
+    function renderOptionImage(
+        option = null
+    ) {
+        const id =
+            String(option?.id || "");
+
+        const imageUrl =
+            String(
+                option?.image_url || ""
+            );
+
+        const preview =
+            document.getElementById(
+                "option-image-preview"
+            );
+
+        const placeholder =
+            document.getElementById(
+                "option-image-placeholder"
+            );
+
+        const selectButton =
+            document.getElementById(
+                "select-option-image"
+            );
+
+        const removeButton =
+            document.getElementById(
+                "remove-option-image"
+            );
+
+        const help =
+            document.getElementById(
+                "option-image-help"
+            );
+
+        const input =
+            document.getElementById(
+                "option-image-file"
+            );
+
+        input.value = "";
+
+        if (imageUrl) {
+            preview.src = imageUrl;
+            preview.hidden = false;
+            placeholder.hidden = true;
+
+            selectButton.textContent =
+                "Cambiar imagen";
+
+            removeButton.hidden =
+                false;
+        } else {
+            preview.removeAttribute(
+                "src"
+            );
+
+            preview.hidden = true;
+            placeholder.hidden = false;
+
+            selectButton.textContent =
+                "Subir imagen";
+
+            removeButton.hidden =
+                true;
+        }
+
+        selectButton.disabled =
+            !id;
+
+        help.textContent =
+            id
+                ? "JPG, PNG o WebP. Máximo 5 MB."
+                : "Guarda primero la opción para poder subir una imagen.";
+    }
+
+
+    function findModifierOption(
+        optionId
+    ) {
+        const target =
+            Number(optionId);
+
+        for (
+            const group
+            of catalog.modifier_groups
+        ) {
+            const option =
+                group.options.find(
+                    item =>
+                        Number(item.id) ===
+                        target
+                );
+
+            if (option) {
+                return {
+                    group,
+                    option
+                };
+            }
+        }
+
+        return {
+            group: null,
+            option: null
+        };
+    }
+
+
+    async function uploadModifierOptionImage(
+        file
+    ) {
+        const optionId =
+            document.getElementById(
+                "option-id"
+            ).value;
+
+        if (!optionId) {
+            throw new Error(
+                "Guarda primero la opción."
+            );
+        }
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "image",
+            file
+        );
+
+        catalog =
+            await adminRequest(
+                `/admin/pos/catalog/modifier-options/${optionId}/image`,
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+        const result =
+            findModifierOption(
+                optionId
+            );
+
+        if (result.group) {
+            renderModifierOptions(
+                result.group
+            );
+        }
+
+        renderOptionImage(
+            result.option
+        );
+
+        renderAll();
+
+        showToast(
+            "Imagen del complemento actualizada."
+        );
+    }
+
+
+    async function deleteModifierOptionImage() {
+        const optionId =
+            document.getElementById(
+                "option-id"
+            ).value;
+
+        if (!optionId) {
+            return;
+        }
+
+        if (
+            !window.confirm(
+                "¿Eliminar la imagen de este complemento?"
+            )
+        ) {
+            return;
+        }
+
+        catalog =
+            await adminRequest(
+                `/admin/pos/catalog/modifier-options/${optionId}/image`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+        const result =
+            findModifierOption(
+                optionId
+            );
+
+        if (result.group) {
+            renderModifierOptions(
+                result.group
+            );
+        }
+
+        renderOptionImage(
+            result.option
+        );
+
+        renderAll();
+
+        showToast(
+            "Imagen del complemento eliminada."
+        );
+    }
+
+
+
+
 
     function openOption(
         group,
@@ -5981,13 +6359,96 @@
             "";
 
 
-        document.getElementById(
+
+        renderOptionImage(
+            option
+        );
+
+document.getElementById(
             "option-dialog"
         ).showModal();
     }
 
 
+
     document.getElementById(
+        "select-option-image"
+    ).addEventListener(
+        "click",
+        () => {
+            document.getElementById(
+                "option-image-file"
+            ).click();
+        }
+    );
+
+
+    document.getElementById(
+        "option-image-file"
+    ).addEventListener(
+        "change",
+        async event => {
+            const file =
+                event.target.files?.[0];
+
+            if (!file) {
+                return;
+            }
+
+            const error =
+                document.getElementById(
+                    "option-error"
+                );
+
+            error.textContent = "";
+
+            try {
+                await uploadModifierOptionImage(
+                    file
+                );
+            } catch (uploadError) {
+                console.error(
+                    uploadError
+                );
+
+                error.textContent =
+                    uploadError?.message ||
+                    "No fue posible subir la imagen.";
+            } finally {
+                event.target.value = "";
+            }
+        }
+    );
+
+
+    document.getElementById(
+        "remove-option-image"
+    ).addEventListener(
+        "click",
+        async () => {
+            const error =
+                document.getElementById(
+                    "option-error"
+                );
+
+            error.textContent = "";
+
+            try {
+                await deleteModifierOptionImage();
+            } catch (deleteError) {
+                console.error(
+                    deleteError
+                );
+
+                error.textContent =
+                    deleteError?.message ||
+                    "No fue posible eliminar la imagen.";
+            }
+        }
+    );
+
+
+document.getElementById(
         "option-form"
     ).addEventListener(
         "submit",

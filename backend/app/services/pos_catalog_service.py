@@ -222,6 +222,7 @@ class PosCatalogService:
                                 price_delta=Decimal(
                                     option.price_delta
                                 ),
+                                image_url=option.image_url,
                                 sort_order=option.sort_order,
                             )
                             for option in active_options

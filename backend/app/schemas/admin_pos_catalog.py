@@ -166,6 +166,7 @@ class AdminPosModifierOptionResponse(BaseModel):
     id: int
     name: str
     price_delta: Decimal
+    image_url: str | None
     sort_order: int
     is_active: bool
 

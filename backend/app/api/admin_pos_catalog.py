@@ -38,6 +38,9 @@ from app.services.admin_pos_bulk_import_service import (
 from app.services.pos_product_image_service import (
     PosProductImageService,
 )
+from app.services.pos_modifier_option_image_service import (
+    PosModifierOptionImageService,
+)
 
 
 router = APIRouter(
@@ -401,6 +404,46 @@ def update_product_modifier(
         product_id,
         group_id,
         data,
+    )
+
+
+@router.post(
+    "/modifier-options/{option_id}/image",
+    response_model=AdminPosCatalogResponse,
+)
+async def upload_modifier_option_image(
+    option_id: int,
+    image: UploadFile = File(...),
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    await PosModifierOptionImageService.upload(
+        db,
+        option_id,
+        image,
+    )
+
+    return AdminPosCatalogService.get_catalog(
+        db
+    )
+
+
+@router.delete(
+    "/modifier-options/{option_id}/image",
+    response_model=AdminPosCatalogResponse,
+)
+def delete_modifier_option_image(
+    option_id: int,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    PosModifierOptionImageService.delete(
+        db,
+        option_id,
+    )
+
+    return AdminPosCatalogService.get_catalog(
+        db
     )
 
 

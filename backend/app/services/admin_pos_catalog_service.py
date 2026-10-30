@@ -336,6 +336,7 @@ class AdminPosCatalogService:
                         "id": option.id,
                         "name": option.name,
                         "price_delta": Decimal(option.price_delta),
+                        "image_url": option.image_url,
                         "sort_order": option.sort_order,
                         "is_active": option.is_active,
                     }

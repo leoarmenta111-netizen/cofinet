@@ -492,6 +492,11 @@ class PosModifierOption(Base):
         server_default="0",
     )
 
+    image_url = Column(
+        String(500),
+        nullable=True,
+    )
+
     sort_order = Column(
         Integer,
         nullable=False,
