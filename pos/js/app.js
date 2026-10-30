@@ -7,6 +7,9 @@
         searchQuery: "",
 
         selectedCustomer: null,
+        orderType: "DINE_IN",
+        orderName: "",
+        tableNumber: "",
         customerResults: [],
         customersBusy: false,
 
@@ -2345,8 +2348,67 @@ function updateOpeningTotal() {
         renderCart();
     }
 
+    const orderTypeLabels = {
+        DINE_IN: "Para aquí",
+        TAKEOUT: "Para llevar",
+        DELIVERY: "A domicilio",
+    };
+
+    function syncOrderContextUI() {
+        document
+            .querySelectorAll("[data-order-type]")
+            .forEach(button => {
+                button.classList.toggle(
+                    "is-active",
+                    button.dataset.orderType ===
+                        state.orderType
+                );
+            });
+
+        const badge =
+            $("#current-order-type");
+
+        if (badge) {
+            badge.textContent =
+                orderTypeLabels[state.orderType]
+                || state.orderType;
+        }
+
+        const tableField =
+            $("#order-table-field");
+
+        if (tableField) {
+            tableField.hidden =
+                state.orderType !== "DINE_IN";
+        }
+    }
+
+    function resetOrderContext() {
+        state.orderType = "DINE_IN";
+        state.orderName = "";
+        state.tableNumber = "";
+
+        const nameInput =
+            $("#order-name");
+
+        const tableInput =
+            $("#order-table-number");
+
+        if (nameInput) {
+            nameInput.value = "";
+        }
+
+        if (tableInput) {
+            tableInput.value = "";
+        }
+
+        syncOrderContextUI();
+    }
+
+
     function clearCart() {
         state.cart = [];
+        resetOrderContext();
         renderCart();
     }
 
@@ -2506,6 +2568,20 @@ function updateOpeningTotal() {
             customer_uuid:
                 state.selectedCustomer
                     ? state.selectedCustomer.customer_uuid
+                    : null,
+
+            order_type:
+                state.orderType,
+
+            order_name:
+                state.orderName.trim() || null,
+
+            table_number:
+                state.orderType === "DINE_IN"
+                    ? (
+                        state.tableNumber.trim()
+                        || null
+                    )
                     : null,
 
             created_at_client:
@@ -4171,6 +4247,54 @@ function updateOpeningTotal() {
             "click",
             clearCart
         );
+
+    document
+        .querySelectorAll("[data-order-type]")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    state.orderType =
+                        button.dataset.orderType;
+
+                    if (
+                        state.orderType !==
+                        "DINE_IN"
+                    ) {
+                        state.tableNumber = "";
+
+                        const tableInput =
+                            $("#order-table-number");
+
+                        if (tableInput) {
+                            tableInput.value = "";
+                        }
+                    }
+
+                    syncOrderContextUI();
+                }
+            );
+        });
+
+    $("#order-name")
+        ?.addEventListener(
+            "input",
+            event => {
+                state.orderName =
+                    event.currentTarget.value;
+            }
+        );
+
+    $("#order-table-number")
+        ?.addEventListener(
+            "input",
+            event => {
+                state.tableNumber =
+                    event.currentTarget.value;
+            }
+        );
+
+    syncOrderContextUI();
 
     $("#checkout-button")
         .addEventListener(

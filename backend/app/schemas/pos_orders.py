@@ -35,6 +35,19 @@ class PosOrderCreate(BaseModel):
     branch_code: str = Field(min_length=1, max_length=50)
     terminal_id: str = Field(min_length=1, max_length=80)
     customer_uuid: UUID | None = None
+    order_type: Literal[
+        "DINE_IN",
+        "TAKEOUT",
+        "DELIVERY",
+    ] = "DINE_IN"
+    order_name: str | None = Field(
+        default=None,
+        max_length=120,
+    )
+    table_number: str | None = Field(
+        default=None,
+        max_length=80,
+    )
     created_at_client: datetime
     notes: str | None = Field(default=None, max_length=1000)
     items: list[PosOrderItemCreate] = Field(min_length=1)
@@ -112,6 +125,13 @@ class PosOrderResponse(BaseModel):
     branch_code: str
     terminal_id: str
     customer_uuid: str | None = None
+    order_type: Literal[
+        "DINE_IN",
+        "TAKEOUT",
+        "DELIVERY",
+    ]
+    order_name: str | None = None
+    table_number: str | None = None
     status: str
     payment_status: str
     subtotal: Decimal
@@ -143,6 +163,13 @@ class PosStationOrderResponse(BaseModel):
     order_uuid: str
     folio: str
     branch_code: str
+    order_type: Literal[
+        "DINE_IN",
+        "TAKEOUT",
+        "DELIVERY",
+    ]
+    order_name: str | None = None
+    table_number: str | None = None
     station_status: Literal[
         "NEW",
         "PREPARING",

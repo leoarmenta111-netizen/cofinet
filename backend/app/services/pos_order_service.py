@@ -90,6 +90,9 @@ class PosOrderService:
                 if order.customer is not None
                 else None
             ),
+            order_type=order.order_type,
+            order_name=order.order_name,
+            table_number=order.table_number,
             status=order.status,
             payment_status=order.payment_status,
             subtotal=money(order.subtotal),
@@ -286,6 +289,9 @@ class PosOrderService:
                     order_uuid=order.order_uuid,
                     folio=order.folio,
                     branch_code=order.branch.code,
+                    order_type=order.order_type,
+                    order_name=order.order_name,
+                    table_number=order.table_number,
                     station_status=(
                         station_state.status
                     ),
@@ -1335,6 +1341,9 @@ class PosOrderService:
                 else None
             ),
             terminal_id=payload.terminal_id,
+            order_type=payload.order_type,
+            order_name=payload.order_name,
+            table_number=payload.table_number,
             status="NEW",
             payment_status="PAID",
             subtotal=subtotal,

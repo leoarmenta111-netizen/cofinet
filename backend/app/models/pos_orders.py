@@ -38,6 +38,10 @@ class PosOrder(Base):
             "source IN ('POS','KIOSK','BAR_TABLET')",
             name='ck_pos_orders_source',
         ),
+        CheckConstraint(
+            "order_type IN ('DINE_IN','TAKEOUT','DELIVERY')",
+            name="ck_pos_orders_order_type",
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -90,6 +94,23 @@ class PosOrder(Base):
         default='POS',
         server_default='POS',
         index=True,
+    )
+
+    order_type = Column(
+        String(24),
+        nullable=False,
+        default="DINE_IN",
+        server_default="DINE_IN",
+    )
+
+    order_name = Column(
+        String(120),
+        nullable=True,
+    )
+
+    table_number = Column(
+        String(80),
+        nullable=True,
     )
 
     self_order_id = Column(

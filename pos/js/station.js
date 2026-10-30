@@ -139,6 +139,42 @@
         `;
     }
 
+    const orderTypeLabels = {
+        DINE_IN: "PARA AQUÍ",
+        TAKEOUT: "PARA LLEVAR",
+        DELIVERY: "A DOMICILIO",
+    };
+
+    function renderOrderContext(order) {
+        const parts = [
+            orderTypeLabels[order.order_type]
+                || order.order_type
+                || "PARA AQUÍ",
+        ];
+
+        if (
+            order.order_type === "DINE_IN"
+            && order.table_number
+        ) {
+            parts.push(
+                `MESA ${order.table_number}`
+            );
+        }
+
+        if (order.order_name) {
+            parts.push(order.order_name);
+        }
+
+        return `
+            <div class="station-order-context">
+                ${parts
+                    .map(escapeHtml)
+                    .join(" · ")}
+            </div>
+        `;
+    }
+
+
     function renderOrder(order) {
         const status =
             order.station_status;
@@ -209,6 +245,8 @@
                         ${labels[status] || status}
                     </span>
                 </header>
+
+                ${renderOrderContext(order)}
 
                 ${orderNotes}
 

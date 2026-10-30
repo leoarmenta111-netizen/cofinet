@@ -39,7 +39,7 @@
             link.rel = "manifest";
         })();
     </script>
-    <link rel="stylesheet" href="./css/pos.css?v=28">
+    <link rel="stylesheet" href="./css/pos.css?v=29">
     <link rel="stylesheet" href="./css/receipt.css?v=1">
 </head>
 <body>
@@ -507,7 +507,7 @@
 
         <aside id="current-order-panel" class="order-panel" aria-label="Orden actual">
             <div class="order-heading">
-                <div><h2>Orden actual</h2><span class="order-type">Venta en mostrador</span></div>
+                <div><h2>Orden actual</h2><span id="current-order-type" class="order-type">Para aquí</span></div>
                 <div class="order-heading-actions">
                     <button id="clear-cart" class="icon-button danger-button" type="button" hidden title="Vaciar orden" aria-label="Vaciar orden"><svg><use href="#i-trash"></use></svg></button>
 
@@ -521,6 +521,69 @@
                     </button>
                 </div>
             </div>
+
+            <section
+                id="order-context"
+                class="order-context"
+                aria-label="Datos del pedido"
+            >
+                <div class="order-context-title">
+                    <strong>Tipo de pedido</strong>
+                </div>
+
+                <div class="order-type-selector">
+                    <button
+                        type="button"
+                        class="order-type-button is-active"
+                        data-order-type="DINE_IN"
+                    >
+                        Para aquí
+                    </button>
+
+                    <button
+                        type="button"
+                        class="order-type-button"
+                        data-order-type="TAKEOUT"
+                    >
+                        Para llevar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="order-type-button"
+                        data-order-type="DELIVERY"
+                    >
+                        A domicilio
+                    </button>
+                </div>
+
+                <div class="order-context-fields">
+                    <label
+                        id="order-table-field"
+                        class="order-context-field"
+                    >
+                        <span>Mesa</span>
+                        <input
+                            id="order-table-number"
+                            type="text"
+                            maxlength="80"
+                            autocomplete="off"
+                            placeholder="Ej. 4 o Terraza 2"
+                        >
+                    </label>
+
+                    <label class="order-context-field">
+                        <span>Nombre</span>
+                        <input
+                            id="order-name"
+                            type="text"
+                            maxlength="120"
+                            autocomplete="off"
+                            placeholder="Nombre del pedido"
+                        >
+                    </label>
+                </div>
+            </section>
 
             <section
                 id="sale-customer-section"
@@ -1070,7 +1133,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <script src="./js/folio.js?v=1"></script>
 <script src="./js/receipt-core.js?v=1"></script>
 <script src="./js/receipt-renderer.js?v=1"></script>
-<script src="./js/app.js?v=24"></script>
+<script src="./js/app.js?v=25"></script>
 <script src="./js/orders-local.js?v=1"></script>
 <script src="./js/sound-alerts.js?v=1"></script>
 <script src="./js/orders.js?v=17"></script>

@@ -260,6 +260,18 @@ button {
     background: #eaf2e9;
 }
 
+
+.station-order-context {
+    margin: 10px 14px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #f3f5f1;
+    color: var(--kds-brand-dark);
+    font-size: 13px;
+    font-weight: 850;
+    letter-spacing: .02em;
+}
+
 .station-items {
     margin: 0;
     padding: 7px 14px;
