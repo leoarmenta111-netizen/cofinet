@@ -746,6 +746,29 @@
                 shift.status
             );
 
+        const movementDetails =
+            movement?.querySelector(
+                "details[data-cash-accordion]"
+            );
+
+        const closingDetails =
+            closing?.querySelector(
+                "details[data-cash-accordion]"
+            );
+
+        if (
+            shift?.status ===
+            "CLOSING"
+        ) {
+            if (movementDetails) {
+                movementDetails.open = false;
+            }
+
+            if (closingDetails) {
+                closingDetails.open = true;
+            }
+        }
+
         $("#cash-control-status")
             .textContent =
             shiftLabel(shift);
