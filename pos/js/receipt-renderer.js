@@ -416,6 +416,12 @@
             snapshot.branch ||
             {};
 
+        const fiscal =
+            window.CofiPosFiscalConfig
+                ?.getForBranch?.(
+                    branch.branch_code
+                ) ?? null;
+
         const totals =
             snapshot.totals ||
             {};
@@ -426,6 +432,7 @@
 
         const logo =
             localLogoRef(
+                fiscal?.logo_ref ??
                 business.logo_ref
             );
 
@@ -555,6 +562,75 @@
                 `
                 : "";
 
+        const fiscalQr =
+            fiscal
+                ? localLogoRef(
+                    fiscal.billing_qr_ref
+                )
+                : null;
+
+        const fiscalHeaderSection =
+            fiscal
+                ? `
+                    <section class="receipt-fiscal receipt-fiscal--header">
+                        <div class="receipt-fiscal-title">
+                            DATOS FISCALES
+                        </div>
+
+                        <div class="receipt-fiscal-details">
+                            <div>
+                                <strong>RFC:</strong>
+                                ${escapeHtml(
+                                    fiscal.rfc
+                                )}
+                            </div>
+
+                            <div class="receipt-fiscal-address">
+                                ${escapeHtml(
+                                    fiscal.fiscal_address
+                                )}
+                            </div>
+                        </div>
+                    </section>
+                `
+                : "";
+
+        const billingSection =
+            fiscal
+                ? `
+                    <div class="receipt-divider"></div>
+
+                    <section class="receipt-fiscal receipt-billing">
+                        <div class="receipt-billing-title">
+                            ${escapeHtml(
+                                fiscal.billing_label ||
+                                "FACTURACIÓN"
+                            )}
+                        </div>
+
+                        <div class="receipt-billing-message">
+                            ${escapeHtml(
+                                fiscal.billing_message
+                            )}
+                        </div>
+
+                        ${
+                            fiscalQr
+                                ? `
+                                    <img
+                                        class="receipt-billing-qr"
+                                        src="${escapeHtml(
+                                            fiscalQr
+                                        )}"
+                                        alt="QR de facturación"
+                                    >
+                                `
+                                : ""
+                        }
+                    </section>
+                `
+                : "";
+
         return `
             <article class="receipt-paper" aria-label="Ticket de venta">
                 <header class="receipt-header">
@@ -570,14 +646,8 @@
                             : ""
                     }
 
-                    <h1>${escapeHtml(
-                        business.business_name ||
-                        "CofiCenter"
-                    )}</h1>
+                    ${fiscalHeaderSection}
 
-                    <div class="receipt-branch">
-                        ${branchLines}
-                    </div>
                 </header>
 
                 <div class="receipt-divider"></div>
@@ -695,6 +765,8 @@
 
                     ${cashDetails}
                 </section>
+
+                ${billingSection}
 
                 ${
                     business.footer_message

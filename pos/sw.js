@@ -1,4 +1,4 @@
-const SHELL_CACHE = "cofi-pos-shell-v26";
+const SHELL_CACHE = "cofi-pos-shell-v30";
 const IMAGE_CACHE = "cofi-pos-images-v1";
 
 const APP_SHELL = [
@@ -14,7 +14,10 @@ const APP_SHELL = [
     "./js/sync.js",
     "./js/folio.js",
     "./js/receipt-core.js?v=2",
-    "./js/receipt-renderer.js?v=2",
+    "./js/receipt-renderer.js?v=5",
+    "./js/receipt-fiscal-config.js?v=1",
+    "./assets/coficenter-ticket-logo.png",
+    "./assets/facturacion-qr.png",
     "./js/app.js?v=26",
     "./js/orders-local.js",
     "./js/sound-alerts.js",

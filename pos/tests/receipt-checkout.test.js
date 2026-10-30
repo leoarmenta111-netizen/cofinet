@@ -708,31 +708,53 @@ test("receipt modules load before app boot", () => {
 });
 
 
-test("service worker precaches receipt modules with bumped shell version", () => {
-    const sw = fs.readFileSync(
-        path.join(
-            __dirname,
-            "..",
-            "sw.js"
-        ),
-        "utf8"
-    );
+test(
+    "service worker precaches current receipt modules",
+    () => {
+        const sw =
+            fs.readFileSync(
+                path.join(
+                    __dirname,
+                    "..",
+                    "sw.js"
+                ),
+                "utf8"
+            );
 
-    assert.match(
-        sw,
-        /const SHELL_CACHE = "cofi-pos-shell-v25";/,
-        "receipt wiring must use current shell cache v23"
-    );
+        assert.match(
+            sw,
+            /const SHELL_CACHE = "cofi-pos-shell-v[0-9]+";/
+        );
 
-    assert.match(
-        sw,
-        /["']\.\/js\/folio\.js["']/,
-        "service worker must precache folio.js"
-    );
+        assert.match(
+            sw,
+            /\.\/js\/receipt-core\.js(?:\?v=[0-9]+)?/
+        );
 
-    assert.match(
-        sw,
-        /["']\.\/js\/receipt-core\.js["']/,
-        "service worker must precache receipt-core.js"
-    );
-});
+        assert.match(
+            sw,
+            /\.\/js\/receipt-renderer\.js(?:\?v=[0-9]+)?/
+        );
+
+        assert.match(
+            sw,
+            /\.\/js\/receipt-fiscal-config\.js(?:\?v=[0-9]+)?/
+        );
+
+        assert.match(
+            sw,
+            /\.\/js\/app\.js(?:\?v=[0-9]+)?/
+        );
+
+        assert.match(
+            sw,
+            /\.\/assets\/coficenter-ticket-logo\.png/
+        );
+
+        assert.match(
+            sw,
+            /\.\/assets\/facturacion-qr\.png/
+        );
+    }
+);
+

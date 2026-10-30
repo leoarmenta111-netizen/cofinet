@@ -138,6 +138,17 @@ class ReceiptSnapshotBranchV1(BaseModel):
     phone: str | None = None
 
 
+class ReceiptSnapshotFiscalV1(BaseModel):
+    rfc: str
+    fiscal_address: str
+    billing_label: str
+    billing_message: str
+    billing_url: str
+    billing_qr_ref: str
+
+    model_config = {"extra": "forbid"}
+
+
 class ReceiptSnapshotTerminalV1(BaseModel):
     terminal_id: str
 
@@ -229,6 +240,7 @@ class ReceiptSnapshotV1(BaseModel):
     business: ReceiptSnapshotBusinessV1
     branch: ReceiptSnapshotBranchV1
     terminal: ReceiptSnapshotTerminalV1
+    fiscal: ReceiptSnapshotFiscalV1 | None = None
     customer: ReceiptSnapshotCustomerV1 | None = None
     items: list[ReceiptSnapshotItemV1] = Field(min_length=1)
     totals: ReceiptSnapshotTotalsV1
