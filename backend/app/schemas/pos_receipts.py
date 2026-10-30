@@ -219,6 +219,9 @@ class ReceiptSnapshotPaymentV1(BaseModel):
 
 class ReceiptSnapshotV1(BaseModel):
     schema_version: Literal[1]
+    order_type: Literal["DINE_IN", "TAKEOUT", "DELIVERY"] | None = None
+    order_name: str | None = Field(default=None, max_length=120)
+    table_number: str | None = Field(default=None, max_length=80)
     order_uuid: UUID
     folio: str = Field(min_length=8, max_length=40)
     sold_at: datetime
