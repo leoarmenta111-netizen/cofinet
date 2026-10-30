@@ -568,6 +568,8 @@ class PosCashService:
                 detail="Cash shift is not open",
             )
 
+        normalized_counts: dict[int, int] = {}
+
         if closing_amount is not None:
             counted_cash = Decimal(
                 str(closing_amount)
@@ -581,8 +583,6 @@ class PosCashService:
                     detail="Closing amount cannot be negative",
                 )
         else:
-            normalized_counts: dict[int, int] = {}
-
             for count in closing_counts or []:
                 denomination = int(count.denomination_cents)
 
