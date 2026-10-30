@@ -527,13 +527,20 @@ class PosCashService:
         db: Session,
         *,
         shift_uuid: str,
-        closing_counts: list[CashDenominationCount],
         staff: PosStaff,
+        closing_counts: list[CashDenominationCount] | None = None,
+        closing_amount: Decimal | None = None,
     ) -> PosCashReconciliation:
-        if not closing_counts:
+        has_amount = closing_amount is not None
+        has_counts = bool(closing_counts)
+
+        if has_amount == has_counts:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Closing denomination count is required",
+                detail=(
+                    "Provide exactly one closing amount "
+                    "or denomination count"
+                ),
             )
 
         shift = db.execute(
@@ -561,25 +568,38 @@ class PosCashService:
                 detail="Cash shift is not open",
             )
 
-        normalized_counts: dict[int, int] = {}
-
-        for count in closing_counts:
-            denomination = int(count.denomination_cents)
-
-            normalized_counts[denomination] = (
-                normalized_counts.get(denomination, 0)
-                + count.quantity
+        if closing_amount is not None:
+            counted_cash = Decimal(
+                str(closing_amount)
+            ).quantize(
+                Decimal("0.01")
             )
 
-        counted_cents = sum(
-            denomination * quantity
-            for denomination, quantity
-            in normalized_counts.items()
-        )
+            if counted_cash < 0:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Closing amount cannot be negative",
+                )
+        else:
+            normalized_counts: dict[int, int] = {}
 
-        counted_cash = (
-            Decimal(counted_cents) / Decimal("100")
-        ).quantize(Decimal("0.01"))
+            for count in closing_counts or []:
+                denomination = int(count.denomination_cents)
+
+                normalized_counts[denomination] = (
+                    normalized_counts.get(denomination, 0)
+                    + count.quantity
+                )
+
+            counted_cents = sum(
+                denomination * quantity
+                for denomination, quantity
+                in normalized_counts.items()
+            )
+
+            counted_cash = (
+                Decimal(counted_cents) / Decimal("100")
+            ).quantize(Decimal("0.01"))
 
         ledger_total_raw = db.execute(
             select(

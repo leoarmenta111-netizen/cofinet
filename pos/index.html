@@ -965,22 +965,25 @@
 
                 <div class="cash-action-body">
                 <p id="cash-closing-instruction">
-                                Cuenta el efectivo. El esperado permanece oculto hasta enviar el conteo.
+                                Ingresa el efectivo total contado. El esperado permanece oculto hasta enviar el monto.
                             </p>
 
                             <div id="cash-closing-count-area">
-                                <div class="cash-denominations" data-cash-stage="CLOSING">
-                                    <label><span>$1</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="100"></label>
-                                    <label><span>$2</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="200"></label>
-                                    <label><span>$5</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="500"></label>
-                                    <label><span>$10</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="1000"></label>
-                                    <label><span>$20</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="2000"></label>
-                                    <label><span>$50</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="5000"></label>
-                                    <label><span>$100</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="10000"></label>
-                                    <label><span>$200</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="20000"></label>
-                                    <label><span>$500</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="50000"></label>
-                                    <label><span>$1,000</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="100000"></label>
-                                </div>
+                                <label class="field cash-closing-amount-field">
+                                    <span>Efectivo contado</span>
+                                    <div class="cash-opening-money-input">
+                                        <span>$</span>
+                                        <input
+                                            id="cash-closing-amount"
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value="0.00"
+                                            inputmode="decimal"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+                                </label>
 
                                 <button id="cash-closing-count-submit" class="checkout-button" type="button">
                                     Enviar conteo
@@ -1060,13 +1063,13 @@ document.addEventListener("DOMContentLoaded", () => {
 <script src="./js/db.js?v=8"></script>
 <script src="./js/api.js?v=10"></script>
 <script src="./js/staff-session.js?v=1"></script>
-<script src="./js/cash-shift.js?v=2"></script>
+<script src="./js/cash-shift.js?v=3"></script>
 <script src="./js/catalog.js?v=8"></script>
 <script src="./js/sync.js?v=8"></script>
 <script src="./js/folio.js?v=1"></script>
 <script src="./js/receipt-core.js?v=1"></script>
 <script src="./js/receipt-renderer.js?v=1"></script>
-<script src="./js/app.js?v=20"></script>
+<script src="./js/app.js?v=21"></script>
 <script src="./js/orders-local.js?v=1"></script>
 <script src="./js/sound-alerts.js?v=1"></script>
 <script src="./js/orders.js?v=17"></script>

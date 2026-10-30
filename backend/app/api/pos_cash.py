@@ -185,6 +185,7 @@ def submit_cash_closing_count(
             db,
             shift_uuid=shift_uuid,
             closing_counts=payload.closing_counts,
+            closing_amount=payload.closing_amount,
             staff=staff,
         )
     )

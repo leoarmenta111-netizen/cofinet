@@ -141,9 +141,14 @@ class PosCashMovementResponse(BaseModel):
 
 
 class PosCashClosingCountRequest(BaseModel):
-    closing_counts: list[CashDenominationCount] = Field(
+    closing_counts: list[CashDenominationCount] | None = Field(
+        default=None,
         min_length=1,
         max_length=10,
+    )
+    closing_amount: Decimal | None = Field(
+        default=None,
+        ge=0,
     )
 
 

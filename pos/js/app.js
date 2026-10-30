@@ -705,15 +705,27 @@
     }
 
 
-    function closingCounts() {
-        return readCashCounts(
-            "[data-closing-denomination-cents]",
-            "data-closing-denomination-cents"
-        );
+    function closingAmount() {
+        const input =
+            $("#cash-closing-amount");
+
+        const amount =
+            Number(input?.value);
+
+        if (
+            !Number.isFinite(amount) ||
+            amount < 0
+        ) {
+            throw new Error(
+                "Monto final inválido"
+            );
+        }
+
+        return amount;
     }
 
 
-    function updateOpeningTotal() {
+function updateOpeningTotal() {
         // Opening now uses one direct amount field.
     }
 
@@ -1037,7 +1049,7 @@
             const reconciliation =
                 await state.cashShift
                     .submitClosingCount(
-                        closingCounts()
+                        closingAmount()
                     );
 
             showCashReconciliation(

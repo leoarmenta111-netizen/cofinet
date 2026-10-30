@@ -376,7 +376,7 @@
             }
 
             async function submitClosingCount(
-                closingCounts
+                closingValue
             ) {
                 requireOnline(
                     "Conteo de cierre"
@@ -395,19 +395,42 @@
                     );
                 }
 
-                calculateDenominationTotal(
-                    closingCounts
-                );
+                let closingPayload;
+
+                if (Array.isArray(closingValue)) {
+                    calculateDenominationTotal(
+                        closingValue
+                    );
+
+                    closingPayload = {
+                        closing_counts:
+                            closingValue,
+                    };
+                } else {
+                    const amount =
+                        Number(closingValue);
+
+                    if (
+                        !Number.isFinite(amount) ||
+                        amount < 0
+                    ) {
+                        throw new Error(
+                            "Monto final inválido"
+                        );
+                    }
+
+                    closingPayload = {
+                        closing_amount:
+                            amount,
+                    };
+                }
 
                 const result =
                     await api
                         .submitCashClosingCount(
                             currentShift
                                 .shift_uuid,
-                            {
-                                closing_counts:
-                                    closingCounts,
-                            },
+                            closingPayload,
                             {
                                 accessToken:
                                     staff
@@ -425,7 +448,8 @@
                 );
             }
 
-            async function finalizeClose(
+
+async function finalizeClose(
                 managerCredentials,
                 differenceNote = null
             ) {
