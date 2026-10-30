@@ -79,6 +79,7 @@ def open_cash_shift(
         branch_code=branch_code,
         terminal_id=terminal_id,
         opening_counts=payload.opening_counts,
+        opening_amount=payload.opening_amount,
         requesting_staff=requesting_staff,
         authorizing_manager=manager,
     )

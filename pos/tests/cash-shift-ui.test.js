@@ -108,51 +108,6 @@ function fixture() {
     };
 }
 
-test(
-    "opening UI has no default or editable manual cash amount",
-    () => {
-        const html =
-            fs.readFileSync(
-                HTML_PATH,
-                "utf8"
-            );
-
-        assert.match(
-            html,
-            /id="cash-shift-opening"/
-        );
-
-        [
-            100,
-            200,
-            500,
-            1000,
-            2000,
-            5000,
-            10000,
-            20000,
-            50000,
-            100000,
-        ].forEach(value => {
-            assert.match(
-                html,
-                new RegExp(
-                    `data-denomination-cents="${value}"`
-                )
-            );
-        });
-
-        assert.doesNotMatch(
-            html,
-            /id="opening-manual-total"/
-        );
-
-        assert.doesNotMatch(
-            html,
-            /data-default-opening-amount/
-        );
-    }
-);
 
 test(
     "denomination quantities calculate the displayed total",
@@ -564,6 +519,106 @@ test(
         assert.ok(
             persistIndex < submitIndex,
             "El cache local debe quedar CLOSING antes de enviar el conteo al servidor"
+        );
+    }
+);
+
+
+test(
+    "cash control keeps movement and closing actions collapsed by default",
+    () => {
+        const html =
+            fs.readFileSync(
+                path.resolve(
+                    __dirname,
+                    "../index.html"
+                ),
+                "utf8"
+            );
+
+        assert.match(
+            html,
+            /<section id="cash-movement-panel"[\s\S]*?<details class="cash-action-disclosure"[\s\S]*?<summary>[\s\S]*Movimiento de caja[\s\S]*?<\/summary>/
+        );
+
+        assert.match(
+            html,
+            /<section id="cash-shift-closing"[\s\S]*?<details class="cash-action-disclosure"[\s\S]*?<summary>[\s\S]*Cerrar caja[\s\S]*?<\/summary>/
+        );
+
+        assert.doesNotMatch(
+            html,
+            /<details class="cash-action-disclosure"[^>]*\sopen(?:\s|>)/
+        );
+    }
+);
+
+
+
+test(
+    "cash opening uses a single opening amount instead of denomination inputs",
+    () => {
+        const html =
+            fs.readFileSync(
+                path.resolve(
+                    __dirname,
+                    "../index.html"
+                ),
+                "utf8"
+            );
+
+        assert.match(
+            html,
+            /id="cash-opening-amount"/
+        );
+
+        const openingSection =
+            html.match(
+                /<section id="cash-shift-opening"[\s\S]*?<\/section>/
+            )?.[0] || "";
+
+        assert.doesNotMatch(
+            openingSection,
+            /data-denomination-cents/
+        );
+
+        assert.doesNotMatch(
+            openingSection,
+            /Total contado/
+        );
+    }
+);
+
+test(
+    "operational connectivity trusts confirmed backend health over navigator.onLine",
+    () => {
+        const source =
+            fs.readFileSync(
+                path.resolve(
+                    __dirname,
+                    "../js/app.js"
+                ),
+                "utf8"
+            );
+
+        const match =
+            source.match(
+                /function operationalOnline\(\)\s*\{([\s\S]*?)\n\s*\}/
+            );
+
+        assert.ok(
+            match,
+            "operationalOnline function must exist"
+        );
+
+        assert.match(
+            match[1],
+            /state\.cloudOnline\s*===\s*true/
+        );
+
+        assert.doesNotMatch(
+            match[1],
+            /navigator\.onLine/
         );
     }
 );

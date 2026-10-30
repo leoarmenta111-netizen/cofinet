@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Literal
 
 from pydantic import (
+    model_validator,
     BaseModel,
     ConfigDict,
     Field,
@@ -30,12 +31,30 @@ class CashDenominationCount(BaseModel):
 
 
 class PosCashShiftOpenRequest(BaseModel):
-    opening_counts: list[CashDenominationCount] = Field(
+    opening_amount: Decimal | None = Field(
+        default=None,
+        ge=0,
+        decimal_places=2,
+    )
+    opening_counts: list[CashDenominationCount] | None = Field(
+        default=None,
         min_length=1,
         max_length=10,
     )
     authorizing_manager_staff_id: int = Field(gt=0)
     manager_pin: str = Field(min_length=4, max_length=32)
+
+    @model_validator(mode="after")
+    def validate_opening_source(self):
+        has_amount = self.opening_amount is not None
+        has_counts = self.opening_counts is not None
+
+        if has_amount == has_counts:
+            raise ValueError(
+                "Provide exactly one of opening_amount or opening_counts"
+            )
+
+        return self
 
 
 class PosCashShiftResponse(BaseModel):

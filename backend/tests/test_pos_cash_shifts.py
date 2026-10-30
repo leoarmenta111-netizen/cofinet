@@ -387,3 +387,53 @@ def test_two_simultaneous_open_attempts_cannot_both_commit(
     finally:
         verify_db.close()
         engine.dispose()
+
+
+
+def test_open_shift_accepts_direct_opening_amount(
+    db_session,
+):
+    (
+        PosCashShift,
+        PosCashDenominationCount,
+        _,
+        PosCashService,
+    ) = _cash_feature()
+
+    branch, cashier, manager = _seed_staff(
+        db_session
+    )
+
+    shift = PosCashService.open_shift(
+        db_session,
+        branch_code=branch.code,
+        terminal_id=TERMINAL_ID,
+        opening_amount=Decimal("1230.50"),
+        requesting_staff=cashier,
+        authorizing_manager=manager,
+    )
+
+    db_session.flush()
+
+    assert isinstance(
+        shift,
+        PosCashShift,
+    )
+    assert shift.status == "OPEN"
+    assert shift.opening_total == Decimal(
+        "1230.50"
+    )
+
+    counts = (
+        db_session
+        .query(PosCashDenominationCount)
+        .filter(
+            PosCashDenominationCount.shift_id
+            == shift.id,
+            PosCashDenominationCount.stage
+            == "OPENING",
+        )
+        .all()
+    )
+
+    assert counts == []

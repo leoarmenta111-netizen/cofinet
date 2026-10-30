@@ -217,7 +217,7 @@
             }
 
             async function open(
-                openingCounts,
+                openingValue,
                 managerCredentials
             ) {
                 requireOnline(
@@ -231,16 +231,49 @@
                 const staff =
                     activeStaff();
 
-                calculateDenominationTotal(
-                    openingCounts
-                );
+                let openingPayload;
+
+                if (
+                    Array.isArray(
+                        openingValue
+                    )
+                ) {
+                    calculateDenominationTotal(
+                        openingValue
+                    );
+
+                    openingPayload = {
+                        opening_counts:
+                            openingValue,
+                    };
+                } else {
+                    const amount =
+                        Number(
+                            openingValue
+                        );
+
+                    if (
+                        !Number.isFinite(
+                            amount
+                        ) ||
+                        amount < 0
+                    ) {
+                        throw new Error(
+                            "Monto inicial inválido"
+                        );
+                    }
+
+                    openingPayload = {
+                        opening_amount:
+                            amount,
+                    };
+                }
 
                 const result =
                     await api
                         .openCashShift(
                             {
-                                opening_counts:
-                                    openingCounts,
+                                ...openingPayload,
                                 authorizing_manager_staff_id:
                                     Number(
                                         managerCredentials

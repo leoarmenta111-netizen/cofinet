@@ -39,7 +39,7 @@
             link.rel = "manifest";
         })();
     </script>
-    <link rel="stylesheet" href="./css/pos.css?v=27">
+    <link rel="stylesheet" href="./css/pos.css?v=28">
     <link rel="stylesheet" href="./css/receipt.css?v=1">
 </head>
 <body>
@@ -847,25 +847,25 @@
 
         <section id="cash-shift-opening" class="cash-shift-panel" hidden>
             <h3>Apertura</h3>
-            <p>Cuenta físicamente el efectivo por denominación.</p>
+            <p class="cash-opening-help">
+                Ingresa el efectivo con el que inicia el turno.
+            </p>
 
-            <div class="cash-denominations" data-cash-stage="OPENING">
-                <label><span>$1</span><input type="number" min="0" step="1" value="0" data-denomination-cents="100"></label>
-                <label><span>$2</span><input type="number" min="0" step="1" value="0" data-denomination-cents="200"></label>
-                <label><span>$5</span><input type="number" min="0" step="1" value="0" data-denomination-cents="500"></label>
-                <label><span>$10</span><input type="number" min="0" step="1" value="0" data-denomination-cents="1000"></label>
-                <label><span>$20</span><input type="number" min="0" step="1" value="0" data-denomination-cents="2000"></label>
-                <label><span>$50</span><input type="number" min="0" step="1" value="0" data-denomination-cents="5000"></label>
-                <label><span>$100</span><input type="number" min="0" step="1" value="0" data-denomination-cents="10000"></label>
-                <label><span>$200</span><input type="number" min="0" step="1" value="0" data-denomination-cents="20000"></label>
-                <label><span>$500</span><input type="number" min="0" step="1" value="0" data-denomination-cents="50000"></label>
-                <label><span>$1,000</span><input type="number" min="0" step="1" value="0" data-denomination-cents="100000"></label>
-            </div>
-
-            <div class="cash-count-total">
-                <span>Total contado</span>
-                <strong id="cash-opening-total">$0.00</strong>
-            </div>
+            <label class="field cash-opening-amount-field">
+                <span>Monto inicial</span>
+                <div class="cash-opening-money-input">
+                    <span>$</span>
+                    <input
+                        id="cash-opening-amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="0.00"
+                        inputmode="decimal"
+                        autocomplete="off"
+                    >
+                </div>
+            </label>
 
             <div class="manager-auth-grid">
                 <label class="field">
@@ -883,112 +883,131 @@
             </button>
         </section>
 
-        <section id="cash-movement-panel" class="cash-shift-panel" hidden>
-            <h3>Movimiento de caja</h3>
+        <section id="cash-movement-panel" class="cash-shift-panel cash-shift-panel-compact" hidden>
+            <details class="cash-action-disclosure">
+                <summary>
+                    <span>
+                        <strong>Movimiento de caja</strong>
+                        <small>Entrada, gasto, retiro o depósito</small>
+                    </span>
+                    <span class="cash-action-chevron" aria-hidden="true">›</span>
+                </summary>
 
-            <div class="cash-form-grid">
-                <label class="field">
-                    <span>Dirección</span>
-                    <select id="cash-movement-direction">
-                        <option value="INFLOW">Entrada</option>
-                        <option value="OUTFLOW">Salida</option>
-                    </select>
-                </label>
+                <div class="cash-action-body">
+                <div class="cash-form-grid">
+                                <label class="field">
+                                    <span>Dirección</span>
+                                    <select id="cash-movement-direction">
+                                        <option value="INFLOW">Entrada</option>
+                                        <option value="OUTFLOW">Salida</option>
+                                    </select>
+                                </label>
 
-                <label class="field">
-                    <span>Categoría</span>
-                    <select id="cash-movement-category">
-                        <option value="CHANGE">Cambio</option>
-                        <option value="EXPENSE">Gasto</option>
-                        <option value="SAFE_WITHDRAWAL">Retiro a caja fuerte</option>
-                        <option value="DEPOSIT">Depósito</option>
-                        <option value="CORRECTION">Corrección</option>
-                        <option value="OTHER">Otro</option>
-                    </select>
-                </label>
+                                <label class="field">
+                                    <span>Categoría</span>
+                                    <select id="cash-movement-category">
+                                        <option value="CHANGE">Cambio</option>
+                                        <option value="EXPENSE">Gasto</option>
+                                        <option value="SAFE_WITHDRAWAL">Retiro a caja fuerte</option>
+                                        <option value="DEPOSIT">Depósito</option>
+                                        <option value="CORRECTION">Corrección</option>
+                                        <option value="OTHER">Otro</option>
+                                    </select>
+                                </label>
 
-                <label class="field">
-                    <span>Monto</span>
-                    <input id="cash-movement-amount" type="number" min="0.01" step="0.01" inputmode="decimal">
-                </label>
+                                <label class="field">
+                                    <span>Monto</span>
+                                    <input id="cash-movement-amount" type="number" min="0.01" step="0.01" inputmode="decimal">
+                                </label>
 
-                <label class="field cash-note-field">
-                    <span>Nota obligatoria</span>
-                    <textarea id="cash-movement-note" maxlength="500" required></textarea>
-                </label>
-            </div>
+                                <label class="field cash-note-field">
+                                    <span>Nota obligatoria</span>
+                                    <textarea id="cash-movement-note" maxlength="500" required></textarea>
+                                </label>
+                            </div>
 
-            <div class="manager-auth-grid">
-                <label class="field">
-                    <span>ID Manager</span>
-                    <input id="cash-movement-manager-id" type="number" min="1" inputmode="numeric">
-                </label>
-                <label class="field">
-                    <span>PIN Manager</span>
-                    <input id="cash-movement-manager-pin" type="password" inputmode="numeric" autocomplete="off">
-                </label>
-            </div>
+                            <div class="manager-auth-grid">
+                                <label class="field">
+                                    <span>ID Manager</span>
+                                    <input id="cash-movement-manager-id" type="number" min="1" inputmode="numeric">
+                                </label>
+                                <label class="field">
+                                    <span>PIN Manager</span>
+                                    <input id="cash-movement-manager-pin" type="password" inputmode="numeric" autocomplete="off">
+                                </label>
+                            </div>
 
-            <button id="cash-movement-submit" class="checkout-button" type="button">
-                Registrar movimiento
-            </button>
-        </section>
-
-        <section id="cash-shift-closing" class="cash-shift-panel" hidden>
-            <h3>Cierre ciego</h3>
-            <p id="cash-closing-instruction">
-                Cuenta el efectivo. El esperado permanece oculto hasta enviar el conteo.
-            </p>
-
-            <div id="cash-closing-count-area">
-                <div class="cash-denominations" data-cash-stage="CLOSING">
-                    <label><span>$1</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="100"></label>
-                    <label><span>$2</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="200"></label>
-                    <label><span>$5</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="500"></label>
-                    <label><span>$10</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="1000"></label>
-                    <label><span>$20</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="2000"></label>
-                    <label><span>$50</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="5000"></label>
-                    <label><span>$100</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="10000"></label>
-                    <label><span>$200</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="20000"></label>
-                    <label><span>$500</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="50000"></label>
-                    <label><span>$1,000</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="100000"></label>
+                            <button id="cash-movement-submit" class="checkout-button" type="button">
+                                Registrar movimiento
+                            </button>
                 </div>
+            </details>
 
-                <button id="cash-closing-count-submit" class="checkout-button" type="button">
-                    Enviar conteo
-                </button>
-            </div>
+        <section id="cash-shift-closing" class="cash-shift-panel cash-shift-panel-compact" hidden>
+            <details class="cash-action-disclosure">
+                <summary>
+                    <span>
+                        <strong>Cerrar caja</strong>
+                        <small>Conteo y conciliación al finalizar el turno</small>
+                    </span>
+                    <span class="cash-action-chevron" aria-hidden="true">›</span>
+                </summary>
 
-            <div id="cash-reconciliation" hidden>
-                <div class="reconciliation-grid">
-                    <div><span>Efectivo inicial</span><strong id="cash-reconciliation-opening">—</strong></div>
-                    <div><span>Actividad de caja</span><strong id="cash-reconciliation-ledger">—</strong></div>
-                    <div><span>Efectivo esperado</span><strong id="cash-reconciliation-expected">—</strong></div>
-                    <div><span>Efectivo contado</span><strong id="cash-reconciliation-counted">—</strong></div>
-                    <div><span>Diferencia</span><strong id="cash-reconciliation-difference">—</strong></div>
+                <div class="cash-action-body">
+                <p id="cash-closing-instruction">
+                                Cuenta el efectivo. El esperado permanece oculto hasta enviar el conteo.
+                            </p>
+
+                            <div id="cash-closing-count-area">
+                                <div class="cash-denominations" data-cash-stage="CLOSING">
+                                    <label><span>$1</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="100"></label>
+                                    <label><span>$2</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="200"></label>
+                                    <label><span>$5</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="500"></label>
+                                    <label><span>$10</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="1000"></label>
+                                    <label><span>$20</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="2000"></label>
+                                    <label><span>$50</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="5000"></label>
+                                    <label><span>$100</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="10000"></label>
+                                    <label><span>$200</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="20000"></label>
+                                    <label><span>$500</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="50000"></label>
+                                    <label><span>$1,000</span><input type="number" min="0" step="1" value="0" data-closing-denomination-cents="100000"></label>
+                                </div>
+
+                                <button id="cash-closing-count-submit" class="checkout-button" type="button">
+                                    Enviar conteo
+                                </button>
+                            </div>
+
+                            <div id="cash-reconciliation" hidden>
+                                <div class="reconciliation-grid">
+                                    <div><span>Efectivo inicial</span><strong id="cash-reconciliation-opening">—</strong></div>
+                                    <div><span>Actividad de caja</span><strong id="cash-reconciliation-ledger">—</strong></div>
+                                    <div><span>Efectivo esperado</span><strong id="cash-reconciliation-expected">—</strong></div>
+                                    <div><span>Efectivo contado</span><strong id="cash-reconciliation-counted">—</strong></div>
+                                    <div><span>Diferencia</span><strong id="cash-reconciliation-difference">—</strong></div>
+                                </div>
+
+                                <label id="cash-difference-note-field" class="field" hidden>
+                                    <span>Explicación de diferencia</span>
+                                    <textarea id="cash-difference-note" maxlength="500"></textarea>
+                                </label>
+
+                                <div class="manager-auth-grid">
+                                    <label class="field">
+                                        <span>ID Manager</span>
+                                        <input id="cash-close-manager-id" type="number" min="1" inputmode="numeric">
+                                    </label>
+                                    <label class="field">
+                                        <span>PIN Manager</span>
+                                        <input id="cash-close-manager-pin" type="password" inputmode="numeric" autocomplete="off">
+                                    </label>
+                                </div>
+
+                                <button id="cash-final-close-submit" class="checkout-button" type="button">
+                                    Autorizar cierre
+                                </button>
+                            </div>
                 </div>
-
-                <label id="cash-difference-note-field" class="field" hidden>
-                    <span>Explicación de diferencia</span>
-                    <textarea id="cash-difference-note" maxlength="500"></textarea>
-                </label>
-
-                <div class="manager-auth-grid">
-                    <label class="field">
-                        <span>ID Manager</span>
-                        <input id="cash-close-manager-id" type="number" min="1" inputmode="numeric">
-                    </label>
-                    <label class="field">
-                        <span>PIN Manager</span>
-                        <input id="cash-close-manager-pin" type="password" inputmode="numeric" autocomplete="off">
-                    </label>
-                </div>
-
-                <button id="cash-final-close-submit" class="checkout-button" type="button">
-                    Autorizar cierre
-                </button>
-            </div>
-        </section>
+            </details>
     </section>
 </div>
 
@@ -996,13 +1015,13 @@
 <script src="./js/db.js?v=8"></script>
 <script src="./js/api.js?v=10"></script>
 <script src="./js/staff-session.js?v=1"></script>
-<script src="./js/cash-shift.js?v=1"></script>
+<script src="./js/cash-shift.js?v=2"></script>
 <script src="./js/catalog.js?v=8"></script>
 <script src="./js/sync.js?v=8"></script>
 <script src="./js/folio.js?v=1"></script>
 <script src="./js/receipt-core.js?v=1"></script>
 <script src="./js/receipt-renderer.js?v=1"></script>
-<script src="./js/app.js?v=18"></script>
+<script src="./js/app.js?v=19"></script>
 <script src="./js/orders-local.js?v=1"></script>
 <script src="./js/sound-alerts.js?v=1"></script>
 <script src="./js/orders.js?v=17"></script>

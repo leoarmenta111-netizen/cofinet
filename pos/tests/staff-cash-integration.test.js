@@ -66,7 +66,7 @@ test(
 
         const cashIndex =
             html.indexOf(
-                "./js/cash-shift.js"
+                "./js/cash-shift.js?v=2"
             );
 
         const appIndex =
@@ -248,7 +248,7 @@ test(
 
         assert.ok(
             sw.includes(
-                '"./js/cash-shift.js"'
+                '"./js/cash-shift.js?v=2"'
             )
         );
     }

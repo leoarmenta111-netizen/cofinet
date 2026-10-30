@@ -83,7 +83,8 @@ class PosCashService:
         *,
         branch_code: str,
         terminal_id: str,
-        opening_counts: list[CashDenominationCount],
+        opening_counts: list[CashDenominationCount] | None = None,
+        opening_amount: Decimal | None = None,
         requesting_staff: PosStaff,
         authorizing_manager: PosStaff,
     ) -> PosCashShift:
@@ -117,10 +118,16 @@ class PosCashService:
                 detail="Terminal ID is required",
             )
 
-        if not opening_counts:
+        has_amount = opening_amount is not None
+        has_counts = bool(opening_counts)
+
+        if has_amount == has_counts:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Opening denomination count is required",
+                detail=(
+                    "Provide exactly one opening amount "
+                    "or denomination count"
+                ),
             )
 
         # Serialize opening attempts for this branch on databases
@@ -151,22 +158,52 @@ class PosCashService:
 
         normalized_counts: dict[int, int] = {}
 
-        for count in opening_counts:
-            denomination = int(count.denomination_cents)
-            normalized_counts[denomination] = (
-                normalized_counts.get(denomination, 0)
-                + count.quantity
+        if opening_amount is not None:
+            opening_total = Decimal(
+                str(opening_amount)
+            ).quantize(
+                Decimal("0.01")
             )
 
-        total_cents = sum(
-            denomination * quantity
-            for denomination, quantity
-            in normalized_counts.items()
-        )
+            if opening_total < 0:
+                raise HTTPException(
+                    status_code=(
+                        status.HTTP_422_UNPROCESSABLE_ENTITY
+                    ),
+                    detail=(
+                        "Opening amount cannot be negative"
+                    ),
+                )
 
-        opening_total = (
-            Decimal(total_cents) / Decimal("100")
-        ).quantize(Decimal("0.01"))
+            total_cents = int(
+                opening_total * Decimal("100")
+            )
+
+        else:
+            for count in opening_counts or []:
+                denomination = int(
+                    count.denomination_cents
+                )
+                normalized_counts[denomination] = (
+                    normalized_counts.get(
+                        denomination,
+                        0,
+                    )
+                    + count.quantity
+                )
+
+            total_cents = sum(
+                denomination * quantity
+                for denomination, quantity
+                in normalized_counts.items()
+            )
+
+            opening_total = (
+                Decimal(total_cents)
+                / Decimal("100")
+            ).quantize(
+                Decimal("0.01")
+            )
 
         shift = PosCashShift(
             branch_id=branch.id,

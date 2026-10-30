@@ -235,10 +235,7 @@
        ===================================================== */
 
     function operationalOnline() {
-        return (
-            state.cloudOnline !== false &&
-            navigator.onLine
-        );
+        return state.cloudOnline === true;
     }
 
 
@@ -716,19 +713,7 @@
 
 
     function updateOpeningTotal() {
-        if (!state.cashShift) {
-            return;
-        }
-
-        const total =
-            state.cashShift
-                .calculateDenominationTotal(
-                    openingCounts()
-                );
-
-        $("#cash-opening-total")
-            .textContent =
-            money(total);
+        // Opening now uses one direct amount field.
     }
 
 
@@ -853,7 +838,10 @@
             const shift =
                 await state.cashShift
                     .open(
-                        openingCounts(),
+                        Number(
+                            $("#cash-opening-amount")
+                                .value || 0
+                        ),
                         {
                             staffId:
                                 Number(
