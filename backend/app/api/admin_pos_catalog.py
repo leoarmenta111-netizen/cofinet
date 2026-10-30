@@ -12,6 +12,7 @@ from app.database.deps import get_db
 from app.models.admin import Admin
 from app.schemas.admin_pos_catalog import (
     AdminPosBranchProductUpdate,
+    AdminPosBranchProductVariantUpdate,
     AdminPosCatalogResponse,
     AdminPosCategoryCreate,
     AdminPosCategoryUpdate,
@@ -22,6 +23,11 @@ from app.schemas.admin_pos_catalog import (
     AdminPosProductCreate,
     AdminPosProductModifierUpdate,
     AdminPosProductUpdate,
+    AdminPosProductVariantUpdate,
+    AdminPosVariantCreate,
+    AdminPosVariantGroupCreate,
+    AdminPosVariantGroupUpdate,
+    AdminPosVariantUpdate,
 )
 from app.services.admin_pos_catalog_service import (
     AdminPosCatalogService,
@@ -172,6 +178,74 @@ def update_product_branch(
 
 
 @router.post(
+    "/variant-groups",
+    response_model=AdminPosCatalogResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_variant_group(
+    data: AdminPosVariantGroupCreate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.create_variant_group(
+        db,
+        data,
+    )
+
+
+@router.patch(
+    "/variant-groups/{group_id}",
+    response_model=AdminPosCatalogResponse,
+)
+def update_variant_group(
+    group_id: int,
+    data: AdminPosVariantGroupUpdate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.update_variant_group(
+        db,
+        group_id,
+        data,
+    )
+
+
+@router.post(
+    "/variant-groups/{group_id}/variants",
+    response_model=AdminPosCatalogResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_variant(
+    group_id: int,
+    data: AdminPosVariantCreate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.create_variant(
+        db,
+        group_id,
+        data,
+    )
+
+
+@router.patch(
+    "/variants/{variant_id}",
+    response_model=AdminPosCatalogResponse,
+)
+def update_variant(
+    variant_id: int,
+    data: AdminPosVariantUpdate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.update_variant(
+        db,
+        variant_id,
+        data,
+    )
+
+
+@router.post(
     "/modifier-groups",
     response_model=AdminPosCatalogResponse,
     status_code=status.HTTP_201_CREATED,
@@ -235,6 +309,78 @@ def update_modifier_option(
     return AdminPosCatalogService.update_option(
         db,
         option_id,
+        data,
+    )
+
+
+@router.put(
+    "/products/{product_id}/variant-group/{group_id}",
+    response_model=AdminPosCatalogResponse,
+)
+def assign_product_variant_group(
+    product_id: int,
+    group_id: int,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.assign_variant_group(
+        db,
+        product_id,
+        group_id,
+    )
+
+
+@router.delete(
+    "/products/{product_id}/variant-group",
+    response_model=AdminPosCatalogResponse,
+)
+def remove_product_variant_group(
+    product_id: int,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.remove_variant_group(
+        db,
+        product_id,
+    )
+
+
+@router.put(
+    "/products/{product_id}/variants/{variant_id}",
+    response_model=AdminPosCatalogResponse,
+)
+def update_product_variant(
+    product_id: int,
+    variant_id: int,
+    data: AdminPosProductVariantUpdate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.update_product_variant(
+        db,
+        product_id,
+        variant_id,
+        data,
+    )
+
+
+@router.put(
+    "/products/{product_id}/variants/{variant_id}/branches/{branch_code}",
+    response_model=AdminPosCatalogResponse,
+)
+def update_branch_product_variant(
+    product_id: int,
+    variant_id: int,
+    branch_code: str,
+    data: AdminPosBranchProductVariantUpdate,
+    _admin: Admin = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    return AdminPosCatalogService.update_branch_product_variant(
+        db,
+        product_id,
+        variant_id,
+        branch_code,
         data,
     )
 

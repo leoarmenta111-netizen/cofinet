@@ -10,6 +10,7 @@ from app.schemas.pos_receipts import ReceiptSnapshotV1
 
 class PosOrderItemCreate(BaseModel):
     product_id: int
+    product_variant_id: int | None = None
     quantity: int = Field(ge=1, le=99)
     modifier_option_ids: list[int] = []
     notes: str | None = Field(default=None, max_length=500)
@@ -67,6 +68,8 @@ class PosOrderModifierResponse(BaseModel):
 
 class PosOrderItemResponse(BaseModel):
     product_id: int | None
+    product_variant_id: int | None
+    variant_name: str | None
     product_name: str
     preparation_station: Literal[
         "KITCHEN",
@@ -122,6 +125,8 @@ class PosOrderResponse(BaseModel):
 
 class PosStationOrderItemResponse(BaseModel):
     product_id: int | None
+    product_variant_id: int | None
+    variant_name: str | None
     product_name: str
     preparation_station: Literal[
         "KITCHEN",

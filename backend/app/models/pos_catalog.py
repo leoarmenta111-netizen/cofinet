@@ -76,6 +76,78 @@ class PosCategory(Base):
     )
 
 
+class PosVariantGroup(Base):
+    __tablename__ = "pos_variant_groups"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(120), nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+    variants = relationship("PosVariant", back_populates="group")
+    products = relationship("PosProduct", back_populates="variant_group")
+
+
+class PosVariant(Base):
+    __tablename__ = "pos_variants"
+    __table_args__ = (
+        UniqueConstraint("variant_group_id", "name", name="uq_pos_variants_group_name"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    variant_group_id = Column(Integer, ForeignKey("pos_variant_groups.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(160), nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+    group = relationship("PosVariantGroup", back_populates="variants")
+    product_variants = relationship("PosProductVariant", back_populates="variant")
+
+
+class PosProductVariant(Base):
+    __tablename__ = "pos_product_variants"
+    __table_args__ = (
+        UniqueConstraint("product_id", "variant_id", name="uq_pos_product_variants_product_variant"),
+        CheckConstraint("price >= 0", name="ck_pos_product_variants_price_nonnegative"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey("pos_products.id", ondelete="CASCADE"), nullable=False)
+    variant_id = Column(Integer, ForeignKey("pos_variants.id", ondelete="RESTRICT"), nullable=False)
+    price = Column(Numeric(10, 2), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+    product = relationship("PosProduct", back_populates="product_variants")
+    variant = relationship("PosVariant", back_populates="product_variants")
+    branch_overrides = relationship("PosBranchProductVariant", back_populates="product_variant")
+
+
+class PosBranchProductVariant(Base):
+    __tablename__ = "pos_branch_product_variants"
+    __table_args__ = (
+        UniqueConstraint("branch_id", "product_variant_id", name="uq_pos_branch_product_variants_branch_product_variant"),
+        CheckConstraint("price_override IS NULL OR price_override >= 0", name="ck_pos_branch_product_variants_price_override_nonnegative"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    branch_id = Column(Integer, ForeignKey("branches.id", ondelete="CASCADE"), nullable=False)
+    product_variant_id = Column(Integer, ForeignKey("pos_product_variants.id", ondelete="CASCADE"), nullable=False)
+    price_override = Column(Numeric(10, 2), nullable=True)
+    is_available = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+    branch = relationship("Branch")
+    product_variant = relationship("PosProductVariant", back_populates="branch_overrides")
+
+
 class PosProduct(Base):
     __tablename__ = "pos_products"
     __table_args__ = (
@@ -107,6 +179,15 @@ class PosProduct(Base):
         ),
         nullable=False,
         index=True,
+    )
+
+    variant_group_id = Column(
+        Integer,
+        ForeignKey(
+            "pos_variant_groups.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
     )
 
     name = Column(
@@ -173,6 +254,16 @@ class PosProduct(Base):
     category = relationship(
         "PosCategory",
         back_populates="products",
+    )
+
+    variant_group = relationship(
+        "PosVariantGroup",
+        back_populates="products",
+    )
+
+    product_variants = relationship(
+        "PosProductVariant",
+        back_populates="product",
     )
 
     branch_products = relationship(

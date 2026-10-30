@@ -135,13 +135,21 @@
     }
 
     function itemName(item) {
-        return (
+        const productName =
             item?.name ??
             item?.product_name ??
             item?.item_name ??
             item?.description ??
-            "Producto"
-        );
+            "Producto";
+
+        const variantName =
+            String(
+                item?.variant_name ?? ""
+            ).trim();
+
+        return variantName
+            ? `${productName} · ${variantName}`
+            : productName;
     }
 
     function modifierName(

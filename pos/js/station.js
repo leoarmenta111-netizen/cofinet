@@ -123,7 +123,9 @@
 
                     <span class="station-item-name">
                         ${escapeHtml(
-                            item.product_name
+                            item.variant_name
+                                ? `${item.product_name} · ${item.variant_name}`
+                                : item.product_name
                         )}
                     </span>
                 </div>

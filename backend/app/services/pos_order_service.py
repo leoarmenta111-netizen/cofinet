@@ -17,6 +17,7 @@ from app.models.pos_catalog import (
     PosBranchProduct,
     PosModifierOption,
     PosProduct,
+    PosProductVariant,
 )
 from app.models.pos_orders import (
     PosOrder,
@@ -97,6 +98,8 @@ class PosOrderService:
             items=[
                 PosOrderItemResponse(
                     product_id=item.product_id,
+                    product_variant_id=item.product_variant_id,
+                    variant_name=item.variant_name,
                     product_name=item.product_name,
                     preparation_station=(
                         item.preparation_station
@@ -292,6 +295,10 @@ class PosOrderService:
                     items=[
                         PosStationOrderItemResponse(
                             product_id=item.product_id,
+                            product_variant_id=(
+                                item.product_variant_id
+                            ),
+                            variant_name=item.variant_name,
                             product_name=(
                                 item.product_name
                             ),
@@ -683,7 +690,13 @@ class PosOrderService:
         for item_index, requested_item in enumerate(
             payload.items
         ):
-            if shared_priced_items is not None:
+            if (
+                shared_priced_items is not None
+                and shared_priced_items[
+                    item_index
+                ].product.variant_group_id is None
+                and requested_item.product_variant_id is None
+            ):
                 priced_item = shared_priced_items[
                     item_index
                 ]
@@ -693,6 +706,8 @@ class PosOrderService:
                 calculated_items.append(
                     {
                         "product": priced_item.product,
+                        "product_variant": None,
+                        "variant_name": None,
                         "quantity": priced_item.quantity,
                         "base_price": (
                             priced_item.unit_base_price
@@ -801,17 +816,154 @@ class PosOrderService:
                         ),
                     )
 
+            if (
+                snapshot_item is not None
+                and snapshot_item.product_variant_id
+                != requested_item.product_variant_id
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Receipt product variant does not "
+                        "match order item"
+                    ),
+                )
+
             if not product.category.is_active:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Product category is inactive",
                 )
 
-            base_price = money(
-                branch_product.price
-                if branch_product.price is not None
-                else product.base_price
-            )
+            product_variant = None
+            variant_name = None
+
+            if product.variant_group_id is None:
+                if (
+                    requested_item.product_variant_id
+                    is not None
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Product does not accept a variant"
+                        ),
+                    )
+
+                base_price = money(
+                    branch_product.price
+                    if branch_product.price is not None
+                    else product.base_price
+                )
+
+            else:
+                variant_group = product.variant_group
+
+                if (
+                    variant_group is None
+                    or not variant_group.is_active
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Product variant group is inactive",
+                    )
+
+                if (
+                    requested_item.product_variant_id
+                    is None
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Product requires a variant selection"
+                        ),
+                    )
+
+                product_variant = db.get(
+                    PosProductVariant,
+                    requested_item.product_variant_id,
+                )
+
+                if (
+                    product_variant is None
+                    or product_variant.product_id
+                    != product.id
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Selected variant does not belong "
+                            "to this product"
+                        ),
+                    )
+
+                variant = product_variant.variant
+
+                if not product_variant.is_active:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Selected product variant is inactive",
+                    )
+
+                if (
+                    variant is None
+                    or not variant.is_active
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Selected variant is inactive",
+                    )
+
+                if (
+                    variant.variant_group_id
+                    != product.variant_group_id
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Selected variant does not belong "
+                            "to product variant group"
+                        ),
+                    )
+
+                branch_variant = next(
+                    (
+                        row
+                        for row
+                        in product_variant.branch_overrides
+                        if row.branch_id == branch.id
+                    ),
+                    None,
+                )
+
+                if (
+                    branch_variant is not None
+                    and not branch_variant.is_available
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Selected variant is not available "
+                            "in this branch"
+                        ),
+                    )
+
+                base_price = money(
+                    branch_variant.price_override
+                    if (
+                        branch_variant is not None
+                        and branch_variant.price_override
+                        is not None
+                    )
+                    else product_variant.price
+                )
+
+                variant_name = variant.name
+
+            if snapshot_item is not None:
+                variant_name = (
+                    snapshot_item.variant_name
+                )
 
             requested_option_ids = list(
                 dict.fromkeys(
@@ -1042,6 +1194,8 @@ class PosOrderService:
             calculated_items.append(
                 {
                     "product": product,
+                    "product_variant": product_variant,
+                    "variant_name": variant_name,
                     "quantity": requested_item.quantity,
                     "base_price": base_price,
                     "modifier_total": money(
@@ -1209,6 +1363,13 @@ class PosOrderService:
             item = PosOrderItem(
                 order_id=order.id,
                 product_id=calculated["product"].id,
+                product_variant_id=(
+                    calculated["product_variant"].id
+                    if calculated["product_variant"]
+                    is not None
+                    else None
+                ),
+                variant_name=calculated["variant_name"],
                 product_name=calculated["product"].name,
                 preparation_station=(
                     calculated["product"].preparation_station

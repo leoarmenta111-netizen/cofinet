@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, field_serializer, field_validator, Field
+from pydantic import BaseModel, field_serializer, field_validator, Field, model_validator
 
 
 TaxMode = Literal["NONE", "INCLUDED", "ADDED"]
@@ -160,11 +160,38 @@ class ReceiptSnapshotModifierV1(BaseModel):
 
 class ReceiptSnapshotItemV1(BaseModel):
     product_id: int
+    product_variant_id: int | None = None
+    variant_name: str | None = None
     product_name: str
     quantity: int = Field(ge=1)
     unit_price_cents: int = Field(ge=0)
     line_total_cents: int = Field(ge=0)
     modifiers: list[ReceiptSnapshotModifierV1] = []
+
+    @model_validator(mode="after")
+    def validate_variant_identity(self):
+        has_variant_id = (
+            self.product_variant_id is not None
+        )
+        has_variant_name = (
+            self.variant_name is not None
+        )
+
+        if has_variant_id != has_variant_name:
+            raise ValueError(
+                "product variant identity requires "
+                "both product_variant_id and variant_name"
+            )
+
+        if (
+            self.variant_name is not None
+            and not self.variant_name.strip()
+        ):
+            raise ValueError(
+                "variant_name cannot be blank"
+            )
+
+        return self
 
     model_config = {"extra": "forbid"}
 
