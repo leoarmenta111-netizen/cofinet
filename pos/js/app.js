@@ -1027,6 +1027,15 @@ function updateOpeningTotal() {
         $("#cash-reconciliation")
             .hidden = false;
 
+        const closingDetails =
+            document.querySelector(
+                "#cash-shift-closing details[data-cash-accordion]"
+            );
+
+        if (closingDetails) {
+            closingDetails.open = true;
+        }
+
         $("#cash-closing-count-area")
             .hidden = true;
     }
