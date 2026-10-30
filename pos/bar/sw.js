@@ -2,7 +2,7 @@ const CACHE_PREFIX =
     "cofi-kds-bar-shell-";
 
 const SHELL_CACHE =
-    "cofi-kds-bar-shell-v3";
+    "cofi-kds-bar-shell-v4";
 
 const STATION_PATH =
     "/pos/bar/";
@@ -14,10 +14,10 @@ const APP_SHELL = [
     "./manifest-nuevo-vallarta.webmanifest?v=1",
     "./manifest-bucerias.webmanifest?v=1",
     "./manifest-ixtapa.webmanifest?v=1",
-    "../css/station.css?v=2",
+    "../css/station.css?v=3",
     "../js/api.js?v=11",
     "../js/sound-alerts.js?v=1",
-    "../js/station.js?v=3",
+    "../js/station.js?v=4",
     "../assets/coficenter-logo.png",
     "../assets/pwa/icon-192.png",
     "../assets/pwa/icon-512.png",
