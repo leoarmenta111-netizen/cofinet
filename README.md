@@ -26,6 +26,53 @@ This repository is presented as an **engineering portfolio project**. Production
 - **Alembic database migrations**
 - **Automated backend and frontend tests**
 
+## Product Preview
+
+<table>
+  <tr>
+    <td width="50%">
+      <strong>Touch-first POS</strong><br>
+      <img src="docs/screenshots/pos-main.webp" alt="CofiNet POS main sales screen">
+    </td>
+    <td width="50%">
+      <strong>Customer self-order</strong><br>
+      <img src="docs/screenshots/self-order.webp" alt="CofiNet customer self-order interface">
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <strong>Kitchen station</strong><br>
+      <img src="docs/screenshots/kitchen.webp" alt="CofiNet kitchen preparation station">
+    </td>
+    <td width="50%">
+      <strong>Bar station</strong><br>
+      <img src="docs/screenshots/bar.webp" alt="CofiNet bar preparation station">
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <strong>POS staff access</strong><br>
+      <img src="docs/screenshots/pos-login.webp" alt="CofiNet POS staff login">
+    </td>
+    <td width="50%">
+      <strong>Secure administration</strong><br>
+      <img src="docs/screenshots/admin-login.webp" alt="CofiNet administration login">
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <strong>Captive Wi-Fi portal</strong><br>
+      <img src="docs/screenshots/captive-portal.webp" alt="CofiNet captive portal">
+    </td>
+    <td width="50%">
+      <strong>Access plans</strong><br>
+      <img src="docs/screenshots/plans.webp" alt="CofiNet access plans">
+    </td>
+  </tr>
+</table>
+
+The screenshots above are sanitized portfolio captures. Production credentials and sensitive operational data are not included.
+
 ## System Architecture
 
 ```mermaid
