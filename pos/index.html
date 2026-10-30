@@ -894,7 +894,7 @@
         </section>
 
         <section id="cash-movement-panel" class="cash-shift-panel cash-shift-panel-compact" hidden>
-            <details class="cash-action-disclosure">
+            <details class="cash-action-disclosure" data-cash-accordion>
                 <summary>
                     <span>
                         <strong>Movimiento de caja</strong>
@@ -954,7 +954,7 @@
             </details>
 
         <section id="cash-shift-closing" class="cash-shift-panel cash-shift-panel-compact" hidden>
-            <details class="cash-action-disclosure">
+            <details class="cash-action-disclosure" data-cash-accordion>
                 <summary>
                     <span>
                         <strong>Cerrar caja</strong>
@@ -1020,6 +1020,41 @@
             </details>
     </section>
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const cashActions = [
+        ...document.querySelectorAll(
+            "#cash-control-backdrop details[data-cash-accordion]"
+        )
+    ];
+
+    cashActions.forEach((details) => {
+        details.open = false;
+
+        details.addEventListener("toggle", () => {
+            if (!details.open) return;
+
+            cashActions.forEach((other) => {
+                if (other !== details) {
+                    other.open = false;
+                }
+            });
+        });
+    });
+
+    const cashClose = document.getElementById("cash-control-close");
+
+    if (cashClose) {
+        cashClose.addEventListener("click", () => {
+            cashActions.forEach((details) => {
+                details.open = false;
+            });
+        });
+    }
+});
+</script>
 
 <script src="./js/uuid.js?v=8"></script>
 <script src="./js/db.js?v=8"></script>
