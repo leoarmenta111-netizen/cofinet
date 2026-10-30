@@ -374,6 +374,34 @@
                 hidden
             >
 
+                <section class="panel variant-groups-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Variantes de precio</h2>
+                            <small class="muted">
+                                Tamaños u opciones que pueden tener
+                                un precio diferente por producto.
+                            </small>
+                        </div>
+
+                        <button
+                            id="new-variant-group"
+                            class="button button-primary"
+                            type="button"
+                        >
+                            Nuevo grupo
+                        </button>
+                    </div>
+
+                    <div
+                        id="variant-groups"
+                        class="modifier-groups"
+                    ></div>
+
+                </section>
+
+
                 <section class="panel">
 
                     <div class="panel-header">
@@ -411,6 +439,211 @@
 
 </div>
 
+
+
+<!-- ==================================================
+     PRICE VARIANT GROUP DIALOG
+     ================================================== -->
+
+<dialog
+    id="variant-group-dialog"
+    class="dialog"
+>
+<form id="variant-group-form">
+
+    <h2 id="variant-group-dialog-title">
+        Nuevo grupo de variantes
+    </h2>
+
+    <input
+        id="variant-group-id"
+        type="hidden"
+    >
+
+    <div class="dialog-form">
+
+        <div class="field field-wide">
+            <label for="variant-group-name">
+                Nombre
+            </label>
+
+            <input
+                id="variant-group-name"
+                required
+                maxlength="120"
+                placeholder="Ej. Tamaños de bebida"
+            >
+        </div>
+
+        <div class="field">
+            <label for="variant-group-order">
+                Orden
+            </label>
+
+            <input
+                id="variant-group-order"
+                type="number"
+                value="0"
+            >
+        </div>
+
+        <label class="checkbox-row">
+            <input
+                id="variant-group-active"
+                type="checkbox"
+                checked
+            >
+            Grupo activo
+        </label>
+
+    </div>
+
+    <section
+        id="variant-group-options-section"
+        class="catalog-editor-section"
+        hidden
+    >
+        <div class="panel-header">
+
+            <div>
+                <h3>Opciones</h3>
+                <small class="muted">
+                    Ej. Chico, Mediano y Grande.
+                </small>
+            </div>
+
+            <button
+                id="new-variant-option"
+                class="button button-secondary button-small"
+                type="button"
+            >
+                Nueva opción
+            </button>
+
+        </div>
+
+        <div
+            id="variant-group-options"
+            class="modifier-option-list"
+        ></div>
+    </section>
+
+    <p
+        id="variant-group-error"
+        class="form-error"
+    ></p>
+
+    <div class="dialog-actions">
+
+        <button
+            id="cancel-variant-group"
+            class="button button-secondary"
+            type="button"
+        >
+            Cancelar
+        </button>
+
+        <button
+            class="button button-primary"
+            type="submit"
+        >
+            Guardar
+        </button>
+
+    </div>
+
+</form>
+</dialog>
+
+
+<!-- ==================================================
+     PRICE VARIANT OPTION DIALOG
+     ================================================== -->
+
+<dialog
+    id="variant-option-dialog"
+    class="dialog"
+>
+<form id="variant-option-form">
+
+    <h2 id="variant-option-dialog-title">
+        Nueva opción
+    </h2>
+
+    <input
+        id="variant-option-id"
+        type="hidden"
+    >
+
+    <input
+        id="variant-option-group-id"
+        type="hidden"
+    >
+
+    <div class="dialog-form">
+
+        <div class="field field-wide">
+            <label for="variant-option-name">
+                Nombre
+            </label>
+
+            <input
+                id="variant-option-name"
+                required
+                maxlength="160"
+                placeholder="Ej. Grande"
+            >
+        </div>
+
+        <div class="field">
+            <label for="variant-option-order">
+                Orden
+            </label>
+
+            <input
+                id="variant-option-order"
+                type="number"
+                value="0"
+            >
+        </div>
+
+        <label class="checkbox-row">
+            <input
+                id="variant-option-active"
+                type="checkbox"
+                checked
+            >
+            Opción activa
+        </label>
+
+    </div>
+
+    <p
+        id="variant-option-error"
+        class="form-error"
+    ></p>
+
+    <div class="dialog-actions">
+
+        <button
+            id="cancel-variant-option"
+            class="button button-secondary"
+            type="button"
+        >
+            Cancelar
+        </button>
+
+        <button
+            class="button button-primary"
+            type="submit"
+        >
+            Guardar
+        </button>
+
+    </div>
+
+</form>
+</dialog>
 
 
 <!-- ==================================================
@@ -2047,6 +2280,624 @@
     }
 
 
+
+    /* ==============================================
+       PRICE VARIANT GROUPS
+       ============================================== */
+
+
+    function renderVariantGroups() {
+        const container =
+            document.getElementById(
+                "variant-groups"
+            );
+
+        container.replaceChildren();
+
+        const groups =
+            catalog.variant_groups || [];
+
+        if (!groups.length) {
+            showEmpty(
+                container,
+                "Sin variantes de precio",
+                "Crea un grupo como Tamaños de bebida."
+            );
+
+            return;
+        }
+
+        for (const group of groups) {
+            const card =
+                document.createElement(
+                    "article"
+                );
+
+            card.className =
+                "modifier-group-card";
+
+            const header =
+                document.createElement(
+                    "div"
+                );
+
+            header.className =
+                "modifier-group-header";
+
+            const titleWrap =
+                document.createElement(
+                    "div"
+                );
+
+            const title =
+                document.createElement(
+                    "h3"
+                );
+
+            title.textContent =
+                group.name;
+
+            const meta =
+                document.createElement(
+                    "small"
+                );
+
+            meta.className =
+                "muted";
+
+            meta.textContent =
+                `${(group.variants || []).length} ${
+                    (group.variants || []).length === 1
+                        ? "opción"
+                        : "opciones"
+                }`;
+
+            titleWrap.append(
+                title,
+                meta
+            );
+
+            const controls =
+                document.createElement(
+                    "div"
+                );
+
+            controls.className =
+                "modifier-group-controls";
+
+            controls.append(
+                activeBadge(
+                    group.is_active
+                )
+            );
+
+            const edit =
+                document.createElement(
+                    "button"
+                );
+
+            edit.type = "button";
+
+            edit.className =
+                "button button-ghost button-small";
+
+            edit.textContent =
+                "Editar";
+
+            edit.addEventListener(
+                "click",
+                () =>
+                    openVariantGroup(
+                        group
+                    )
+            );
+
+            controls.append(edit);
+
+            header.append(
+                titleWrap,
+                controls
+            );
+
+            card.append(header);
+
+            const options =
+                document.createElement(
+                    "div"
+                );
+
+            options.className =
+                "modifier-option-list";
+
+            if (
+                !(group.variants || []).length
+            ) {
+                const empty =
+                    document.createElement(
+                        "p"
+                    );
+
+                empty.className =
+                    "muted";
+
+                empty.textContent =
+                    "Sin opciones.";
+
+                options.append(empty);
+
+            } else {
+
+                for (
+                    const variant
+                    of group.variants
+                ) {
+                    const row =
+                        document.createElement(
+                            "div"
+                        );
+
+                    row.className =
+                        "modifier-option-row";
+
+                    const name =
+                        document.createElement(
+                            "span"
+                        );
+
+                    name.textContent =
+                        variant.name;
+
+                    const status =
+                        activeBadge(
+                            variant.is_active
+                        );
+
+                    row.append(
+                        name,
+                        status
+                    );
+
+                    options.append(row);
+                }
+            }
+
+            card.append(options);
+            container.append(card);
+        }
+    }
+
+
+    function openVariantGroup(group = null) {
+        document.getElementById(
+            "variant-group-id"
+        ).value =
+            group?.id || "";
+
+        document.getElementById(
+            "variant-group-dialog-title"
+        ).textContent =
+            group
+                ? "Editar grupo de variantes"
+                : "Nuevo grupo de variantes";
+
+        document.getElementById(
+            "variant-group-name"
+        ).value =
+            group?.name || "";
+
+        document.getElementById(
+            "variant-group-order"
+        ).value =
+            group?.sort_order ?? 0;
+
+        document.getElementById(
+            "variant-group-active"
+        ).checked =
+            group?.is_active ?? true;
+
+        document.getElementById(
+            "variant-group-error"
+        ).textContent =
+            "";
+
+        const optionsSection =
+            document.getElementById(
+                "variant-group-options-section"
+            );
+
+        optionsSection.hidden =
+            !group;
+
+        if (group) {
+            renderVariantGroupOptions(
+                group
+            );
+        } else {
+            document.getElementById(
+                "variant-group-options"
+            ).replaceChildren();
+        }
+
+        document.getElementById(
+            "variant-group-dialog"
+        ).showModal();
+    }
+
+
+    function renderVariantGroupOptions(
+        group
+    ) {
+        const container =
+            document.getElementById(
+                "variant-group-options"
+            );
+
+        container.replaceChildren();
+
+        const variants =
+            group.variants || [];
+
+        if (!variants.length) {
+            const empty =
+                document.createElement(
+                    "p"
+                );
+
+            empty.className =
+                "muted";
+
+            empty.textContent =
+                "Todavía no hay opciones.";
+
+            container.append(empty);
+            return;
+        }
+
+        for (
+            const variant
+            of variants
+        ) {
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "modifier-editor-option";
+
+            const copy =
+                document.createElement(
+                    "div"
+                );
+
+            const name =
+                document.createElement(
+                    "strong"
+                );
+
+            name.textContent =
+                variant.name;
+
+            const state =
+                document.createElement(
+                    "small"
+                );
+
+            state.textContent =
+                variant.is_active
+                    ? "Activa"
+                    : "Inactiva";
+
+            copy.append(
+                name,
+                state
+            );
+
+            const edit =
+                document.createElement(
+                    "button"
+                );
+
+            edit.type =
+                "button";
+
+            edit.className =
+                "button button-ghost button-small";
+
+            edit.textContent =
+                "Editar";
+
+            edit.addEventListener(
+                "click",
+                () =>
+                    openVariantOption(
+                        group,
+                        variant
+                    )
+            );
+
+            row.append(
+                copy,
+                edit
+            );
+
+            container.append(row);
+        }
+    }
+
+
+    function openVariantOption(
+        group,
+        variant = null
+    ) {
+        document.getElementById(
+            "variant-option-id"
+        ).value =
+            variant?.id || "";
+
+        document.getElementById(
+            "variant-option-group-id"
+        ).value =
+            group.id;
+
+        document.getElementById(
+            "variant-option-dialog-title"
+        ).textContent =
+            variant
+                ? "Editar opción"
+                : "Nueva opción";
+
+        document.getElementById(
+            "variant-option-name"
+        ).value =
+            variant?.name || "";
+
+        document.getElementById(
+            "variant-option-order"
+        ).value =
+            variant?.sort_order ?? 0;
+
+        document.getElementById(
+            "variant-option-active"
+        ).checked =
+            variant?.is_active ?? true;
+
+        document.getElementById(
+            "variant-option-error"
+        ).textContent =
+            "";
+
+        document.getElementById(
+            "variant-option-dialog"
+        ).showModal();
+    }
+
+
+    document.getElementById(
+        "new-variant-group"
+    ).addEventListener(
+        "click",
+        () =>
+            openVariantGroup()
+    );
+
+
+    document.getElementById(
+        "cancel-variant-group"
+    ).addEventListener(
+        "click",
+        () =>
+            document.getElementById(
+                "variant-group-dialog"
+            ).close()
+    );
+
+
+    document.getElementById(
+        "variant-group-form"
+    ).addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            const id =
+                document.getElementById(
+                    "variant-group-id"
+                ).value;
+
+            const payload = {
+                name:
+                    document.getElementById(
+                        "variant-group-name"
+                    ).value.trim(),
+
+                sort_order:
+                    Number(
+                        document.getElementById(
+                            "variant-group-order"
+                        ).value || 0
+                    ),
+
+                is_active:
+                    document.getElementById(
+                        "variant-group-active"
+                    ).checked
+            };
+
+            try {
+                catalog =
+                    await adminRequest(
+                        id
+                            ? `/admin/pos/catalog/variant-groups/${id}`
+                            : "/admin/pos/catalog/variant-groups",
+                        {
+                            method: id ? "PATCH" : "POST",
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                )
+                        }
+                    );
+
+                document.getElementById(
+                    "variant-group-dialog"
+                ).close();
+
+                renderAll();
+
+                showToast(
+                    id
+                        ? "Grupo de variantes actualizado."
+                        : "Grupo de variantes creado."
+                );
+
+            } catch (error) {
+                document.getElementById(
+                    "variant-group-error"
+                ).textContent =
+                    error.message;
+            }
+        }
+    );
+
+
+    document.getElementById(
+        "new-variant-option"
+    ).addEventListener(
+        "click",
+        () => {
+            const groupId =
+                document.getElementById(
+                    "variant-group-id"
+                ).value;
+
+            const group =
+                (catalog.variant_groups || [])
+                    .find(
+                        item =>
+                            String(item.id) ===
+                            String(groupId)
+                    );
+
+            if (!group) {
+                return;
+            }
+
+            openVariantOption(
+                group
+            );
+        }
+    );
+
+
+    document.getElementById(
+        "cancel-variant-option"
+    ).addEventListener(
+        "click",
+        () =>
+            document.getElementById(
+                "variant-option-dialog"
+            ).close()
+    );
+
+
+    document.getElementById(
+        "variant-option-form"
+    ).addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            const groupId =
+                document.getElementById(
+                    "variant-option-group-id"
+                ).value;
+
+            const variantId =
+                document.getElementById(
+                    "variant-option-id"
+                ).value;
+
+            const payload = {
+                name:
+                    document.getElementById(
+                        "variant-option-name"
+                    ).value.trim(),
+
+                sort_order:
+                    Number(
+                        document.getElementById(
+                            "variant-option-order"
+                        ).value || 0
+                    ),
+
+                is_active:
+                    document.getElementById(
+                        "variant-option-active"
+                    ).checked
+            };
+
+            try {
+                catalog =
+                    await adminRequest(
+                        variantId
+                            ? `/admin/pos/catalog/variants/${variantId}`
+                            : `/admin/pos/catalog/variant-groups/${groupId}/variants`,
+                        {
+                            method:
+                                variantId
+                                    ? "PATCH"
+                                    : "POST",
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                )
+                        }
+                    );
+
+                document.getElementById(
+                    "variant-option-dialog"
+                ).close();
+
+                renderAll();
+
+                const refreshedGroup =
+                    (catalog.variant_groups || [])
+                        .find(
+                            item =>
+                                String(item.id) ===
+                                String(groupId)
+                        );
+
+                if (refreshedGroup) {
+                    document.getElementById(
+                        "variant-group-id"
+                    ).value =
+                        refreshedGroup.id;
+
+                    renderVariantGroupOptions(
+                        refreshedGroup
+                    );
+                }
+
+                showToast(
+                    variantId
+                        ? "Opción actualizada."
+                        : "Opción creada."
+                );
+
+            } catch (error) {
+                document.getElementById(
+                    "variant-option-error"
+                ).textContent =
+                    error.message;
+            }
+        }
+    );
+
+
     function renderModifiers() {
 
         const container =
@@ -2277,6 +3128,8 @@
         renderCategories();
 
         renderProducts();
+
+        renderVariantGroups();
 
         renderModifiers();
     }

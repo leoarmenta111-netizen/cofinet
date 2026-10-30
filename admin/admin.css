@@ -2182,3 +2182,14 @@ tbody tr:hover { background: var(--admin-surface-soft); }
         grid-template-columns: 1fr;
     }
 }
+
+
+/* VARIANT GROUP ADMIN */
+
+.variant-groups-panel {
+    margin-bottom: 20px;
+}
+
+#variant-group-options-section {
+    margin-top: 18px;
+}
