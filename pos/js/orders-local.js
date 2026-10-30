@@ -138,10 +138,29 @@
                             );
 
 
+                        const selectedVariant =
+                            item.product_variant_id == null
+                                ? null
+                                : (
+                                    product?.variants || []
+                                ).find(
+                                    variant =>
+                                        Number(
+                                            variant.product_variant_id
+                                        ) ===
+                                        Number(
+                                            item.product_variant_id
+                                        )
+                                ) || null;
+
                         const productPrice =
-                            number(
-                                product?.price
-                            );
+                            selectedVariant
+                                ? number(
+                                    selectedVariant.price
+                                )
+                                : number(
+                                    product?.price
+                                );
 
 
                         const modifiersTotal =
@@ -167,6 +186,16 @@
                         return {
                             product_id:
                                 item.product_id,
+
+                            product_variant_id:
+                                selectedVariant
+                                    ?.product_variant_id ??
+                                item.product_variant_id ??
+                                null,
+
+                            variant_name:
+                                selectedVariant?.name ??
+                                null,
 
                             product_name:
                                 product?.name ||
@@ -216,6 +245,14 @@
                     .map(item => ({
                         product_id:
                             item.product_id,
+
+                        product_variant_id:
+                            item.product_variant_id ??
+                            null,
+
+                        variant_name:
+                            item.variant_name ??
+                            null,
 
                         product_name:
                             item.product_name,

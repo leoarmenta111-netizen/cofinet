@@ -14,6 +14,7 @@ class PosModifierOptionResponse(BaseModel):
     id: int
     name: str
     price_delta: Decimal
+    image_url: str | None
     sort_order: int
 
 
@@ -27,12 +28,23 @@ class PosModifierGroupResponse(BaseModel):
     options: list[PosModifierOptionResponse]
 
 
+class PosCatalogProductVariantResponse(BaseModel):
+    product_variant_id: int
+    variant_id: int
+    name: str
+    price: Decimal
+    sort_order: int
+
+
 class PosCatalogProductResponse(BaseModel):
     id: int
     name: str
     description: str | None
     sku: str | None
     price: Decimal
+    display_price: Decimal
+    has_variants: bool
+    variants: list[PosCatalogProductVariantResponse]
     image_url: str | None
     preparation_station: Literal[
         "KITCHEN",

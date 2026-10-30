@@ -285,6 +285,22 @@
                 product_id:
                     item.product_id,
 
+                ...(
+                    item.product_variant_id == null
+                        ? {}
+                        : {
+                            product_variant_id:
+                                item.product_variant_id,
+
+                            variant_name:
+                                item.variant_name == null
+                                    ? null
+                                    : String(
+                                        item.variant_name
+                                    ),
+                        }
+                ),
+
                 product_name:
                     String(
                         item.product_name ??
@@ -324,6 +340,9 @@
 
         const branch =
             input.branch || {};
+
+        const fiscal =
+            input.fiscal || null;
 
         const terminal =
             input.terminal || {};
@@ -406,6 +425,59 @@
                         ""
                     ),
             },
+
+            fiscal:
+                fiscal
+                    ? {
+                        rfc:
+                            String(
+                                fiscal.rfc || ""
+                            ).trim(),
+
+                        fiscal_address:
+                            String(
+                                fiscal.fiscal_address || ""
+                            ).trim(),
+
+                        billing_label:
+                            String(
+                                fiscal.billing_label || ""
+                            ).trim(),
+
+                        billing_message:
+                            String(
+                                fiscal.billing_message || ""
+                            ).trim(),
+
+                        billing_url:
+                            String(
+                                fiscal.billing_url || ""
+                            ).trim(),
+
+                        billing_qr_ref:
+                            String(
+                                fiscal.billing_qr_ref || ""
+                            ).trim(),
+                    }
+                    : null,
+
+            order_type:
+                String(
+                    input.order_type ||
+                    "DINE_IN"
+                ).toUpperCase(),
+
+            order_name:
+                input.order_name == null ||
+                String(input.order_name).trim() === ""
+                    ? null
+                    : String(input.order_name).trim(),
+
+            table_number:
+                input.table_number == null ||
+                String(input.table_number).trim() === ""
+                    ? null
+                    : String(input.table_number).trim(),
 
             customer:
                 buildCustomer(
@@ -514,6 +586,53 @@
             "customer.name"
         );
     }
+
+    function validateFiscal(fiscal) {
+        if (fiscal === null) {
+            return;
+        }
+
+        if (
+            !fiscal ||
+            typeof fiscal !== "object" ||
+            Array.isArray(fiscal)
+        ) {
+            throw new Error(
+                "fiscal must be null or an object"
+            );
+        }
+
+        requireText(
+            fiscal.rfc,
+            "fiscal.rfc"
+        );
+
+        requireText(
+            fiscal.fiscal_address,
+            "fiscal.fiscal_address"
+        );
+
+        requireText(
+            fiscal.billing_label,
+            "fiscal.billing_label"
+        );
+
+        requireText(
+            fiscal.billing_message,
+            "fiscal.billing_message"
+        );
+
+        requireText(
+            fiscal.billing_url,
+            "fiscal.billing_url"
+        );
+
+        requireText(
+            fiscal.billing_qr_ref,
+            "fiscal.billing_qr_ref"
+        );
+    }
+
 
     function validateItem(
         item,
@@ -632,6 +751,41 @@
             );
         }
 
+        const hasProductVariantId =
+            item.product_variant_id !== null &&
+            item.product_variant_id !== undefined;
+
+        const hasVariantName =
+            item.variant_name !== null &&
+            item.variant_name !== undefined;
+
+        if (
+            hasProductVariantId !==
+            hasVariantName
+        ) {
+            throw new Error(
+                "Invalid variant identity"
+            );
+        }
+
+        if (
+            hasProductVariantId &&
+            !Number.isInteger(
+                item.product_variant_id
+            )
+        ) {
+            throw new Error(
+                "Invalid product_variant_id"
+            );
+        }
+
+        if (hasVariantName) {
+            requireText(
+                item.variant_name,
+                "item.variant_name"
+            );
+        }
+
         return item.line_total_cents;
     }
 
@@ -718,6 +872,43 @@
         requireText(
             snapshot.terminal.terminal_id,
             "terminal.terminal_id"
+        );
+
+        if (
+            snapshot.order_type !== undefined &&
+            ![
+                "DINE_IN",
+                "TAKEOUT",
+                "DELIVERY",
+            ].includes(snapshot.order_type)
+        ) {
+            throw new Error(
+                "Unsupported receipt order_type"
+            );
+        }
+
+        if (
+            snapshot.order_name !== null &&
+            snapshot.order_name !== undefined
+        ) {
+            requireText(
+                snapshot.order_name,
+                "order_name"
+            );
+        }
+
+        if (
+            snapshot.table_number !== null &&
+            snapshot.table_number !== undefined
+        ) {
+            requireText(
+                snapshot.table_number,
+                "table_number"
+            );
+        }
+
+        validateFiscal(
+            snapshot.fiscal
         );
 
         validateCustomer(

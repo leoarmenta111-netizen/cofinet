@@ -39,7 +39,7 @@
             link.rel = "manifest";
         })();
     </script>
-    <link rel="stylesheet" href="./css/pos.css?v=27">
+    <link rel="stylesheet" href="./css/pos.css?v=29">
     <link rel="stylesheet" href="./css/receipt.css?v=1">
 </head>
 <body>
@@ -92,7 +92,16 @@
 
         <div class="session-meta">
             <div class="clock-block"><svg><use href="#i-clock"></use></svg><div><strong id="current-time">--:--</strong><span id="current-date">--</span></div></div>
-            <div class="operator-block"><span class="operator-avatar">T</span><div><strong>Terminal activa</strong><span>Operación POS</span></div></div>
+            <div class="operator-block">
+                <span class="operator-avatar" id="operator-avatar">—</span>
+                <div>
+                    <strong id="operator-name">POS bloqueado</strong>
+                    <span id="operator-role">PIN requerido</span>
+                    <small id="active-shift-status">Caja protegida</small>
+                </div>
+            </div>
+            <button id="cash-control-button" class="topbar-action" type="button" disabled>Caja</button>
+            <button id="staff-lock-button" class="topbar-action" type="button" disabled>Bloquear</button>
         </div>
     </header>
 
@@ -498,7 +507,7 @@
 
         <aside id="current-order-panel" class="order-panel" aria-label="Orden actual">
             <div class="order-heading">
-                <div><h2>Orden actual</h2><span class="order-type">Venta en mostrador</span></div>
+                <div><h2>Orden actual</h2><span id="current-order-type" class="order-type">Para aquí</span></div>
                 <div class="order-heading-actions">
                     <button id="clear-cart" class="icon-button danger-button" type="button" hidden title="Vaciar orden" aria-label="Vaciar orden"><svg><use href="#i-trash"></use></svg></button>
 
@@ -512,6 +521,69 @@
                     </button>
                 </div>
             </div>
+
+            <section
+                id="order-context"
+                class="order-context"
+                aria-label="Datos del pedido"
+            >
+                <div class="order-context-title">
+                    <strong>Tipo de pedido</strong>
+                </div>
+
+                <div class="order-type-selector">
+                    <button
+                        type="button"
+                        class="order-type-button is-active"
+                        data-order-type="DINE_IN"
+                    >
+                        Para aquí
+                    </button>
+
+                    <button
+                        type="button"
+                        class="order-type-button"
+                        data-order-type="TAKEOUT"
+                    >
+                        Para llevar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="order-type-button"
+                        data-order-type="DELIVERY"
+                    >
+                        A domicilio
+                    </button>
+                </div>
+
+                <div class="order-context-fields">
+                    <label
+                        id="order-table-field"
+                        class="order-context-field"
+                    >
+                        <span>Mesa</span>
+                        <input
+                            id="order-table-number"
+                            type="text"
+                            maxlength="80"
+                            autocomplete="off"
+                            placeholder="Ej. 4 o Terraza 2"
+                        >
+                    </label>
+
+                    <label class="order-context-field">
+                        <span>Nombre</span>
+                        <input
+                            id="order-name"
+                            type="text"
+                            maxlength="120"
+                            autocomplete="off"
+                            placeholder="Nombre del pedido"
+                        >
+                    </label>
+                </div>
+            </section>
 
             <section
                 id="sale-customer-section"
@@ -679,6 +751,16 @@
 <div id="modifier-modal" class="modal-backdrop" hidden>
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modifier-product-name">
         <div class="modal-header"><div><p class="eyebrow">PERSONALIZAR PRODUCTO</p><h2 id="modifier-product-name">Producto</h2><span id="modifier-base-price" class="modal-subtitle"></span></div><button id="modifier-close" class="modal-close" type="button" aria-label="Cerrar">×</button></div>
+        <section id="variant-section" class="variant-section" hidden>
+            <div class="modifier-group-title">
+                <div>
+                    <strong>Tamaño</strong>
+                    <small>Selecciona una opción</small>
+                </div>
+                <span class="modifier-rule is-required">Obligatorio</span>
+            </div>
+            <div id="variant-options" class="variant-options"></div>
+        </section>
         <div id="modifier-groups" class="modifier-groups"></div>
         <div class="quantity-row"><div><strong>Cantidad</strong><span>Unidades para agregar</span></div><div class="quantity-control"><button id="modifier-qty-minus" type="button" aria-label="Reducir cantidad">−</button><strong id="modifier-qty">1</strong><button id="modifier-qty-plus" type="button" aria-label="Aumentar cantidad">+</button></div></div>
         <div id="modifier-error" class="form-error" hidden></div>
@@ -764,17 +846,298 @@
     </section>
 </div>
 
+
+<!-- COFICENTER OPERATIONAL STAFF / CASH V1 -->
+<div id="staff-lock-screen" class="staff-lock-screen">
+    <section class="staff-lock-card" aria-labelledby="staff-lock-heading">
+        <img
+            src="./assets/coficenter-logo.png?v=9"
+            alt="CofiCenter"
+            class="staff-lock-logo"
+        >
+        <p class="eyebrow">ACCESO OPERATIVO</p>
+        <h2 id="staff-lock-heading">Desbloquear POS</h2>
+        <p class="staff-lock-help">
+            Ingresa tu número de empleado y PIN.
+        </p>
+
+        <form id="staff-unlock-form">
+            <label class="field">
+                <span>Empleado</span>
+                <input
+                    id="staff-id"
+                    type="number"
+                    min="1"
+                    inputmode="numeric"
+                    autocomplete="username"
+                    required
+                >
+            </label>
+
+            <label class="field">
+                <span>PIN</span>
+                <input
+                    id="staff-pin"
+                    type="password"
+                    minlength="4"
+                    maxlength="32"
+                    inputmode="numeric"
+                    autocomplete="current-password"
+                    required
+                >
+            </label>
+
+            <div id="staff-unlock-error" class="form-error" hidden></div>
+
+            <button
+                id="staff-unlock-submit"
+                class="checkout-button"
+                type="submit"
+            >
+                Desbloquear
+            </button>
+        </form>
+
+        <div class="staff-lock-connectivity">
+            <span>Estado:</span>
+            <strong id="staff-lock-connectivity">Comprobando…</strong>
+        </div>
+    </section>
+</div>
+
+<div id="cash-control-backdrop" class="cash-control-backdrop" hidden>
+    <section class="cash-control-card" role="dialog" aria-modal="true" aria-labelledby="cash-control-heading">
+        <header class="cash-control-header">
+            <div>
+                <p class="eyebrow">CONTROL DE CAJA</p>
+                <h2 id="cash-control-heading">Caja</h2>
+                <span id="cash-control-status">Consultando turno…</span>
+            </div>
+            <button id="cash-control-close" class="modal-close" type="button" aria-label="Cerrar">×</button>
+        </header>
+
+        <div id="cash-action-error" class="form-error" hidden></div>
+
+        <section id="cash-shift-opening" class="cash-shift-panel" hidden>
+            <h3>Apertura</h3>
+            <p class="cash-opening-help">
+                Ingresa el efectivo con el que inicia el turno.
+            </p>
+
+            <label class="field cash-opening-amount-field">
+                <span>Monto inicial</span>
+                <div class="cash-opening-money-input">
+                    <span>$</span>
+                    <input
+                        id="cash-opening-amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="0.00"
+                        inputmode="decimal"
+                        autocomplete="off"
+                    >
+                </div>
+            </label>
+
+            <div class="manager-auth-grid">
+                <label class="field">
+                    <span>ID Manager</span>
+                    <input id="cash-opening-manager-id" type="number" min="1" inputmode="numeric">
+                </label>
+                <label class="field">
+                    <span>PIN Manager</span>
+                    <input id="cash-opening-manager-pin" type="password" inputmode="numeric" autocomplete="off">
+                </label>
+            </div>
+
+            <button id="cash-opening-submit" class="checkout-button" type="button">
+                Abrir caja
+            </button>
+        </section>
+
+        <section id="cash-movement-panel" class="cash-shift-panel cash-shift-panel-compact" hidden>
+            <details class="cash-action-disclosure" data-cash-accordion>
+                <summary>
+                    <span>
+                        <strong>Movimiento de caja</strong>
+                        <small>Entrada, gasto, retiro o depósito</small>
+                    </span>
+                    <span class="cash-action-chevron" aria-hidden="true">›</span>
+                </summary>
+
+                <div class="cash-action-body">
+                <div class="cash-form-grid">
+                                <label class="field">
+                                    <span>Dirección</span>
+                                    <select id="cash-movement-direction">
+                                        <option value="INFLOW">Entrada</option>
+                                        <option value="OUTFLOW">Salida</option>
+                                    </select>
+                                </label>
+
+                                <label class="field">
+                                    <span>Categoría</span>
+                                    <select id="cash-movement-category">
+                                        <option value="CHANGE">Cambio</option>
+                                        <option value="EXPENSE">Gasto</option>
+                                        <option value="SAFE_WITHDRAWAL">Retiro a caja fuerte</option>
+                                        <option value="DEPOSIT">Depósito</option>
+                                        <option value="CORRECTION">Corrección</option>
+                                        <option value="OTHER">Otro</option>
+                                    </select>
+                                </label>
+
+                                <label class="field">
+                                    <span>Monto</span>
+                                    <input id="cash-movement-amount" type="number" min="0.01" step="0.01" inputmode="decimal">
+                                </label>
+
+                                <label class="field cash-note-field">
+                                    <span>Nota obligatoria</span>
+                                    <textarea id="cash-movement-note" maxlength="500" required></textarea>
+                                </label>
+                            </div>
+
+                            <div class="manager-auth-grid">
+                                <label class="field">
+                                    <span>ID Manager</span>
+                                    <input id="cash-movement-manager-id" type="number" min="1" inputmode="numeric">
+                                </label>
+                                <label class="field">
+                                    <span>PIN Manager</span>
+                                    <input id="cash-movement-manager-pin" type="password" inputmode="numeric" autocomplete="off">
+                                </label>
+                            </div>
+
+                            <button id="cash-movement-submit" class="checkout-button" type="button">
+                                Registrar movimiento
+                            </button>
+                </div>
+            </details>
+        </section>
+
+        <section id="cash-shift-closing" class="cash-shift-panel cash-shift-panel-compact" hidden>
+            <details class="cash-action-disclosure" data-cash-accordion>
+                <summary>
+                    <span>
+                        <strong>Cerrar caja</strong>
+                        <small>Conteo y conciliación al finalizar el turno</small>
+                    </span>
+                    <span class="cash-action-chevron" aria-hidden="true">›</span>
+                </summary>
+
+                <div class="cash-action-body">
+                <p id="cash-closing-instruction">
+                                Ingresa el efectivo total contado. El esperado permanece oculto hasta enviar el monto.
+                            </p>
+
+                            <div id="cash-closing-count-area">
+                                <label class="field cash-closing-amount-field">
+                                    <span>Efectivo contado</span>
+                                    <div class="cash-opening-money-input">
+                                        <span>$</span>
+                                        <input
+                                            id="cash-closing-amount"
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value="0.00"
+                                            inputmode="decimal"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+                                </label>
+
+                                <button id="cash-closing-count-submit" class="checkout-button" type="button">
+                                    Enviar conteo
+                                </button>
+                            </div>
+
+                            <div id="cash-reconciliation" hidden>
+                                <div class="reconciliation-grid">
+                                    <div><span>Efectivo inicial</span><strong id="cash-reconciliation-opening">—</strong></div>
+                                    <div><span>Actividad de caja</span><strong id="cash-reconciliation-ledger">—</strong></div>
+                                    <div><span>Efectivo esperado</span><strong id="cash-reconciliation-expected">—</strong></div>
+                                    <div><span>Efectivo contado</span><strong id="cash-reconciliation-counted">—</strong></div>
+                                    <div><span>Diferencia</span><strong id="cash-reconciliation-difference">—</strong></div>
+                                </div>
+
+                                <label id="cash-difference-note-field" class="field" hidden>
+                                    <span>Explicación de diferencia</span>
+                                    <textarea id="cash-difference-note" maxlength="500"></textarea>
+                                </label>
+
+                                <div class="manager-auth-grid">
+                                    <label class="field">
+                                        <span>ID Manager</span>
+                                        <input id="cash-close-manager-id" type="number" min="1" inputmode="numeric">
+                                    </label>
+                                    <label class="field">
+                                        <span>PIN Manager</span>
+                                        <input id="cash-close-manager-pin" type="password" inputmode="numeric" autocomplete="off">
+                                    </label>
+                                </div>
+
+                                <button id="cash-final-close-submit" class="checkout-button" type="button">
+                                    Autorizar cierre
+                                </button>
+                            </div>
+                </div>
+            </details>
+    </section>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const cashActions = [
+        ...document.querySelectorAll(
+            "#cash-control-backdrop details[data-cash-accordion]"
+        )
+    ];
+
+    cashActions.forEach((details) => {
+        details.open = false;
+
+        details.addEventListener("toggle", () => {
+            if (!details.open) return;
+
+            cashActions.forEach((other) => {
+                if (other !== details) {
+                    other.open = false;
+                }
+            });
+        });
+    });
+
+    const cashClose = document.getElementById("cash-control-close");
+
+    if (cashClose) {
+        cashClose.addEventListener("click", () => {
+            cashActions.forEach((details) => {
+                details.open = false;
+            });
+        });
+    }
+});
+</script>
+
 <script src="./js/uuid.js?v=8"></script>
 <script src="./js/db.js?v=8"></script>
 <script src="./js/api.js?v=10"></script>
+<script src="./js/staff-session.js?v=1"></script>
+<script src="./js/cash-shift.js?v=4"></script>
 <script src="./js/catalog.js?v=8"></script>
 <script src="./js/sync.js?v=8"></script>
 <script src="./js/folio.js?v=1"></script>
-<script src="./js/receipt-core.js?v=1"></script>
-<script src="./js/receipt-renderer.js?v=1"></script>
-<script src="./js/app.js?v=18"></script>
+<script src="./js/receipt-core.js?v=2"></script>
+<script src="./js/receipt-fiscal-config.js?v=1"></script>
+<script src="./js/receipt-renderer.js?v=5"></script>
+<script src="./js/app.js?v=26"></script>
 <script src="./js/orders-local.js?v=1"></script>
 <script src="./js/sound-alerts.js?v=1"></script>
-<script src="./js/orders.js?v=15"></script>
+<script src="./js/orders.js?v=18"></script>
+
 </body>
 </html>

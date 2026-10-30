@@ -1,0 +1,1089 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+    <meta name="color-scheme" content="light">
+
+    <title>Empleados POS | CofiNet+</title>
+
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+</head>
+
+<body
+    class="auth-pending"
+    data-page="staff"
+>
+    <div class="app-shell protected-content">
+
+        <aside class="sidebar">
+            <div class="brand-lockup">
+                <span class="brand-mark">C</span>
+                <span>CofiNet+</span>
+            </div>
+
+            <nav
+                data-admin-nav
+                aria-label="Navegación principal"
+            ></nav>
+
+            <div class="sidebar-profile">
+                <div class="profile-row">
+                    <span
+                        class="avatar"
+                        data-admin-initials
+                    ></span>
+
+                    <div class="profile-copy">
+                        <strong data-admin-name></strong>
+                        <span data-admin-role></span>
+                    </div>
+                </div>
+
+                <button
+                    class="button button-ghost logout-button"
+                    type="button"
+                    onclick="CofiAdmin.logoutAdmin()"
+                >
+                    Cerrar sesión
+                </button>
+            </div>
+        </aside>
+
+        <div class="main-area">
+
+            <header class="topbar">
+                <button
+                    class="button button-ghost menu-toggle"
+                    data-menu-toggle
+                    aria-expanded="false"
+                >
+                    Menú
+                </button>
+
+                <span class="topbar-title">
+                    Empleados POS
+                </span>
+
+                <span
+                    class="muted"
+                    data-admin-name
+                ></span>
+            </header>
+
+            <main class="content">
+
+                <header class="page-header">
+                    <div>
+                        <p class="eyebrow">
+                            Control de acceso POS
+                        </p>
+
+                        <h1 class="page-title">
+                            Empleados POS
+                        </h1>
+
+                        <p class="page-description">
+                            Administra empleados, sucursales,
+                            roles y acceso mediante PIN.
+                        </p>
+                    </div>
+
+                    <button
+                        id="open-create-staff"
+                        class="button button-primary"
+                        type="button"
+                    >
+                        Nuevo empleado
+                    </button>
+                </header>
+
+                <section class="panel">
+
+                    <div class="panel-header">
+                        <h2>Personal</h2>
+
+                        <span class="badge badge-neutral">
+                            Solo Super Admin
+                        </span>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Número de empleado</th>
+                                    <th>Nombre</th>
+                                    <th>Sucursal</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="staff-rows">
+                                <tr>
+                                    <td
+                                        colspan="6"
+                                        class="muted"
+                                    >
+                                        Cargando…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <dialog
+        id="create-staff-dialog"
+        class="dialog dialog-large"
+    >
+        <form id="create-staff-form">
+            <h2>Nuevo empleado POS</h2>
+
+            <p>
+                Crea un acceso individual para operar el POS.
+                El número de empleado se genera automáticamente.
+            </p>
+
+            <div class="dialog-form">
+
+                <div class="field">
+                    <label for="new-staff-name">
+                        Nombre
+                    </label>
+
+                    <input
+                        id="new-staff-name"
+                        name="display_name"
+                        required
+                        minlength="1"
+                        maxlength="120"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="new-staff-branch">
+                        Sucursal
+                    </label>
+
+                    <select
+                        id="new-staff-branch"
+                        name="branch_id"
+                        required
+                    >
+                        <option value="">
+                            Cargando sucursales…
+                        </option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="new-staff-role">
+                        Rol
+                    </label>
+
+                    <select
+                        id="new-staff-role"
+                        name="role"
+                        required
+                    >
+                        <option value="CASHIER">
+                            Cashier
+                        </option>
+
+                        <option value="MANAGER">
+                            Manager
+                        </option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="new-staff-pin">
+                        PIN
+                    </label>
+
+                    <input
+                        id="new-staff-pin"
+                        name="pin"
+                        type="password"
+                        inputmode="numeric"
+                        minlength="4"
+                        maxlength="32"
+                        autocomplete="new-password"
+                        required
+                    >
+
+                    <small class="field-hint">
+                        Mínimo 4 caracteres.
+                        El PIN nunca se mostrará después de guardarlo.
+                    </small>
+                </div>
+
+            </div>
+
+            <p
+                id="create-staff-error"
+                class="form-error"
+                role="alert"
+            ></p>
+
+            <div class="dialog-actions">
+                <button
+                    id="cancel-create-staff"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    id="create-staff-button"
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Crear empleado
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog
+        id="edit-staff-dialog"
+        class="dialog"
+    >
+        <form id="edit-staff-form">
+            <h2>Editar empleado POS</h2>
+
+            <p>
+                Actualiza el nombre o rol del empleado.
+            </p>
+
+            <input
+                id="edit-staff-id"
+                type="hidden"
+            >
+
+            <div class="field">
+                <label for="edit-staff-name">
+                    Nombre
+                </label>
+
+                <input
+                    id="edit-staff-name"
+                    name="display_name"
+                    required
+                    minlength="1"
+                    maxlength="120"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="field">
+                <label for="edit-staff-role">
+                    Rol
+                </label>
+
+                <select
+                    id="edit-staff-role"
+                    name="role"
+                    required
+                >
+                    <option value="CASHIER">
+                        Cashier
+                    </option>
+
+                    <option value="MANAGER">
+                        Manager
+                    </option>
+                </select>
+            </div>
+
+            <p
+                id="edit-staff-error"
+                class="form-error"
+                role="alert"
+            ></p>
+
+            <div class="dialog-actions">
+                <button
+                    id="cancel-edit-staff"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    id="save-edit-staff"
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Guardar cambios
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog
+        id="reset-staff-pin-dialog"
+        class="dialog"
+    >
+        <form id="reset-staff-pin-form">
+            <h2>Cambiar PIN</h2>
+
+            <p id="reset-staff-pin-copy"></p>
+
+            <input
+                id="reset-staff-pin-id"
+                type="hidden"
+            >
+
+            <div class="field">
+                <label for="reset-staff-pin-value">
+                    Nuevo PIN
+                </label>
+
+                <input
+                    id="reset-staff-pin-value"
+                    name="pin"
+                    type="password"
+                    inputmode="numeric"
+                    minlength="4"
+                    maxlength="32"
+                    autocomplete="new-password"
+                    required
+                >
+            </div>
+
+            <p
+                id="reset-staff-pin-error"
+                class="form-error"
+                role="alert"
+            ></p>
+
+            <div class="dialog-actions">
+                <button
+                    id="cancel-reset-staff-pin"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    id="save-reset-staff-pin"
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Guardar PIN
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="admin.js?v=20261015-pos-staff"></script>
+
+    <script>
+    (() => {
+        const {
+            SUPER_ADMIN,
+            adminRequest,
+            bootstrapAdmin,
+            confirmAdminAction,
+            showEmpty,
+            showToast,
+        } = window.CofiAdmin;
+
+        const createStaffDialog =
+            document.getElementById(
+                "create-staff-dialog"
+            );
+
+        const editStaffDialog =
+            document.getElementById(
+                "edit-staff-dialog"
+            );
+
+        const resetStaffPinDialog =
+            document.getElementById(
+                "reset-staff-pin-dialog"
+            );
+
+        let branches = [];
+
+        function roleName(role) {
+            return role === "MANAGER"
+                ? "Manager"
+                : "Cashier";
+        }
+
+        function renderStaff(items) {
+            const body =
+                document.getElementById(
+                    "staff-rows"
+                );
+
+            body.replaceChildren();
+
+            if (!items.length) {
+                const row =
+                    document.createElement("tr");
+
+                const cell =
+                    document.createElement("td");
+
+                cell.colSpan = 6;
+
+                showEmpty(
+                    cell,
+                    "Sin empleados",
+                    "Crea el primer empleado POS."
+                );
+
+                row.append(cell);
+                body.append(row);
+
+                return;
+            }
+
+            items.forEach(staff => {
+                const row =
+                    document.createElement("tr");
+
+                const id =
+                    document.createElement("td");
+                id.textContent = staff.id;
+                row.append(id);
+
+                const name =
+                    document.createElement("td");
+                name.textContent =
+                    staff.display_name;
+                row.append(name);
+
+                const branch =
+                    document.createElement("td");
+                branch.textContent =
+                    staff.branch_code;
+                row.append(branch);
+
+                const role =
+                    document.createElement("td");
+                role.textContent =
+                    roleName(staff.role);
+                row.append(role);
+
+                const status =
+                    document.createElement("td");
+
+                const badge =
+                    document.createElement("span");
+
+                badge.className =
+                    `badge badge-${
+                        staff.is_active
+                            ? "success"
+                            : "neutral"
+                    }`;
+
+                badge.textContent =
+                    staff.is_active
+                        ? "Activo"
+                        : "Deshabilitado";
+
+                status.append(badge);
+                row.append(status);
+
+                const actions =
+                    document.createElement("td");
+
+                actions.className =
+                    "row-actions";
+
+                const edit =
+                    document.createElement("button");
+
+                edit.className =
+                    "button button-ghost button-small";
+
+                edit.type = "button";
+                edit.textContent = "Editar";
+
+                edit.addEventListener(
+                    "click",
+                    () => openEditStaff(staff)
+                );
+
+                const toggle =
+                    document.createElement("button");
+
+                toggle.className =
+                    `button button-small ${
+                        staff.is_active
+                            ? "button-danger"
+                            : "button-secondary"
+                    }`;
+
+                toggle.type = "button";
+
+                toggle.textContent =
+                    staff.is_active
+                        ? "Deshabilitar"
+                        : "Habilitar";
+
+                toggle.addEventListener(
+                    "click",
+                    async () => {
+                        const next =
+                            !staff.is_active;
+
+                        const confirmed =
+                            await confirmAdminAction({
+                                title:
+                                    next
+                                        ? "Habilitar empleado"
+                                        : "Deshabilitar empleado",
+                                message:
+                                    `${
+                                        next
+                                            ? "Habilitar"
+                                            : "Deshabilitar"
+                                    } el acceso POS de ${
+                                        staff.display_name
+                                    }.`,
+                                confirmLabel:
+                                    next
+                                        ? "Habilitar"
+                                        : "Deshabilitar",
+                                danger: !next,
+                            });
+
+                        if (!confirmed) {
+                            return;
+                        }
+
+                        try {
+                            await adminRequest(
+                                `/admin/pos/staff/${staff.id}`,
+                                {
+                                    method: "PATCH",
+                                    body:
+                                        JSON.stringify({
+                                            is_active:
+                                                next,
+                                        }),
+                                }
+                            );
+
+                            showToast(
+                                "Estado actualizado.",
+                                "success"
+                            );
+
+                            await loadStaff();
+
+                        } catch (error) {
+                            showToast(
+                                error.message,
+                                "error"
+                            );
+                        }
+                    }
+                );
+
+                const resetPin =
+                    document.createElement("button");
+
+                resetPin.className =
+                    "button button-ghost button-small";
+
+                resetPin.type = "button";
+                resetPin.textContent = "Cambiar PIN";
+
+                resetPin.addEventListener(
+                    "click",
+                    () => openResetStaffPin(staff)
+                );
+
+                actions.append(
+                    edit,
+                    toggle,
+                    resetPin
+                );
+
+                row.append(actions);
+                body.append(row);
+            });
+        }
+
+        function openEditStaff(staff) {
+            const form =
+                document.getElementById(
+                    "edit-staff-form"
+                );
+
+            form.reset();
+
+            document
+                .getElementById(
+                    "edit-staff-id"
+                )
+                .value = staff.id;
+
+            document
+                .getElementById(
+                    "edit-staff-name"
+                )
+                .value = staff.display_name;
+
+            document
+                .getElementById(
+                    "edit-staff-role"
+                )
+                .value = staff.role;
+
+            document
+                .getElementById(
+                    "edit-staff-error"
+                )
+                .textContent = "";
+
+            editStaffDialog.showModal();
+
+            document
+                .getElementById(
+                    "edit-staff-name"
+                )
+                .focus();
+        }
+
+        function openResetStaffPin(staff) {
+            const form =
+                document.getElementById(
+                    "reset-staff-pin-form"
+                );
+
+            form.reset();
+
+            document
+                .getElementById(
+                    "reset-staff-pin-id"
+                )
+                .value = staff.id;
+
+            document
+                .getElementById(
+                    "reset-staff-pin-copy"
+                )
+                .textContent =
+                    `Define un nuevo PIN para ${staff.display_name}.`;
+
+            document
+                .getElementById(
+                    "reset-staff-pin-error"
+                )
+                .textContent = "";
+
+            resetStaffPinDialog.showModal();
+
+            document
+                .getElementById(
+                    "reset-staff-pin-value"
+                )
+                .focus();
+        }
+
+        async function loadStaff() {
+            const items =
+                await adminRequest(
+                    "/admin/pos/staff"
+                );
+
+            renderStaff(items);
+        }
+
+        async function loadBranches() {
+            branches =
+                await adminRequest(
+                    "/branches"
+                );
+
+            const select =
+                document.getElementById(
+                    "new-staff-branch"
+                );
+
+            select.replaceChildren();
+
+            if (!branches.length) {
+                select.add(
+                    new Option(
+                        "No hay sucursales disponibles",
+                        ""
+                    )
+                );
+
+                select.disabled = true;
+                return;
+            }
+
+            select.disabled = false;
+
+            select.add(
+                new Option(
+                    "Selecciona una sucursal",
+                    ""
+                )
+            );
+
+            branches.forEach(branch => {
+                select.add(
+                    new Option(
+                        branch.name,
+                        String(branch.id)
+                    )
+                );
+            });
+        }
+
+        document
+            .getElementById(
+                "cancel-reset-staff-pin"
+            )
+            .addEventListener(
+                "click",
+                () => {
+                    resetStaffPinDialog.close();
+                }
+            );
+
+        document
+            .getElementById(
+                "reset-staff-pin-form"
+            )
+            .addEventListener(
+                "submit",
+                async event => {
+                    event.preventDefault();
+
+                    const form =
+                        event.currentTarget;
+
+                    if (!form.reportValidity()) {
+                        return;
+                    }
+
+                    const staffId =
+                        document.getElementById(
+                            "reset-staff-pin-id"
+                        ).value;
+
+                    const button =
+                        document.getElementById(
+                            "save-reset-staff-pin"
+                        );
+
+                    const error =
+                        document.getElementById(
+                            "reset-staff-pin-error"
+                        );
+
+                    error.textContent = "";
+
+                    CofiAdmin.setButtonLoading(
+                        button,
+                        true,
+                        "Guardando…"
+                    );
+
+                    try {
+                        await adminRequest(
+                            `/admin/pos/staff/${staffId}/reset-pin`,
+                            {
+                                method: "POST",
+                                body:
+                                    JSON.stringify({
+                                        pin:
+                                            form.pin.value,
+                                    }),
+                            }
+                        );
+
+                        resetStaffPinDialog.close();
+
+                        showToast(
+                            "PIN actualizado.",
+                            "success"
+                        );
+
+                    } catch (error) {
+                        document
+                            .getElementById(
+                                "reset-staff-pin-error"
+                            )
+                            .textContent =
+                                error.message;
+
+                    } finally {
+                        CofiAdmin.setButtonLoading(
+                            button,
+                            false
+                        );
+                    }
+                }
+            );
+
+        document
+            .getElementById(
+                "cancel-edit-staff"
+            )
+            .addEventListener(
+                "click",
+                () => {
+                    editStaffDialog.close();
+                }
+            );
+
+        document
+            .getElementById(
+                "edit-staff-form"
+            )
+            .addEventListener(
+                "submit",
+                async event => {
+                    event.preventDefault();
+
+                    const form =
+                        event.currentTarget;
+
+                    if (!form.reportValidity()) {
+                        return;
+                    }
+
+                    const staffId =
+                        document.getElementById(
+                            "edit-staff-id"
+                        ).value;
+
+                    const button =
+                        document.getElementById(
+                            "save-edit-staff"
+                        );
+
+                    const error =
+                        document.getElementById(
+                            "edit-staff-error"
+                        );
+
+                    error.textContent = "";
+
+                    CofiAdmin.setButtonLoading(
+                        button,
+                        true,
+                        "Guardando…"
+                    );
+
+                    try {
+                        await adminRequest(
+                            `/admin/pos/staff/${staffId}`,
+                            {
+                                method: "PATCH",
+                                body:
+                                    JSON.stringify({
+                                        display_name:
+                                            form.display_name.value,
+                                        role:
+                                            form.role.value,
+                                    }),
+                            }
+                        );
+
+                        editStaffDialog.close();
+
+                        showToast(
+                            "Empleado actualizado.",
+                            "success"
+                        );
+
+                        await loadStaff();
+
+                    } catch (error) {
+                        document
+                            .getElementById(
+                                "edit-staff-error"
+                            )
+                            .textContent =
+                                error.message;
+
+                    } finally {
+                        CofiAdmin.setButtonLoading(
+                            button,
+                            false
+                        );
+                    }
+                }
+            );
+
+        document
+            .getElementById(
+                "open-create-staff"
+            )
+            .addEventListener(
+                "click",
+                () => {
+                    const form =
+                        document.getElementById(
+                            "create-staff-form"
+                        );
+
+                    form.reset();
+
+                    document
+                        .getElementById(
+                            "create-staff-error"
+                        )
+                        .textContent = "";
+
+                    createStaffDialog.showModal();
+
+                    document
+                        .getElementById(
+                            "new-staff-name"
+                        )
+                        .focus();
+                }
+            );
+
+        document
+            .getElementById(
+                "cancel-create-staff"
+            )
+            .addEventListener(
+                "click",
+                () => {
+                    createStaffDialog.close();
+                }
+            );
+
+        document
+            .getElementById(
+                "create-staff-form"
+            )
+            .addEventListener(
+                "submit",
+                async event => {
+                    event.preventDefault();
+
+                    const form =
+                        event.currentTarget;
+
+                    if (!form.reportValidity()) {
+                        return;
+                    }
+
+                    const button =
+                        document.getElementById(
+                            "create-staff-button"
+                        );
+
+                    const error =
+                        document.getElementById(
+                            "create-staff-error"
+                        );
+
+                    error.textContent = "";
+
+                    CofiAdmin.setButtonLoading(
+                        button,
+                        true,
+                        "Creando…"
+                    );
+
+                    try {
+                        const created =
+                            await adminRequest(
+                                "/admin/pos/staff",
+                                {
+                                    method: "POST",
+                                    body:
+                                        JSON.stringify({
+                                            branch_id:
+                                                Number(
+                                                    form.branch_id.value
+                                                ),
+                                            display_name:
+                                                form.display_name.value,
+                                            role:
+                                                form.role.value,
+                                            pin:
+                                                form.pin.value,
+                                        }),
+                                }
+                            );
+
+                        createStaffDialog.close();
+
+                        showToast(
+                            `Empleado #${created.id} creado.`,
+                            "success"
+                        );
+
+                        await loadStaff();
+
+                    } catch (error) {
+                        document
+                            .getElementById(
+                                "create-staff-error"
+                            )
+                            .textContent =
+                                error.message;
+
+                    } finally {
+                        CofiAdmin.setButtonLoading(
+                            button,
+                            false
+                        );
+                    }
+                }
+            );
+
+        (async () => {
+            const admin =
+                await bootstrapAdmin({
+                    allowedRoles: [
+                        SUPER_ADMIN,
+                    ],
+                });
+
+            if (!admin) {
+                return;
+            }
+
+            await loadBranches();
+            await loadStaff();
+
+        })().catch(
+            error =>
+                showToast(
+                    error.message,
+                    "error"
+                )
+        );
+    })();
+    </script>
+</body>
+</html>

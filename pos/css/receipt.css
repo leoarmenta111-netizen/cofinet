@@ -291,3 +291,127 @@
         -webkit-print-color-adjust: exact;
     }
 }
+
+
+/* coficenter-fiscal-ticket-public-v1 */
+
+.receipt-header .receipt-logo {
+    display: block;
+    width: 64mm;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto 3mm;
+    object-fit: contain;
+}
+
+.receipt-fiscal {
+    padding: 2mm 0 1mm;
+    text-align: center;
+    color: #000;
+}
+
+.receipt-fiscal-title,
+.receipt-billing-title {
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.receipt-fiscal-title {
+    margin-bottom: 2mm;
+}
+
+.receipt-fiscal-details {
+    text-align: left;
+    line-height: 1.35;
+}
+
+.receipt-fiscal-address {
+    margin-top: 1mm;
+    overflow-wrap: anywhere;
+}
+
+.receipt-billing-title {
+    margin-top: 4mm;
+}
+
+.receipt-billing-message {
+    max-width: 62mm;
+    margin: 1.5mm auto 2mm;
+    line-height: 1.35;
+}
+
+.receipt-billing-qr {
+    display: block;
+    width: 36mm;
+    height: 36mm;
+    margin: 0 auto;
+    object-fit: contain;
+    image-rendering: pixelated;
+    background: #fff;
+}
+
+@media print {
+    .receipt-header .receipt-logo {
+        width: 64mm;
+        max-width: 64mm;
+        height: auto;
+        margin: 0 auto 3mm;
+        filter: grayscale(1) contrast(1.25);
+    }
+
+    .receipt-billing-qr {
+        width: 36mm;
+        height: 36mm;
+        filter: grayscale(1) contrast(1.2);
+    }
+}
+
+
+/* receipt-layout-v2 */
+
+.receipt-fiscal--header {
+    margin: 2.5mm 0 3mm;
+    padding: 0;
+}
+
+.receipt-fiscal--header .receipt-fiscal-title {
+    margin-bottom: 1.5mm;
+}
+
+.receipt-fiscal--header .receipt-fiscal-details {
+    text-align: left;
+    line-height: 1.35;
+}
+
+.receipt-fiscal--header .receipt-fiscal-address {
+    margin-top: 1mm;
+}
+
+.receipt-branch {
+    margin-top: 1mm;
+}
+
+.receipt-billing {
+    padding-top: 2mm;
+}
+
+.receipt-billing .receipt-billing-title {
+    margin-top: 0;
+}
+
+
+/* receipt-center-fiscal-text-v1 */
+
+.receipt-fiscal--header .receipt-fiscal-details {
+    text-align: center;
+    line-height: 1.45;
+}
+
+.receipt-fiscal--header .receipt-fiscal-details div {
+    text-align: center;
+}
+
+.receipt-fiscal--header .receipt-fiscal-address {
+    margin-top: 1mm;
+    text-align: center;
+}

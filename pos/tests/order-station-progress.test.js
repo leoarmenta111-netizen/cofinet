@@ -113,3 +113,21 @@ test(
         );
     }
 );
+
+
+test(
+    "ordenes con Cocina o Barra no avanzan estado general manualmente",
+    () => {
+        assert.match(
+            ordersJs,
+            /function\s+hasPreparationStations\(order\)/,
+            "Falta detectar ordenes controladas por estaciones"
+        );
+
+        assert.match(
+            ordersJs,
+            /hasPreparationStations\(order\)[\s\S]{0,180}action\.hidden\s*=\s*true/,
+            "La accion general debe ocultarse para ordenes con estaciones"
+        );
+    }
+);

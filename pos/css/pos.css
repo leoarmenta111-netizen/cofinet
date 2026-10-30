@@ -148,6 +148,84 @@ h2 { font-size: 18px; }
 .order-heading { min-height: 84px; padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .order-type { display: inline-block; margin-top: 7px; padding: 4px 9px; border: 1px solid #e4d4ae; border-radius: 999px; background: var(--gold-soft); color: var(--gold-dark); font-size: 10px; font-weight: 650; }
 .danger-button { width: 40px; min-width: 40px; height: 40px; color: var(--danger); }
+
+.order-context {
+    flex: 0 0 auto;
+    padding: 12px 17px 13px;
+    border-bottom: 1px solid var(--border);
+    background: #fbfcfa;
+}
+
+.order-context-title {
+    margin-bottom: 8px;
+    font-size: 11px;
+}
+
+.order-type-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.order-type-button {
+    min-height: 38px;
+    padding: 6px 7px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.order-type-button.is-active {
+    border-color: var(--green);
+    background: var(--green-soft);
+    color: var(--green-dark);
+    box-shadow: 0 0 0 1px var(--green);
+}
+
+.order-context-fields {
+    margin-top: 9px;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 7px;
+}
+
+.order-context-field span {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 650;
+}
+
+.order-context-field input {
+    width: 100%;
+    height: 38px;
+    padding: 0 9px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    outline: none;
+    font-size: 11px;
+}
+
+.order-context-field input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(188,138,39,.10);
+}
+
+@media (max-width: 560px) {
+    .order-context {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .order-context-fields {
+        grid-template-columns: 1fr;
+    }
+}
 .empty-order { flex: 1; padding: 34px; display: grid; place-content: center; justify-items: center; text-align: center; color: var(--muted); }
 .empty-order strong { margin-top: 15px; color: var(--text); font-size: 16px; }
 .empty-order > span:last-child { max-width: 240px; margin-top: 7px; line-height: 1.5; font-size: 12px; }
@@ -5852,4 +5930,492 @@ and (max-width: 1366px) {
         -webkit-backdrop-filter: none !important;
         backdrop-filter: none !important;
     }
+}
+
+
+/* ORDER SOURCE BADGES */
+.order-source-badge {
+    display: inline-flex !important;
+    width: max-content;
+    max-width: 100%;
+    min-height: 20px;
+    margin-top: 5px !important;
+    padding: 2px 8px;
+    border: 1px solid #e0e4dc;
+    border-radius: 999px;
+    background: #f6f7f4;
+    color: #747c72 !important;
+    align-items: center;
+    font-size: 8px !important;
+    font-weight: 800;
+    letter-spacing: .055em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.order-source-badge.source-kiosk,
+.order-detail-source.source-kiosk {
+    border-color: #cbd9c2;
+    background: #edf5e8;
+    color: #456936 !important;
+}
+
+.order-source-badge.source-bar_tablet,
+.order-detail-source.source-bar_tablet {
+    border-color: #d8d0bf;
+    background: #f7f2e8;
+    color: #80662d !important;
+}
+
+.order-source-badge.source-local {
+    border-color: #ead8b4;
+    background: #fff5dc;
+    color: #9b6812 !important;
+}
+
+.order-detail-source {
+    display: inline-flex;
+    min-height: 24px;
+    padding: 3px 9px;
+    border: 1px solid #e0e4dc;
+    border-radius: 999px;
+    background: #f6f7f4;
+    color: #747c72;
+    align-items: center;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .045em;
+    text-transform: uppercase;
+}
+
+/*
+==================================================
+   COFICENTER OPERATIONAL STAFF / CASH V1
+   ========================================================= */
+
+.staff-lock-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background:
+        rgba(10, 17, 30, 0.94);
+    backdrop-filter: blur(12px);
+}
+
+.staff-lock-screen[hidden] {
+    display: none;
+}
+
+.staff-lock-card {
+    width: min(420px, 100%);
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    border-radius: 22px;
+    padding: 28px;
+    background: var(--surface, #fff);
+    box-shadow:
+        0 24px 80px
+        rgba(0, 0, 0, 0.35);
+}
+
+.staff-lock-logo {
+    width: min(210px, 70%);
+    height: auto;
+    display: block;
+    margin: 0 auto 22px;
+}
+
+.staff-lock-help {
+    margin: 4px 0 22px;
+    color: var(--muted, #667085);
+}
+
+.staff-lock-connectivity {
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 13px;
+}
+
+.pos-staff-locked .workspace {
+    user-select: none;
+}
+
+.operator-block {
+    min-width: 150px;
+}
+
+#active-shift-status {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    opacity: 0.72;
+}
+
+.topbar-action {
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 12px;
+    background: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.topbar-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.cash-control-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background:
+        rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(8px);
+}
+
+.cash-control-backdrop[hidden] {
+    display: none;
+}
+
+.cash-control-card {
+    width: min(900px, 100%);
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+    border-radius: 20px;
+    padding: 22px;
+    background: var(--surface, #fff);
+    box-shadow:
+        0 24px 80px
+        rgba(0, 0, 0, 0.28);
+}
+
+.cash-control-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.cash-control-header h2,
+.cash-shift-panel h3 {
+    margin: 0;
+}
+
+.cash-shift-panel {
+    display: grid;
+    gap: 16px;
+}
+
+.cash-shift-panel[hidden] {
+    display: none;
+}
+
+.cash-denominations {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            5,
+            minmax(100px, 1fr)
+        );
+    gap: 10px;
+}
+
+.cash-denominations label {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid
+        rgba(15, 23, 42, 0.12);
+    border-radius: 12px;
+}
+
+.cash-denominations label span {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.cash-denominations input {
+    width: 100%;
+}
+
+.cash-count-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background:
+        rgba(15, 23, 42, 0.05);
+}
+
+.cash-count-total strong {
+    font-size: 24px;
+}
+
+.manager-auth-grid,
+.cash-form-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+    gap: 12px;
+}
+
+.cash-note-field {
+    grid-column: 1 / -1;
+}
+
+.reconciliation-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            5,
+            minmax(0, 1fr)
+        );
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.reconciliation-grid > div {
+    display: grid;
+    gap: 5px;
+    padding: 13px;
+    border-radius: 12px;
+    background:
+        rgba(15, 23, 42, 0.05);
+}
+
+.reconciliation-grid span {
+    font-size: 11px;
+    color: var(--muted, #667085);
+}
+
+.reconciliation-grid strong {
+    font-size: 16px;
+}
+
+@media (max-width: 760px) {
+    .cash-denominations {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+    .manager-auth-grid,
+    .cash-form-grid,
+    .reconciliation-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+    .cash-note-field {
+        grid-column: auto;
+    }
+}
+
+
+/* SIMPLE CASH CONTROL V1 */
+
+.cash-control-card {
+    width: min(680px, 100%);
+    padding: 20px;
+    border-radius: 18px;
+}
+
+.cash-control-header {
+    margin-bottom: 14px;
+}
+
+.cash-shift-panel-compact {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.cash-action-disclosure {
+    overflow: hidden;
+    border: 1px solid #e1e5de;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.cash-action-disclosure + .cash-action-disclosure {
+    margin-top: 10px;
+}
+
+.cash-action-disclosure summary {
+    min-height: 66px;
+    padding: 0 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.cash-action-disclosure summary::-webkit-details-marker {
+    display: none;
+}
+
+.cash-action-disclosure summary > span:first-child {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.cash-action-disclosure summary strong {
+    color: #263026;
+    font-size: 14px;
+    font-weight: 780;
+}
+
+.cash-action-disclosure summary small {
+    color: #7a8378;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.cash-action-chevron {
+    flex: 0 0 auto;
+    color: #6d786a;
+    font-size: 25px;
+    line-height: 1;
+    transition: transform 160ms ease;
+}
+
+.cash-action-disclosure[open]
+.cash-action-chevron {
+    transform: rotate(90deg);
+}
+
+.cash-action-disclosure[open] summary {
+    border-bottom: 1px solid #edf0ea;
+}
+
+.cash-action-body {
+    padding: 17px;
+}
+
+@media (max-width: 620px) {
+    .cash-control-backdrop {
+        padding: 10px;
+    }
+
+    .cash-control-card {
+        width: 100%;
+        padding: 15px;
+        border-radius: 16px;
+    }
+
+    .cash-action-disclosure summary {
+        min-height: 60px;
+        padding: 0 14px;
+    }
+
+    .cash-action-body {
+        padding: 14px;
+    }
+}
+
+
+/* SIMPLE OPENING AMOUNT V1 */
+
+.cash-opening-help {
+    margin: 0 0 18px;
+    color: #747d72;
+    font-size: 12px;
+}
+
+.cash-opening-amount-field {
+    display: block;
+    margin-bottom: 20px;
+}
+
+.cash-opening-amount-field > span {
+    display: block;
+    margin-bottom: 8px;
+    color: #30382f;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.cash-opening-money-input {
+    min-height: 70px;
+    padding: 0 18px;
+    border: 1px solid #d9ddd5;
+    border-radius: 14px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cash-opening-money-input:focus-within {
+    border-color: #5b7849;
+    box-shadow:
+        0 0 0 3px
+        rgba(69, 108, 53, 0.09);
+}
+
+.cash-opening-money-input > span {
+    color: #5f685c;
+    font-size: 24px;
+    font-weight: 750;
+}
+
+.cash-opening-money-input input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #202820;
+    font: inherit;
+    font-size: 30px;
+    font-weight: 820;
+}
+
+#cash-shift-opening {
+    max-width: 560px;
+    margin-inline: auto;
+}
+
+/* PRODUCT VARIANTS V1 */
+.variant-section {
+    display: grid;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.variant-section[hidden] {
+    display: none;
+}
+
+.variant-options {
+    display: grid;
+    gap: .6rem;
+}
+
+.variant-option {
+    cursor: pointer;
 }

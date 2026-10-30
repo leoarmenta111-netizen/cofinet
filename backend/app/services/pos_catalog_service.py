@@ -14,6 +14,7 @@ from app.schemas.pos_catalog import (
     PosCatalogBranchResponse,
     PosCatalogCategoryResponse,
     PosCatalogProductResponse,
+    PosCatalogProductVariantResponse,
     PosCatalogResponse,
     PosModifierGroupResponse,
     PosModifierOptionResponse,
@@ -82,6 +83,97 @@ class PosCatalogService:
                 else product.sort_order
             )
 
+            resolved_variants = []
+            has_variants = (
+                product.variant_group_id is not None
+            )
+            display_price = Decimal(
+                effective_price
+            )
+
+            if has_variants:
+                variant_group = product.variant_group
+
+                if (
+                    variant_group is None
+                    or not variant_group.is_active
+                ):
+                    continue
+
+                for product_variant in sorted(
+                    product.product_variants,
+                    key=lambda item: (
+                        item.sort_order,
+                        item.variant.sort_order,
+                        item.variant.id,
+                    ),
+                ):
+                    variant = product_variant.variant
+
+                    if not product_variant.is_active:
+                        continue
+
+                    if not variant.is_active:
+                        continue
+
+                    if (
+                        variant.variant_group_id
+                        != product.variant_group_id
+                    ):
+                        continue
+
+                    branch_override = next(
+                        (
+                            row
+                            for row
+                            in product_variant.branch_overrides
+                            if row.branch_id == branch.id
+                        ),
+                        None,
+                    )
+
+                    if (
+                        branch_override is not None
+                        and not branch_override.is_available
+                    ):
+                        continue
+
+                    variant_price = (
+                        branch_override.price_override
+                        if (
+                            branch_override is not None
+                            and branch_override.price_override
+                            is not None
+                        )
+                        else product_variant.price
+                    )
+
+                    resolved_variants.append(
+                        PosCatalogProductVariantResponse(
+                            product_variant_id=(
+                                product_variant.id
+                            ),
+                            variant_id=variant.id,
+                            name=variant.name,
+                            price=Decimal(
+                                variant_price
+                            ),
+                            sort_order=(
+                                product_variant.sort_order
+                            ),
+                        )
+                    )
+
+                if not resolved_variants:
+                    continue
+
+                display_price = min(
+                    row.price
+                    for row in resolved_variants
+                )
+
+                effective_price = display_price
+
             modifier_groups = []
 
             for link in sorted(
@@ -130,6 +222,7 @@ class PosCatalogService:
                                 price_delta=Decimal(
                                     option.price_delta
                                 ),
+                                image_url=option.image_url,
                                 sort_order=option.sort_order,
                             )
                             for option in active_options
@@ -143,6 +236,9 @@ class PosCatalogService:
                 description=product.description,
                 sku=product.sku,
                 price=Decimal(effective_price),
+                display_price=Decimal(display_price),
+                has_variants=has_variants,
+                variants=resolved_variants,
                 image_url=product.image_url,
                 preparation_station=product.preparation_station,
                 sort_order=effective_sort_order,

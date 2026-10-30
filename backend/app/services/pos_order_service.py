@@ -17,6 +17,7 @@ from app.models.pos_catalog import (
     PosBranchProduct,
     PosModifierOption,
     PosProduct,
+    PosProductVariant,
 )
 from app.models.pos_orders import (
     PosOrder,
@@ -42,6 +43,11 @@ from app.schemas.pos_orders import (
 )
 
 
+from app.services.pos_cash_service import PosCashService
+from app.services.pos_pricing_service import (
+    PosPricingService,
+    PricingItemRequest,
+)
 from app.services.pos_receipt_service import PosReceiptService
 
 CENT = Decimal("0.01")
@@ -84,6 +90,9 @@ class PosOrderService:
                 if order.customer is not None
                 else None
             ),
+            order_type=order.order_type,
+            order_name=order.order_name,
+            table_number=order.table_number,
             status=order.status,
             payment_status=order.payment_status,
             subtotal=money(order.subtotal),
@@ -93,6 +102,8 @@ class PosOrderService:
             items=[
                 PosOrderItemResponse(
                     product_id=item.product_id,
+                    product_variant_id=item.product_variant_id,
+                    variant_name=item.variant_name,
                     product_name=item.product_name,
                     preparation_station=(
                         item.preparation_station
@@ -278,6 +289,9 @@ class PosOrderService:
                     order_uuid=order.order_uuid,
                     folio=order.folio,
                     branch_code=order.branch.code,
+                    order_type=order.order_type,
+                    order_name=order.order_name,
+                    table_number=order.table_number,
                     station_status=(
                         station_state.status
                     ),
@@ -288,6 +302,10 @@ class PosOrderService:
                     items=[
                         PosStationOrderItemResponse(
                             product_id=item.product_id,
+                            product_variant_id=(
+                                item.product_variant_id
+                            ),
+                            variant_name=item.variant_name,
                             product_name=(
                                 item.product_name
                             ),
@@ -541,6 +559,21 @@ class PosOrderService:
         if order.status == next_status:
             return cls._response(order)
 
+        # Orders routed to Kitchen/Bar are driven by their
+        # preparation stations. Allowing the whole-order
+        # endpoint to advance them independently can create
+        # impossible states such as DELIVERED while BAR is
+        # still NEW. Station endpoints are the source of truth
+        # for preparation-routed orders.
+        if order.station_states:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "Order status is controlled by "
+                    "preparation stations"
+                ),
+            )
+
         allowed = {
             "NEW": {"PREPARING"},
             "PREPARING": {"READY"},
@@ -640,9 +673,88 @@ class PosOrderService:
         calculated_items = []
         subtotal = Decimal("0.00")
 
+        shared_priced_items = None
+
+        if payload.receipt_snapshot is None:
+            shared_priced_items = (
+                PosPricingService.resolve_items(
+                    db=db,
+                    branch=branch,
+                    items=[
+                        PricingItemRequest(
+                            product_id=item.product_id,
+                            quantity=item.quantity,
+                            modifier_option_ids=list(
+                                item.modifier_option_ids
+                            ),
+                            notes=item.notes,
+                        )
+                        for item in payload.items
+                    ],
+                )
+            )
+
         for item_index, requested_item in enumerate(
             payload.items
         ):
+            if (
+                shared_priced_items is not None
+                and shared_priced_items[
+                    item_index
+                ].product.variant_group_id is None
+                and requested_item.product_variant_id is None
+            ):
+                priced_item = shared_priced_items[
+                    item_index
+                ]
+
+                subtotal += priced_item.line_total
+
+                calculated_items.append(
+                    {
+                        "product": priced_item.product,
+                        "product_variant": None,
+                        "variant_name": None,
+                        "quantity": priced_item.quantity,
+                        "base_price": (
+                            priced_item.unit_base_price
+                        ),
+                        "modifier_total": (
+                            priced_item.unit_modifier_total
+                        ),
+                        "unit_price": (
+                            priced_item.unit_price
+                        ),
+                        "line_total": (
+                            priced_item.line_total
+                        ),
+                        "notes": priced_item.notes,
+                        "modifiers": [
+                            {
+                                "group_id": (
+                                    modifier.group_id
+                                ),
+                                "option_id": (
+                                    modifier.option_id
+                                ),
+                                "group_name": (
+                                    modifier.group_name
+                                ),
+                                "option_name": (
+                                    modifier.option_name
+                                ),
+                                "price_delta": (
+                                    modifier.price_delta
+                                ),
+                            }
+                            for modifier
+                            in priced_item.modifiers
+                        ],
+                    }
+                )
+
+                continue
+
             branch_product = db.execute(
                 select(PosBranchProduct)
                 .join(PosBranchProduct.product)
@@ -711,17 +823,154 @@ class PosOrderService:
                         ),
                     )
 
+            if (
+                snapshot_item is not None
+                and snapshot_item.product_variant_id
+                != requested_item.product_variant_id
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Receipt product variant does not "
+                        "match order item"
+                    ),
+                )
+
             if not product.category.is_active:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Product category is inactive",
                 )
 
-            base_price = money(
-                branch_product.price
-                if branch_product.price is not None
-                else product.base_price
-            )
+            product_variant = None
+            variant_name = None
+
+            if product.variant_group_id is None:
+                if (
+                    requested_item.product_variant_id
+                    is not None
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Product does not accept a variant"
+                        ),
+                    )
+
+                base_price = money(
+                    branch_product.price
+                    if branch_product.price is not None
+                    else product.base_price
+                )
+
+            else:
+                variant_group = product.variant_group
+
+                if (
+                    variant_group is None
+                    or not variant_group.is_active
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Product variant group is inactive",
+                    )
+
+                if (
+                    requested_item.product_variant_id
+                    is None
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Product requires a variant selection"
+                        ),
+                    )
+
+                product_variant = db.get(
+                    PosProductVariant,
+                    requested_item.product_variant_id,
+                )
+
+                if (
+                    product_variant is None
+                    or product_variant.product_id
+                    != product.id
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Selected variant does not belong "
+                            "to this product"
+                        ),
+                    )
+
+                variant = product_variant.variant
+
+                if not product_variant.is_active:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Selected product variant is inactive",
+                    )
+
+                if (
+                    variant is None
+                    or not variant.is_active
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Selected variant is inactive",
+                    )
+
+                if (
+                    variant.variant_group_id
+                    != product.variant_group_id
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Selected variant does not belong "
+                            "to product variant group"
+                        ),
+                    )
+
+                branch_variant = next(
+                    (
+                        row
+                        for row
+                        in product_variant.branch_overrides
+                        if row.branch_id == branch.id
+                    ),
+                    None,
+                )
+
+                if (
+                    branch_variant is not None
+                    and not branch_variant.is_available
+                ):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Selected variant is not available "
+                            "in this branch"
+                        ),
+                    )
+
+                base_price = money(
+                    branch_variant.price_override
+                    if (
+                        branch_variant is not None
+                        and branch_variant.price_override
+                        is not None
+                    )
+                    else product_variant.price
+                )
+
+                variant_name = variant.name
+
+            if snapshot_item is not None:
+                variant_name = (
+                    snapshot_item.variant_name
+                )
 
             requested_option_ids = list(
                 dict.fromkeys(
@@ -952,6 +1201,8 @@ class PosOrderService:
             calculated_items.append(
                 {
                     "product": product,
+                    "product_variant": product_variant,
+                    "variant_name": variant_name,
                     "quantity": requested_item.quantity,
                     "base_price": base_price,
                     "modifier_total": money(
@@ -1090,6 +1341,9 @@ class PosOrderService:
                 else None
             ),
             terminal_id=payload.terminal_id,
+            order_type=payload.order_type,
+            order_name=payload.order_name,
+            table_number=payload.table_number,
             status="NEW",
             payment_status="PAID",
             subtotal=subtotal,
@@ -1119,6 +1373,13 @@ class PosOrderService:
             item = PosOrderItem(
                 order_id=order.id,
                 product_id=calculated["product"].id,
+                product_variant_id=(
+                    calculated["product_variant"].id
+                    if calculated["product_variant"]
+                    is not None
+                    else None
+                ),
+                variant_name=calculated["variant_name"],
                 product_name=calculated["product"].name,
                 preparation_station=(
                     calculated["product"].preparation_station
@@ -1207,6 +1468,29 @@ class PosOrderService:
         )
 
         db.add(payment)
+
+        if payment_method == "CASH":
+            cash_shift = PosCashService.current_shift(
+                db,
+                branch_code=branch.code,
+                terminal_id=payload.terminal_id,
+            )
+
+            if (
+                cash_shift is not None
+                and cash_shift.status == "OPEN"
+            ):
+                PosCashService.append_ledger_entry(
+                    db,
+                    shift_id=cash_shift.id,
+                    entry_type="CASH_SALE",
+                    amount=total,
+                    idempotency_key=(
+                        f"CASH_SALE:{payment.payment_uuid}"
+                    ),
+                    reference_type="pos_order",
+                    reference_id=order_uuid,
+                )
 
         if payload.receipt_snapshot is not None:
             PosReceiptService.create_for_order(

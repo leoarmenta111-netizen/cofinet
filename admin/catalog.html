@@ -14,6 +14,74 @@
         rel="stylesheet"
         href="admin.css?v=20260826-product-description-v2"
     >
+
+<style id="modifier-option-image-styles">
+
+.option-image-section {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.option-image-editor {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.option-image-preview-wrap {
+    width: 92px;
+    height: 92px;
+    flex: 0 0 92px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid #d7ddd8;
+    border-radius: 18px;
+    background: #f5f1e7;
+}
+
+.option-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.option-image-placeholder {
+    padding: 8px;
+    color: #68726c;
+    font-size: .78rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.option-image-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.modifier-option-thumbnail {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 13px;
+    background: #f5f1e7;
+    color: #24483c;
+    font-weight: 800;
+}
+
+.modifier-option-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+</style>
+
 </head>
 
 <body
@@ -374,6 +442,34 @@
                 hidden
             >
 
+                <section class="panel variant-groups-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Variantes de precio</h2>
+                            <small class="muted">
+                                Tamaños u opciones que pueden tener
+                                un precio diferente por producto.
+                            </small>
+                        </div>
+
+                        <button
+                            id="new-variant-group"
+                            class="button button-primary"
+                            type="button"
+                        >
+                            Nuevo grupo
+                        </button>
+                    </div>
+
+                    <div
+                        id="variant-groups"
+                        class="modifier-groups"
+                    ></div>
+
+                </section>
+
+
                 <section class="panel">
 
                     <div class="panel-header">
@@ -411,6 +507,211 @@
 
 </div>
 
+
+
+<!-- ==================================================
+     PRICE VARIANT GROUP DIALOG
+     ================================================== -->
+
+<dialog
+    id="variant-group-dialog"
+    class="dialog"
+>
+<form id="variant-group-form">
+
+    <h2 id="variant-group-dialog-title">
+        Nuevo grupo de variantes
+    </h2>
+
+    <input
+        id="variant-group-id"
+        type="hidden"
+    >
+
+    <div class="dialog-form">
+
+        <div class="field field-wide">
+            <label for="variant-group-name">
+                Nombre
+            </label>
+
+            <input
+                id="variant-group-name"
+                required
+                maxlength="120"
+                placeholder="Ej. Tamaños de bebida"
+            >
+        </div>
+
+        <div class="field">
+            <label for="variant-group-order">
+                Orden
+            </label>
+
+            <input
+                id="variant-group-order"
+                type="number"
+                value="0"
+            >
+        </div>
+
+        <label class="checkbox-row">
+            <input
+                id="variant-group-active"
+                type="checkbox"
+                checked
+            >
+            Grupo activo
+        </label>
+
+    </div>
+
+    <section
+        id="variant-group-options-section"
+        class="catalog-editor-section"
+        hidden
+    >
+        <div class="panel-header">
+
+            <div>
+                <h3>Opciones</h3>
+                <small class="muted">
+                    Ej. Chico, Mediano y Grande.
+                </small>
+            </div>
+
+            <button
+                id="new-variant-option"
+                class="button button-secondary button-small"
+                type="button"
+            >
+                Nueva opción
+            </button>
+
+        </div>
+
+        <div
+            id="variant-group-options"
+            class="modifier-option-list"
+        ></div>
+    </section>
+
+    <p
+        id="variant-group-error"
+        class="form-error"
+    ></p>
+
+    <div class="dialog-actions">
+
+        <button
+            id="cancel-variant-group"
+            class="button button-secondary"
+            type="button"
+        >
+            Cancelar
+        </button>
+
+        <button
+            class="button button-primary"
+            type="submit"
+        >
+            Guardar
+        </button>
+
+    </div>
+
+</form>
+</dialog>
+
+
+<!-- ==================================================
+     PRICE VARIANT OPTION DIALOG
+     ================================================== -->
+
+<dialog
+    id="variant-option-dialog"
+    class="dialog"
+>
+<form id="variant-option-form">
+
+    <h2 id="variant-option-dialog-title">
+        Nueva opción
+    </h2>
+
+    <input
+        id="variant-option-id"
+        type="hidden"
+    >
+
+    <input
+        id="variant-option-group-id"
+        type="hidden"
+    >
+
+    <div class="dialog-form">
+
+        <div class="field field-wide">
+            <label for="variant-option-name">
+                Nombre
+            </label>
+
+            <input
+                id="variant-option-name"
+                required
+                maxlength="160"
+                placeholder="Ej. Grande"
+            >
+        </div>
+
+        <div class="field">
+            <label for="variant-option-order">
+                Orden
+            </label>
+
+            <input
+                id="variant-option-order"
+                type="number"
+                value="0"
+            >
+        </div>
+
+        <label class="checkbox-row">
+            <input
+                id="variant-option-active"
+                type="checkbox"
+                checked
+            >
+            Opción activa
+        </label>
+
+    </div>
+
+    <p
+        id="variant-option-error"
+        class="form-error"
+    ></p>
+
+    <div class="dialog-actions">
+
+        <button
+            id="cancel-variant-option"
+            class="button button-secondary"
+            type="button"
+        >
+            Cancelar
+        </button>
+
+        <button
+            class="button button-primary"
+            type="submit"
+        >
+            Guardar
+        </button>
+
+    </div>
+
+</form>
+</dialog>
 
 
 <!-- ==================================================
@@ -991,7 +1292,40 @@
 
                 </div>
 
-            </section>
+
+
+                <div class="product-price-variants-inline">
+                    <section
+                    id="product-variants-section"
+                    class="catalog-editor-section"
+                >
+                    <h3>Variantes de precio</h3>
+
+                    <p class="muted">
+                        Asigna un grupo como Tamaños de bebida
+                        y define el precio de cada opción.
+                    </p>
+
+                    <div class="field">
+                        <label for="product-variant-group">
+                            Grupo de variantes
+                        </label>
+
+                        <select id="product-variant-group">
+                            <option value="">
+                                Sin variantes de precio
+                            </option>
+                        </select>
+                    </div>
+
+                    <div
+                        id="product-variants"
+                        class="product-variant-settings"
+                    ></div>
+                </section>
+                </div>
+
+</section>
 
 
             <!-- ==========================
@@ -1110,7 +1444,7 @@
                     <div>
                         <h3>Configuración avanzada</h3>
                         <p>
-                            Precios por sucursal y modificadores.
+                            Precios por sucursal, variantes y modificadores.
                         </p>
                     </div>
                 </div>
@@ -1132,6 +1466,10 @@
                         class="branch-settings"
                     ></div>
                 </section>
+
+
+
+
 
 
                 <section
@@ -1497,6 +1835,66 @@
             >
             Opción activa
         </label>
+
+          <div
+              id="option-image-section"
+              class="option-image-section"
+          >
+              <label>
+                  Imagen del complemento
+              </label>
+
+              <input
+                  id="option-image-file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  hidden
+              >
+
+              <div class="option-image-editor">
+                  <div class="option-image-preview-wrap">
+                      <img
+                          id="option-image-preview"
+                          class="option-image-preview"
+                          alt="Imagen del complemento"
+                          hidden
+                      >
+
+                      <div
+                          id="option-image-placeholder"
+                          class="option-image-placeholder"
+                      >
+                          Sin imagen
+                      </div>
+                  </div>
+
+                  <div class="option-image-controls">
+                      <button
+                          id="select-option-image"
+                          class="button button-secondary button-small"
+                          type="button"
+                      >
+                          Subir imagen
+                      </button>
+
+                      <button
+                          id="remove-option-image"
+                          class="button button-ghost button-small"
+                          type="button"
+                          hidden
+                      >
+                          Eliminar imagen
+                      </button>
+                  </div>
+              </div>
+
+              <small
+                  id="option-image-help"
+                  class="field-help"
+              >
+                  JPG, PNG o WebP. Máximo 5 MB.
+              </small>
+          </div>
 
     </div>
 
@@ -2015,6 +2413,659 @@
     }
 
 
+
+    /* ==============================================
+       PRICE VARIANT GROUPS
+       ============================================== */
+
+
+    function renderVariantGroups() {
+        const container =
+            document.getElementById(
+                "variant-groups"
+            );
+
+        container.replaceChildren();
+
+        const groups =
+            catalog.variant_groups || [];
+
+        if (!groups.length) {
+            showEmpty(
+                container,
+                "Sin variantes de precio",
+                "Crea un grupo como Tamaños de bebida."
+            );
+
+            return;
+        }
+
+        for (const group of groups) {
+            const card =
+                document.createElement(
+                    "article"
+                );
+
+            card.className =
+                "modifier-group-card";
+
+            const header =
+                document.createElement(
+                    "div"
+                );
+
+            header.className =
+                "modifier-group-header";
+
+            const titleWrap =
+                document.createElement(
+                    "div"
+                );
+
+            const title =
+                document.createElement(
+                    "h3"
+                );
+
+            title.textContent =
+                group.name;
+
+            const meta =
+                document.createElement(
+                    "small"
+                );
+
+            meta.className =
+                "muted";
+
+            meta.textContent =
+                `${(group.variants || []).length} ${
+                    (group.variants || []).length === 1
+                        ? "opción"
+                        : "opciones"
+                }`;
+
+            titleWrap.append(
+                title,
+                meta
+            );
+
+            const controls =
+                document.createElement(
+                    "div"
+                );
+
+            controls.className =
+                "modifier-group-controls";
+
+            controls.append(
+                activeBadge(
+                    group.is_active
+                )
+            );
+
+            const edit =
+                document.createElement(
+                    "button"
+                );
+
+            edit.type = "button";
+
+            edit.className =
+                "button button-ghost button-small";
+
+            edit.textContent =
+                "Editar";
+
+            edit.addEventListener(
+                "click",
+                () =>
+                    openVariantGroup(
+                        group
+                    )
+            );
+
+            controls.append(edit);
+
+            header.append(
+                titleWrap,
+                controls
+            );
+
+            card.append(header);
+
+            const options =
+                document.createElement(
+                    "div"
+                );
+
+            options.className =
+                "modifier-option-list";
+
+            if (
+                !(group.variants || []).length
+            ) {
+                const empty =
+                    document.createElement(
+                        "p"
+                    );
+
+                empty.className =
+                    "muted";
+
+                empty.textContent =
+                    "Sin opciones.";
+
+                options.append(empty);
+
+            } else {
+
+                for (
+                    const variant
+                    of group.variants
+                ) {
+                    const row =
+                        document.createElement(
+                            "div"
+                        );
+
+                    row.className =
+                        "modifier-option-row";
+
+                    const name =
+                        document.createElement(
+                            "span"
+                        );
+
+                    name.textContent =
+                        variant.name;
+
+                    const status =
+                        activeBadge(
+                            variant.is_active
+                        );
+
+                    row.append(
+                        name,
+                        status
+                    );
+
+                    options.append(row);
+                }
+            }
+
+            card.append(options);
+            container.append(card);
+        }
+    }
+
+
+    function openVariantGroup(group = null) {
+        document.getElementById(
+            "variant-group-id"
+        ).value =
+            group?.id || "";
+
+        document.getElementById(
+            "variant-group-dialog-title"
+        ).textContent =
+            group
+                ? "Editar grupo de variantes"
+                : "Nuevo grupo de variantes";
+
+        document.getElementById(
+            "variant-group-name"
+        ).value =
+            group?.name || "";
+
+        document.getElementById(
+            "variant-group-order"
+        ).value =
+            group?.sort_order ?? 0;
+
+        document.getElementById(
+            "variant-group-active"
+        ).checked =
+            group?.is_active ?? true;
+
+        document.getElementById(
+            "variant-group-error"
+        ).textContent =
+            "";
+
+        const optionsSection =
+            document.getElementById(
+                "variant-group-options-section"
+            );
+
+        optionsSection.hidden =
+            !group;
+
+        if (group) {
+            renderVariantGroupOptions(
+                group
+            );
+        } else {
+            document.getElementById(
+                "variant-group-options"
+            ).replaceChildren();
+        }
+
+        document.getElementById(
+            "variant-group-dialog"
+        ).showModal();
+    }
+
+
+    function renderVariantGroupOptions(
+        group
+    ) {
+        const container =
+            document.getElementById(
+                "variant-group-options"
+            );
+
+        container.replaceChildren();
+
+        const variants =
+            group.variants || [];
+
+        if (!variants.length) {
+            const empty =
+                document.createElement(
+                    "p"
+                );
+
+            empty.className =
+                "muted";
+
+            empty.textContent =
+                "Todavía no hay opciones.";
+
+            container.append(empty);
+            return;
+        }
+
+        for (
+            const variant
+            of variants
+        ) {
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "modifier-editor-option";
+
+            const visual =
+                document.createElement(
+                    "div"
+                );
+
+            visual.className =
+                "modifier-option-thumbnail";
+
+            if (option.image_url) {
+                const image =
+                    document.createElement(
+                        "img"
+                    );
+
+                image.src =
+                    option.image_url;
+
+                image.alt =
+                    option.name ||
+                    "Complemento";
+
+                visual.append(
+                    image
+                );
+            } else {
+                visual.textContent =
+                    String(
+                        option.name || "?"
+                    )
+                        .trim()
+                        .charAt(0)
+                        .toUpperCase();
+            }
+
+            const copy =
+                document.createElement(
+                    "div"
+                );
+
+            const name =
+                document.createElement(
+                    "strong"
+                );
+
+            name.textContent =
+                variant.name;
+
+            const state =
+                document.createElement(
+                    "small"
+                );
+
+            state.textContent =
+                variant.is_active
+                    ? "Activa"
+                    : "Inactiva";
+
+            copy.append(
+                name,
+                state
+            );
+
+            const edit =
+                document.createElement(
+                    "button"
+                );
+
+            edit.type =
+                "button";
+
+            edit.className =
+                "button button-ghost button-small";
+
+            edit.textContent =
+                "Editar";
+
+            edit.addEventListener(
+                "click",
+                () =>
+                    openVariantOption(
+                        group,
+                        variant
+                    )
+            );
+
+            row.append(
+                visual,
+                copy,
+                edit
+            );
+
+            container.append(row);
+        }
+    }
+
+
+    function openVariantOption(
+        group,
+        variant = null
+    ) {
+        document.getElementById(
+            "variant-option-id"
+        ).value =
+            variant?.id || "";
+
+        document.getElementById(
+            "variant-option-group-id"
+        ).value =
+            group.id;
+
+        document.getElementById(
+            "variant-option-dialog-title"
+        ).textContent =
+            variant
+                ? "Editar opción"
+                : "Nueva opción";
+
+        document.getElementById(
+            "variant-option-name"
+        ).value =
+            variant?.name || "";
+
+        document.getElementById(
+            "variant-option-order"
+        ).value =
+            variant?.sort_order ?? 0;
+
+        document.getElementById(
+            "variant-option-active"
+        ).checked =
+            variant?.is_active ?? true;
+
+        document.getElementById(
+            "variant-option-error"
+        ).textContent =
+            "";
+
+        document.getElementById(
+            "variant-option-dialog"
+        ).showModal();
+    }
+
+
+    document.getElementById(
+        "new-variant-group"
+    ).addEventListener(
+        "click",
+        () =>
+            openVariantGroup()
+    );
+
+
+    document.getElementById(
+        "cancel-variant-group"
+    ).addEventListener(
+        "click",
+        () =>
+            document.getElementById(
+                "variant-group-dialog"
+            ).close()
+    );
+
+
+    document.getElementById(
+        "variant-group-form"
+    ).addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            const id =
+                document.getElementById(
+                    "variant-group-id"
+                ).value;
+
+            const payload = {
+                name:
+                    document.getElementById(
+                        "variant-group-name"
+                    ).value.trim(),
+
+                sort_order:
+                    Number(
+                        document.getElementById(
+                            "variant-group-order"
+                        ).value || 0
+                    ),
+
+                is_active:
+                    document.getElementById(
+                        "variant-group-active"
+                    ).checked
+            };
+
+            try {
+                catalog =
+                    await adminRequest(
+                        id
+                            ? `/admin/pos/catalog/variant-groups/${id}`
+                            : "/admin/pos/catalog/variant-groups",
+                        {
+                            method: id ? "PATCH" : "POST",
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                )
+                        }
+                    );
+
+                document.getElementById(
+                    "variant-group-dialog"
+                ).close();
+
+                renderAll();
+
+                showToast(
+                    id
+                        ? "Grupo de variantes actualizado."
+                        : "Grupo de variantes creado."
+                );
+
+            } catch (error) {
+                document.getElementById(
+                    "variant-group-error"
+                ).textContent =
+                    error.message;
+            }
+        }
+    );
+
+
+    document.getElementById(
+        "new-variant-option"
+    ).addEventListener(
+        "click",
+        () => {
+            const groupId =
+                document.getElementById(
+                    "variant-group-id"
+                ).value;
+
+            const group =
+                (catalog.variant_groups || [])
+                    .find(
+                        item =>
+                            String(item.id) ===
+                            String(groupId)
+                    );
+
+            if (!group) {
+                return;
+            }
+
+            openVariantOption(
+                group
+            );
+        }
+    );
+
+
+    document.getElementById(
+        "cancel-variant-option"
+    ).addEventListener(
+        "click",
+        () =>
+            document.getElementById(
+                "variant-option-dialog"
+            ).close()
+    );
+
+
+    document.getElementById(
+        "variant-option-form"
+    ).addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            const groupId =
+                document.getElementById(
+                    "variant-option-group-id"
+                ).value;
+
+            const variantId =
+                document.getElementById(
+                    "variant-option-id"
+                ).value;
+
+            const payload = {
+                name:
+                    document.getElementById(
+                        "variant-option-name"
+                    ).value.trim(),
+
+                sort_order:
+                    Number(
+                        document.getElementById(
+                            "variant-option-order"
+                        ).value || 0
+                    ),
+
+                is_active:
+                    document.getElementById(
+                        "variant-option-active"
+                    ).checked
+            };
+
+            try {
+                catalog =
+                    await adminRequest(
+                        variantId
+                            ? `/admin/pos/catalog/variants/${variantId}`
+                            : `/admin/pos/catalog/variant-groups/${groupId}/variants`,
+                        {
+                            method:
+                                variantId
+                                    ? "PATCH"
+                                    : "POST",
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                )
+                        }
+                    );
+
+                document.getElementById(
+                    "variant-option-dialog"
+                ).close();
+
+                renderAll();
+
+                const refreshedGroup =
+                    (catalog.variant_groups || [])
+                        .find(
+                            item =>
+                                String(item.id) ===
+                                String(groupId)
+                        );
+
+                if (refreshedGroup) {
+                    document.getElementById(
+                        "variant-group-id"
+                    ).value =
+                        refreshedGroup.id;
+
+                    renderVariantGroupOptions(
+                        refreshedGroup
+                    );
+                }
+
+                showToast(
+                    variantId
+                        ? "Opción actualizada."
+                        : "Opción creada."
+                );
+
+            } catch (error) {
+                document.getElementById(
+                    "variant-option-error"
+                ).textContent =
+                    error.message;
+            }
+        }
+    );
+
+
     function renderModifiers() {
 
         const container =
@@ -2245,6 +3296,8 @@
         renderCategories();
 
         renderProducts();
+
+        renderVariantGroups();
 
         renderModifiers();
     }
@@ -3652,6 +4705,10 @@
             product
         );
 
+        renderProductVariants(
+            product
+        );
+
 
         document.getElementById(
             "product-branches-section"
@@ -3680,6 +4737,374 @@
             "product-dialog"
         ).showModal();
     }
+    function renderProductVariants(product) {
+        const section =
+            document.getElementById(
+                "product-variants-section"
+            );
+
+        const select =
+            document.getElementById(
+                "product-variant-group"
+            );
+
+        const container =
+            document.getElementById(
+                "product-variants"
+            );
+
+        section.hidden = !product;
+        select.replaceChildren();
+
+        const emptyOption =
+            document.createElement("option");
+
+        emptyOption.value = "";
+        emptyOption.textContent =
+            "Sin variantes de precio";
+
+        select.append(emptyOption);
+
+        for (
+            const group
+            of catalog.variant_groups || []
+        ) {
+            const isSelected =
+                Number(group.id) ===
+                Number(
+                    product?.variant_group_id
+                );
+
+            if (
+                !group.is_active &&
+                !isSelected
+            ) {
+                continue;
+            }
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                String(group.id);
+
+            option.textContent =
+                group.name;
+
+            select.append(option);
+        }
+
+        select.value =
+            product?.variant_group_id == null
+                ? ""
+                : String(
+                    product.variant_group_id
+                );
+
+        renderProductVariantRows(
+            product,
+            select.value
+        );
+    }
+
+
+    function renderProductVariantRows(
+        product,
+        groupId
+    ) {
+        const container =
+            document.getElementById(
+                "product-variants"
+            );
+
+        container.replaceChildren();
+
+        if (!groupId) {
+            const message =
+                document.createElement("p");
+
+            message.className =
+                "muted";
+
+            message.textContent =
+                "Selecciona un grupo para configurar precios.";
+
+            container.append(message);
+            return;
+        }
+
+        const group =
+            (catalog.variant_groups || [])
+                .find(
+                    item =>
+                        String(item.id) ===
+                        String(groupId)
+                );
+
+        if (!group) {
+            return;
+        }
+
+        const existingVariants =
+            new Map(
+                (product?.variants || [])
+                    .map(
+                        item => [
+                            Number(
+                                item.variant_id
+                            ),
+                            item
+                        ]
+                    )
+            );
+
+        for (
+            const variant
+            of group.variants || []
+        ) {
+            if (!variant.is_active) {
+                continue;
+            }
+
+            const existing =
+                existingVariants.get(
+                    Number(variant.id)
+                );
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "product-variant-setting-row";
+
+            row.dataset.variantId =
+                String(variant.id);
+
+            row.dataset.sortOrder =
+                String(
+                    variant.sort_order ?? 0
+                );
+
+            const name =
+                document.createElement(
+                    "strong"
+                );
+
+            name.className =
+                "product-variant-setting-name";
+
+            name.textContent =
+                variant.name;
+
+            const money =
+                document.createElement(
+                    "label"
+                );
+
+            money.className =
+                "product-variant-money";
+
+            const currency =
+                document.createElement(
+                    "span"
+                );
+
+            currency.textContent = "$";
+
+            const price =
+                document.createElement(
+                    "input"
+                );
+
+            price.type = "number";
+            price.min = "0";
+            price.step = "0.01";
+            price.required = true;
+
+            price.dataset.variantPrice =
+                "";
+
+            price.value =
+                existing
+                    ? Number(
+                        existing.price
+                    )
+                    : Number(
+                        product?.base_price ??
+                        0
+                    );
+
+            money.append(
+                currency,
+                price
+            );
+
+            const activeLabel =
+                document.createElement(
+                    "label"
+                );
+
+            activeLabel.className =
+                "product-variant-active";
+
+            const active =
+                document.createElement(
+                    "input"
+                );
+
+            active.type = "checkbox";
+
+            active.dataset.variantActive =
+                "";
+
+            active.checked =
+                existing
+                    ? existing.is_active
+                    : true;
+
+            const activeText =
+                document.createElement(
+                    "span"
+                );
+
+            activeText.textContent =
+                "Activo";
+
+            activeLabel.append(
+                active,
+                activeText
+            );
+
+            row.append(
+                name,
+                money,
+                activeLabel
+            );
+
+            container.append(row);
+        }
+    }
+
+
+    async function saveProductVariants(productId) {
+        const select =
+            document.getElementById(
+                "product-variant-group"
+            );
+
+        const groupId =
+            select.value
+                ? Number(select.value)
+                : null;
+
+        const product =
+            catalog.products.find(
+                item =>
+                    String(item.id) ===
+                    String(productId)
+            );
+
+        const currentGroupId =
+            product?.variant_group_id == null
+                ? null
+                : Number(
+                    product.variant_group_id
+                );
+
+        if (groupId === null) {
+            if (
+                currentGroupId !== null
+            ) {
+                catalog =
+                    await adminRequest(
+                        `/admin/pos/catalog/products/${productId}/variant-group`,
+                        {
+                            method: "DELETE"
+                        }
+                    );
+            }
+
+            return;
+        }
+
+        if (
+            currentGroupId !==
+            groupId
+        ) {
+            catalog =
+                await adminRequest(
+                    `/admin/pos/catalog/products/${productId}/variant-group/${groupId}`,
+                    {
+                        method: "PUT"
+                    }
+                );
+        }
+
+        const rows =
+            document.querySelectorAll(
+                "#product-variants [data-variant-id]"
+            );
+
+        for (const row of rows) {
+            const variantId =
+                Number(
+                    row.dataset.variantId
+                );
+
+            const price =
+                row.querySelector(
+                    "[data-variant-price]"
+                );
+
+            const active =
+                row.querySelector(
+                    "[data-variant-active]"
+                );
+
+            if (
+                price.value === "" ||
+                !Number.isFinite(
+                    Number(price.value)
+                ) ||
+                Number(price.value) < 0
+            ) {
+                throw new Error(
+                    "Captura un precio válido para cada variante."
+                );
+            }
+
+            catalog =
+                await adminRequest(
+                    `/admin/pos/catalog/products/${productId}/variants/${variantId}`,
+                    {
+                        method: "PUT",
+
+                        body:
+                            JSON.stringify({
+                                price:
+                                    Number(
+                                        price.value
+                                    ),
+
+                                is_active:
+                                    active.checked,
+
+                                sort_order:
+                                    Number(
+                                        row.dataset
+                                            .sortOrder ||
+                                        0
+                                    )
+                            })
+                    }
+                );
+        }
+    }
+
+
+
 
 
     async function saveBranchSettings(
@@ -3774,6 +5199,20 @@
                 );
         }
     }
+    document.getElementById(
+        "product-variant-group"
+    ).addEventListener(
+        "change",
+        event => {
+            renderProductVariantRows(
+                currentProduct(),
+                event.currentTarget.value
+            );
+        }
+    );
+
+
+
 
 
     document.getElementById(
@@ -3974,6 +5413,10 @@
 
 
                 await saveProductModifiers(
+                    id
+                );
+
+                await saveProductVariants(
                     id
                 );
 
@@ -4645,6 +6088,221 @@
        OPTIONS
        ============================================== */
 
+    function renderOptionImage(
+        option = null
+    ) {
+        const id =
+            String(option?.id || "");
+
+        const imageUrl =
+            String(
+                option?.image_url || ""
+            );
+
+        const preview =
+            document.getElementById(
+                "option-image-preview"
+            );
+
+        const placeholder =
+            document.getElementById(
+                "option-image-placeholder"
+            );
+
+        const selectButton =
+            document.getElementById(
+                "select-option-image"
+            );
+
+        const removeButton =
+            document.getElementById(
+                "remove-option-image"
+            );
+
+        const help =
+            document.getElementById(
+                "option-image-help"
+            );
+
+        const input =
+            document.getElementById(
+                "option-image-file"
+            );
+
+        input.value = "";
+
+        if (imageUrl) {
+            preview.src = imageUrl;
+            preview.hidden = false;
+            placeholder.hidden = true;
+
+            selectButton.textContent =
+                "Cambiar imagen";
+
+            removeButton.hidden =
+                false;
+        } else {
+            preview.removeAttribute(
+                "src"
+            );
+
+            preview.hidden = true;
+            placeholder.hidden = false;
+
+            selectButton.textContent =
+                "Subir imagen";
+
+            removeButton.hidden =
+                true;
+        }
+
+        selectButton.disabled =
+            !id;
+
+        help.textContent =
+            id
+                ? "JPG, PNG o WebP. Máximo 5 MB."
+                : "Guarda primero la opción para poder subir una imagen.";
+    }
+
+
+    function findModifierOption(
+        optionId
+    ) {
+        const target =
+            Number(optionId);
+
+        for (
+            const group
+            of catalog.modifier_groups
+        ) {
+            const option =
+                group.options.find(
+                    item =>
+                        Number(item.id) ===
+                        target
+                );
+
+            if (option) {
+                return {
+                    group,
+                    option
+                };
+            }
+        }
+
+        return {
+            group: null,
+            option: null
+        };
+    }
+
+
+    async function uploadModifierOptionImage(
+        file
+    ) {
+        const optionId =
+            document.getElementById(
+                "option-id"
+            ).value;
+
+        if (!optionId) {
+            throw new Error(
+                "Guarda primero la opción."
+            );
+        }
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "image",
+            file
+        );
+
+        catalog =
+            await adminRequest(
+                `/admin/pos/catalog/modifier-options/${optionId}/image`,
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+        const result =
+            findModifierOption(
+                optionId
+            );
+
+        if (result.group) {
+            renderModifierOptions(
+                result.group
+            );
+        }
+
+        renderOptionImage(
+            result.option
+        );
+
+        renderAll();
+
+        showToast(
+            "Imagen del complemento actualizada."
+        );
+    }
+
+
+    async function deleteModifierOptionImage() {
+        const optionId =
+            document.getElementById(
+                "option-id"
+            ).value;
+
+        if (!optionId) {
+            return;
+        }
+
+        if (
+            !window.confirm(
+                "¿Eliminar la imagen de este complemento?"
+            )
+        ) {
+            return;
+        }
+
+        catalog =
+            await adminRequest(
+                `/admin/pos/catalog/modifier-options/${optionId}/image`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+        const result =
+            findModifierOption(
+                optionId
+            );
+
+        if (result.group) {
+            renderModifierOptions(
+                result.group
+            );
+        }
+
+        renderOptionImage(
+            result.option
+        );
+
+        renderAll();
+
+        showToast(
+            "Imagen del complemento eliminada."
+        );
+    }
+
+
+
+
 
     function openOption(
         group,
@@ -4701,13 +6359,96 @@
             "";
 
 
-        document.getElementById(
+
+        renderOptionImage(
+            option
+        );
+
+document.getElementById(
             "option-dialog"
         ).showModal();
     }
 
 
+
     document.getElementById(
+        "select-option-image"
+    ).addEventListener(
+        "click",
+        () => {
+            document.getElementById(
+                "option-image-file"
+            ).click();
+        }
+    );
+
+
+    document.getElementById(
+        "option-image-file"
+    ).addEventListener(
+        "change",
+        async event => {
+            const file =
+                event.target.files?.[0];
+
+            if (!file) {
+                return;
+            }
+
+            const error =
+                document.getElementById(
+                    "option-error"
+                );
+
+            error.textContent = "";
+
+            try {
+                await uploadModifierOptionImage(
+                    file
+                );
+            } catch (uploadError) {
+                console.error(
+                    uploadError
+                );
+
+                error.textContent =
+                    uploadError?.message ||
+                    "No fue posible subir la imagen.";
+            } finally {
+                event.target.value = "";
+            }
+        }
+    );
+
+
+    document.getElementById(
+        "remove-option-image"
+    ).addEventListener(
+        "click",
+        async () => {
+            const error =
+                document.getElementById(
+                    "option-error"
+                );
+
+            error.textContent = "";
+
+            try {
+                await deleteModifierOptionImage();
+            } catch (deleteError) {
+                console.error(
+                    deleteError
+                );
+
+                error.textContent =
+                    deleteError?.message ||
+                    "No fue posible eliminar la imagen.";
+            }
+        }
+    );
+
+
+document.getElementById(
         "option-form"
     ).addEventListener(
         "submit",

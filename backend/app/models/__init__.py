@@ -13,6 +13,10 @@ from app.models.pos_orders import (
 )
 from app.models.pos_catalog import (
     PosBranchProduct,
+    PosBranchProductVariant,
+    PosProductVariant,
+    PosVariant,
+    PosVariantGroup,
     PosCategory,
     PosModifierGroup,
     PosModifierOption,
@@ -31,9 +35,63 @@ __all__ = [
     "PinBatchFailure",
     "PinBatchStatus",
     "PosBranchProduct",
+    "PosBranchProductVariant",
+    "PosProductVariant",
+    "PosVariant",
+    "PosVariantGroup",
     "PosCategory",
     "PosModifierGroup",
     "PosModifierOption",
     "PosProduct",
     "PosProductModifierGroup",
+]
+
+
+from app.models.self_orders import (
+    SelfOrder,
+    SelfOrderDevice,
+    SelfOrderItem,
+    SelfOrderItemModifier,
+    SelfOrderPaymentAttempt,
+)
+
+__all__ += [
+    'SelfOrder',
+    'SelfOrderDevice',
+    'SelfOrderItem',
+    'SelfOrderItemModifier',
+    'SelfOrderPaymentAttempt',
+]
+
+
+from app.models.pos_staff import (
+    PosStaff,
+    PosStaffRole,
+)
+
+__all__ += [
+    "PosStaff",
+    "PosStaffRole",
+]
+
+
+from app.models.pos_audit import PosAuditEvent
+
+__all__ += [
+    "PosAuditEvent",
+]
+
+
+from app.models.pos_cash import (
+    PosCashDenominationCount,
+    PosCashLedgerEntry,
+    PosCashMovement,
+    PosCashShift,
+)
+
+__all__ += [
+    "PosCashDenominationCount",
+    "PosCashLedgerEntry",
+    "PosCashMovement",
+    "PosCashShift",
 ]

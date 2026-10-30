@@ -48,6 +48,56 @@
         }[method] || method || "—";
     }
 
+    function orderSource(order) {
+        if (order?.is_local === true) {
+            return "LOCAL";
+        }
+
+        const explicit =
+            String(order?.source || "")
+                .trim()
+                .toUpperCase();
+
+        if ([
+            "POS",
+            "KIOSK",
+            "BAR_TABLET",
+        ].includes(explicit)) {
+            return explicit;
+        }
+
+        const terminal =
+            String(order?.terminal_id || "")
+                .trim()
+                .toUpperCase();
+
+        if (terminal.startsWith("KIOSK-")) {
+            return "KIOSK";
+        }
+
+        if (terminal.startsWith("BAR-TABLET-")) {
+            return "BAR_TABLET";
+        }
+
+        return "POS";
+    }
+
+    function sourceLabel(source) {
+        return {
+            LOCAL: "Local",
+            POS: "POS",
+            KIOSK: "Kiosk",
+            BAR_TABLET: "Tablet barra",
+        }[source] || source || "POS";
+    }
+
+    function selfServiceSource(source) {
+        return (
+            source === "KIOSK" ||
+            source === "BAR_TABLET"
+        );
+    }
+
     function formatTime(value) {
         if (!value) return "—";
 
@@ -486,6 +536,92 @@
     }
 
 
+    const orderTypeLabels = {
+        DINE_IN: "Para aquí",
+        TAKEOUT: "Para llevar",
+        DELIVERY: "A domicilio",
+    };
+
+    function normalizedOrderType(order) {
+        const value = String(
+            order?.order_type || ""
+        ).toUpperCase();
+
+        return orderTypeLabels[value]
+            ? value
+            : null;
+    }
+
+    function orderContextText(
+        order,
+        source
+    ) {
+        const type =
+            normalizedOrderType(order);
+
+        const parts = [];
+
+        if (type) {
+            parts.push(
+                orderTypeLabels[type]
+            );
+        }
+
+        if (
+            type === "DINE_IN" &&
+            order?.table_number
+        ) {
+            parts.push(
+                `Mesa ${order.table_number}`
+            );
+        }
+
+        if (parts.length) {
+            return parts.join(" · ");
+        }
+
+        return selfServiceSource(source)
+            ? sourceLabel(source)
+            : "Venta en mostrador";
+    }
+
+    function orderDisplayName(
+        order,
+        source
+    ) {
+        const orderName =
+            String(
+                order?.order_name || ""
+            ).trim();
+
+        if (orderName) {
+            return orderName;
+        }
+
+        const customerName =
+            order?.customer_name ||
+            order?.customer?.name ||
+            order?.customer?.full_name;
+
+        if (customerName) {
+            return customerName;
+        }
+
+        const type =
+            normalizedOrderType(order);
+
+        if (
+            type === "DINE_IN" &&
+            order?.table_number
+        ) {
+            return `Mesa ${order.table_number}`;
+        }
+
+        return selfServiceSource(source)
+            ? "Autoservicio"
+            : "Mostrador";
+    }
+
     function renderOrders() {
         const list =
             $("#orders-list");
@@ -523,15 +659,32 @@
                     const itemText =
                         (order.items || [])
                             .map(item =>
-                                item.product_name || ""
+                                [
+                                    item.product_name,
+                                    item.variant_name
+                                ]
+                                    .filter(Boolean)
+                                    .join(" ")
                             )
                             .join(" ");
+
+                    const source =
+                        orderSource(order);
 
                     const haystack = [
                         order.folio,
                         customerName,
+                        order.order_name,
+                        order.table_number,
+                        normalizedOrderType(order)
+                            ? orderTypeLabels[
+                                normalizedOrderType(order)
+                            ]
+                            : null,
                         order.customer_phone,
                         itemText,
+                        source,
+                        sourceLabel(source),
                     ]
                         .filter(Boolean)
                         .join(" ")
@@ -589,6 +742,9 @@
             const isLocal =
                 order.is_local === true;
 
+            const source =
+                orderSource(order);
+
             const visualStatus =
                 isLocal
                     ? "new"
@@ -633,9 +789,12 @@
                 document.createElement("small");
 
             origin.textContent =
-                isLocal
-                    ? "Local"
-                    : "POS";
+                sourceLabel(source);
+
+            origin.className =
+                `order-source-badge source-${
+                    source.toLowerCase()
+                }`;
 
             folioCell.append(
                 folio,
@@ -653,14 +812,19 @@
                 document.createElement("strong");
 
             customer.textContent =
-                customerName;
+                orderDisplayName(
+                    order,
+                    source
+                );
 
             const customerMeta =
                 document.createElement("small");
 
             customerMeta.textContent =
-                order.customer_phone ||
-                "Venta en mostrador";
+                orderContextText(
+                    order,
+                    source
+                );
 
             customerCell.append(
                 customer,
@@ -681,7 +845,11 @@
                 orderItems
                     .slice(0, 2)
                     .map(item =>
-                        `${item.quantity} × ${item.product_name}`
+                        `${item.quantity} × ${
+                            item.variant_name
+                                ? `${item.product_name} · ${item.variant_name}`
+                                : item.product_name
+                        }`
                     );
 
             const itemPrimary =
@@ -1082,6 +1250,9 @@
         meta.className =
             "order-detail-meta";
 
+        const source =
+            orderSource(order);
+
         const date =
             document.createElement(
                 "span"
@@ -1102,9 +1273,44 @@
                 order.payment?.method
             );
 
+        const origin =
+            document.createElement(
+                "span"
+            );
+
+        origin.className =
+            `order-detail-source source-${
+                source.toLowerCase()
+            }`;
+
+        origin.textContent =
+            sourceLabel(source);
+
+        const orderContext =
+            document.createElement(
+                "span"
+            );
+
+        orderContext.textContent =
+            [
+                orderContextText(
+                    order,
+                    source
+                ),
+                order.order_name
+                    ? `Nombre: ${
+                        order.order_name
+                    }`
+                    : null,
+            ]
+                .filter(Boolean)
+                .join(" · ");
+
         meta.append(
             date,
-            payment
+            payment,
+            origin,
+            orderContext
         );
 
         body.append(meta);
@@ -1138,7 +1344,11 @@
                     );
 
                 name.textContent =
-                    `${item.quantity} × ${item.product_name}`;
+                    `${item.quantity} × ${
+                        item.variant_name
+                            ? `${item.product_name} · ${item.variant_name}`
+                            : item.product_name
+                    }`;
 
                 const price =
                     document.createElement(
@@ -1220,12 +1430,25 @@
         configureStatusAction(order);
     }
 
+    function hasPreparationStations(order) {
+        return Array.isArray(order?.stations) &&
+            order.stations.some(
+                station =>
+                    station?.station === "KITCHEN" ||
+                    station?.station === "BAR"
+            );
+    }
+
+
     function configureStatusAction(order) {
         const action =
             $("#order-status-action");
 
 
-        if (order?.is_local) {
+        if (
+            order?.is_local ||
+            hasPreparationStations(order)
+        ) {
             action.hidden = true;
 
             delete action.dataset

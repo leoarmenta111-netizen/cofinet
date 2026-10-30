@@ -32,10 +32,9 @@ test(
             );
         });
 
-        assert.ok(
-            !html.match(
-                /<button[^>]*disabled[^>]*>[\s\S]*?Clientes/
-            ),
+        assert.doesNotMatch(
+            html,
+            /<button(?=[^>]*id="nav-customers")(?=[^>]*\bdisabled\b)[^>]*>/,
             "Clientes sigue deshabilitado"
         );
     }

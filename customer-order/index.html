@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+    <meta name="theme-color" content="#f4f1e8">
+    <meta
+        name="application-name"
+        content="CofiCenter Kiosk"
+    >
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+    <link
+        rel="manifest"
+        href="./manifest-ixtapa.webmanifest"
+    >
+    <link
+        rel="icon"
+        href="/pos/assets/pwa/icon-192.png"
+    >
+    <title>CofiCenter · Ordena aquí</title>
+    <link
+        rel="stylesheet"
+        href="./css/customer-order.css?v=7"
+    >
+</head>
+
+<body>
+<div
+    id="customer-order-app"
+    class="customer-order-app"
+>
+    <header class="customer-header">
+        <img
+            src="/pos/assets/coficenter-logo.png"
+            alt="CofiCenter"
+            class="customer-logo"
+        >
+
+        <div class="pickup-pill">
+            <span class="pickup-dot"></span>
+            Recoge en barra
+        </div>
+    </header>
+
+    <main class="customer-main">
+        <section
+            id="start-screen"
+            class="start-screen"
+        >
+            <div class="start-copy">
+                <p class="eyebrow">
+                    COFICENTER
+                </p>
+
+                <h1>
+                    Tu café,<br>
+                    a tu manera.
+                </h1>
+
+                <p class="start-description">
+                    Elige tus favoritos,
+                    personalízalos y recoge
+                    tu pedido en barra.
+                </p>
+
+                <button
+                    id="start-order-button"
+                    class="customer-primary-button start-button"
+                    type="button"
+                >
+                    Iniciar pedido
+                </button>
+            </div>
+
+            <div class="start-art" aria-hidden="true">
+                <div class="start-art-frame">
+                    <div class="start-art-glow"></div>
+
+                    <img
+                        src="./assets/coficenter-hero-combo.png"
+                        alt=""
+                        class="start-art-image"
+                    >
+
+                    <div class="start-art-badge">
+                        <span class="start-art-badge-dot"></span>
+
+                        <span>
+                            Preparado al momento
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="menu-screen"
+            class="menu-screen"
+            hidden
+        >
+            <div class="menu-topline">
+                <div>
+                    <p class="eyebrow">
+                        MENÚ
+                    </p>
+
+                    <h1>
+                        ¿Qué se te antoja?
+                    </h1>
+
+                    <p id="branch-label">
+                        CofiCenter Ixtapa
+                    </p>
+                </div>
+
+                <button
+                    id="restart-order-button"
+                    class="ghost-button"
+                    type="button"
+                >
+                    Reiniciar
+                </button>
+            </div>
+
+            <nav
+                id="category-tabs"
+                class="category-tabs"
+                aria-label="Categorías del menú"
+            ></nav>
+
+            <div
+                id="catalog-message"
+                class="catalog-message"
+                role="status"
+            >
+                Cargando menú…
+            </div>
+
+            <section
+                id="product-grid"
+                class="product-grid"
+                aria-live="polite"
+            ></section>
+        </section>
+    </main>
+
+
+    <div
+        id="modifier-dialog"
+        class="customer-modal product-configurator-modal"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modifier-title"
+    >
+        <div class="modal-backdrop"></div>
+
+        <section class="modifier-sheet product-configurator">
+            <header class="modifier-topbar">
+                <button
+                    id="close-modifier-button"
+                    class="round-icon-button modifier-back-button"
+                    type="button"
+                    aria-label="Volver al menú"
+                >
+                    ‹
+                </button>
+
+                <img
+                    class="modifier-brand-mark"
+                    src="/pos/assets/coficenter-logo.png"
+                    alt="CofiCenter"
+                >
+
+                <span
+                    class="modifier-topbar-spacer"
+                    aria-hidden="true"
+                ></span>
+            </header>
+
+            <div class="modifier-product-hero">
+                <div class="modifier-product-visual">
+                    <img
+                        id="modifier-product-image"
+                        class="modifier-product-image"
+                        alt=""
+                        hidden
+                    >
+
+                    <span
+                        id="modifier-product-fallback"
+                        class="modifier-product-fallback"
+                        aria-hidden="true"
+                    >
+                        C
+                    </span>
+                </div>
+
+                <div class="modifier-heading">
+                    <p class="eyebrow">
+                        PERSONALIZA TU PRODUCTO
+                    </p>
+
+                    <h2 id="modifier-title">
+                        Producto
+                    </h2>
+
+                    <p
+                        id="modifier-description"
+                        class="modifier-description"
+                    >
+                        Personaliza tu producto a tu gusto.
+                    </p>
+
+                    <p
+                        id="modifier-base-price"
+                        class="modifier-base-price"
+                    >
+                        $0.00
+                    </p>
+                </div>
+            </div>
+
+            <div
+                id="modifier-groups"
+                class="modifier-groups"
+            ></div>
+
+            <section class="modifier-note-section">
+                <div class="modifier-note-heading">
+                    <div>
+                        <strong>
+                            Nota especial
+                        </strong>
+
+                        <small>
+                            Opcional
+                        </small>
+                    </div>
+
+                    <span id="modifier-note-count">
+                        0/150
+                    </span>
+                </div>
+
+                <textarea
+                    id="modifier-notes"
+                    class="modifier-notes"
+                    maxlength="150"
+                    rows="2"
+                    placeholder="Ej. aderezo aparte, partir por la mitad…"
+                ></textarea>
+            </section>
+
+            <p
+                id="modifier-error"
+                class="modifier-error"
+                hidden
+            ></p>
+
+            <div class="modifier-footer product-configurator-footer">
+                <div class="modifier-footer-top">
+                    <div class="modifier-order-summary">
+                        <span>Tu orden</span>
+                        <strong id="modifier-cart-count">
+                            Orden vacía
+                        </strong>
+                        <small id="modifier-cart-total">
+                            $0.00
+                        </small>
+                    </div>
+
+                    <div class="quantity-control">
+                        <button
+                            id="modifier-minus"
+                            type="button"
+                            aria-label="Reducir cantidad"
+                        >
+                            −
+                        </button>
+
+                        <strong id="modifier-quantity">
+                            1
+                        </strong>
+
+                        <button
+                            id="modifier-plus"
+                            type="button"
+                            aria-label="Aumentar cantidad"
+                        >
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modifier-footer-action">
+                    <small id="modifier-required-hint">
+                        Completa las opciones obligatorias
+                    </small>
+
+                    <button
+                        id="add-customized-product"
+                        class="customer-primary-button modifier-add-button"
+                        type="button"
+                    >
+                        <span id="modifier-add-label">
+                            Agregar al pedido
+                        </span>
+
+                        <strong id="modifier-total">
+                            $0.00
+                        </strong>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+
+    <div
+        id="review-sheet"
+        class="customer-modal"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-title"
+    >
+        <div class="modal-backdrop"></div>
+
+        <section class="review-panel">
+            <div class="sheet-handle"></div>
+
+            <div class="review-heading">
+                <div>
+                    <p class="eyebrow">
+                        TU PEDIDO
+                    </p>
+
+                    <h2 id="review-title">
+                        Revisa antes de continuar
+                    </h2>
+                </div>
+
+                <button
+                    id="close-review-button"
+                    class="round-icon-button"
+                    type="button"
+                    aria-label="Cerrar revisión"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div
+                id="review-items"
+                class="review-items"
+            ></div>
+
+            <div class="review-total">
+                <span>Total</span>
+                <strong id="review-total">
+                    $0.00
+                </strong>
+            </div>
+
+            <p class="pickup-note">
+                Tu pedido se recogerá en barra.
+            </p>
+
+            <button
+                id="continue-payment-button"
+                class="customer-primary-button"
+                type="button"
+            >
+                Continuar al pago
+            </button>
+
+            <small class="next-block-note">
+                Pago únicamente con tarjeta.
+            </small>
+        </section>
+    </div>
+
+
+
+    <div
+        id="payment-sheet"
+        class="customer-modal"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="payment-title"
+    >
+        <div class="modal-backdrop"></div>
+
+        <section class="payment-panel">
+            <div class="sheet-handle"></div>
+
+            <section
+                id="payment-ready"
+                class="payment-state"
+            >
+                <p class="eyebrow">
+                    PAGO
+                </p>
+
+                <h2 id="payment-title">
+                    Confirma tu pedido
+                </h2>
+
+                <p class="payment-copy">
+                    Tu pedido se enviará a
+                    preparación únicamente después
+                    de confirmar el pago.
+                </p>
+
+                <div class="payment-card-row">
+                    <span class="payment-card-icon">
+                        ◫
+                    </span>
+
+                    <div>
+                        <strong>
+                            Tarjeta
+                        </strong>
+
+                        <small>
+                            Crédito o débito
+                        </small>
+                    </div>
+                </div>
+
+                <button
+                    id="pay-card-button"
+                    class="customer-primary-button payment-action"
+                    type="button"
+                >
+                    Pagar con tarjeta
+                </button>
+
+                <button
+                    id="cancel-payment-button"
+                    class="payment-secondary-button"
+                    type="button"
+                >
+                    Volver al pedido
+                </button>
+            </section>
+
+
+            <section
+                id="payment-processing"
+                class="payment-state payment-centered"
+                hidden
+            >
+                <div class="payment-spinner"></div>
+
+                <p class="eyebrow">
+                    PROCESANDO
+                </p>
+
+                <h2>
+                    Estamos confirmando tu pago
+                </h2>
+
+                <p class="payment-copy">
+                    No cierres esta pantalla
+                    ni intentes pagar otra vez.
+                </p>
+            </section>
+
+
+            <section
+                id="payment-declined"
+                class="payment-state payment-centered"
+                hidden
+            >
+                <div class="payment-state-icon">
+                    !
+                </div>
+
+                <p class="eyebrow">
+                    PAGO NO APROBADO
+                </p>
+
+                <h2>
+                    No pudimos aprobar la tarjeta
+                </h2>
+
+                <p class="payment-copy">
+                    No se envió ningún pedido
+                    a preparación.
+                </p>
+
+                <button
+                    id="retry-payment-button"
+                    class="customer-primary-button payment-action"
+                    type="button"
+                >
+                    Intentar otra vez
+                </button>
+            </section>
+
+
+            <section
+                id="payment-unknown"
+                class="payment-state payment-centered"
+                hidden
+            >
+                <div class="payment-state-icon">
+                    ?
+                </div>
+
+                <p class="eyebrow">
+                    VERIFICANDO PAGO
+                </p>
+
+                <h2>
+                    No repitas el pago
+                </h2>
+
+                <p class="payment-copy">
+                    Perdimos la confirmación.
+                    Revisaremos el estado del
+                    mismo intento antes de permitir
+                    cualquier otro cobro.
+                </p>
+
+                <button
+                    id="recover-payment-button"
+                    class="customer-primary-button payment-action"
+                    type="button"
+                >
+                    Revisar estado
+                </button>
+            </section>
+
+
+            <section
+                id="payment-success"
+                class="payment-state payment-centered"
+                hidden
+            >
+                <div class="success-check">
+                    ✓
+                </div>
+
+                <p class="eyebrow">
+                    PEDIDO CONFIRMADO
+                </p>
+
+                <h2>
+                    ¡Gracias!
+                </h2>
+
+                <p>
+                    Tu número de orden es
+                </p>
+
+                <strong
+                    id="success-folio"
+                    class="success-folio"
+                >
+                    —
+                </strong>
+
+                <div class="success-pickup">
+                    Recoge en barra
+                </div>
+
+                <button
+                    id="new-order-button"
+                    class="customer-primary-button payment-action"
+                    type="button"
+                >
+                    Nueva orden
+                </button>
+            </section>
+
+
+            <p
+                id="payment-message"
+                class="payment-message"
+                hidden
+            ></p>
+        </section>
+    </div>
+
+
+    <div
+        id="idle-warning"
+        class="customer-modal idle-warning"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="idle-warning-title"
+    >
+        <div class="modal-backdrop"></div>
+
+        <section class="idle-panel">
+            <p class="eyebrow">
+                ¿SIGUES AHÍ?
+            </p>
+
+            <h2 id="idle-warning-title">
+                Tu pedido se reiniciará pronto
+            </h2>
+
+            <p>
+                Reiniciaremos esta pantalla en
+                <strong id="idle-countdown">
+                    15
+                </strong>
+                segundos.
+            </p>
+
+            <button
+                id="continue-idle-button"
+                class="customer-primary-button"
+                type="button"
+            >
+                Seguir ordenando
+            </button>
+        </section>
+    </div>
+
+
+    <footer
+        id="customer-cart-bar"
+        class="customer-cart-bar"
+        hidden
+    >
+        <div class="cart-bar-summary">
+            <span id="cart-count">
+                0 productos
+            </span>
+
+            <strong id="cart-total">
+                $0.00
+            </strong>
+        </div>
+
+        <button
+            id="review-order-button"
+            class="customer-primary-button cart-review-button"
+            type="button"
+        >
+            Ver tu orden
+        </button>
+    </footer>
+</div>
+
+<script src="./js/api.js?v=1"></script>
+<script src="./js/cart.js?v=2"></script>
+<script src="./js/checkout.js?v=1"></script>
+<script src="./js/app.js?v=5"></script>
+<script src="./js/pwa.js?v=1"></script>
+</body>
+</html>

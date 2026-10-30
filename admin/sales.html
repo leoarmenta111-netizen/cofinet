@@ -829,7 +829,11 @@
             );
 
         title.textContent =
-            `${item.quantity} × ${item.product_name}`;
+            `${item.quantity} × ${
+                item.variant_name
+                    ? `${item.product_name} · ${item.variant_name}`
+                    : item.product_name
+            }`;
 
 
         const total =

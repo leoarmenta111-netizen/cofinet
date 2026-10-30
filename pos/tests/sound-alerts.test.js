@@ -180,7 +180,7 @@ test(
 
         assert.match(
             index,
-            /orders\.js\?v=15/,
+            /orders\.js\?v=17/,
             "orders.js debe refrescarse"
         );
 
@@ -224,7 +224,7 @@ test(
 
         assert.match(
             sw,
-            /cofi-pos-shell-v23/
+            /cofi-pos-shell-v25/
         );
 
         assert.match(

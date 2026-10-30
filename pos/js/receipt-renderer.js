@@ -135,13 +135,21 @@
     }
 
     function itemName(item) {
-        return (
+        const productName =
             item?.name ??
             item?.product_name ??
             item?.item_name ??
             item?.description ??
-            "Producto"
-        );
+            "Producto";
+
+        const variantName =
+            String(
+                item?.variant_name ?? ""
+            ).trim();
+
+        return variantName
+            ? `${productName} · ${variantName}`
+            : productName;
     }
 
     function modifierName(
@@ -408,6 +416,12 @@
             snapshot.branch ||
             {};
 
+        const fiscal =
+            window.CofiPosFiscalConfig
+                ?.getForBranch?.(
+                    branch.branch_code
+                ) ?? null;
+
         const totals =
             snapshot.totals ||
             {};
@@ -418,12 +432,33 @@
 
         const logo =
             localLogoRef(
+                fiscal?.logo_ref ??
                 business.logo_ref
             );
 
         const customerName =
             snapshot.customer
                 ?.name;
+
+        const orderType =
+            snapshot.order_type
+                ? String(
+                    snapshot.order_type
+                ).toUpperCase()
+                : null;
+
+        const orderTypeLabel =
+            {
+                DINE_IN: "Para aquí",
+                TAKEOUT: "Para llevar",
+                DELIVERY: "A domicilio",
+            }[orderType] || null;
+
+        const orderName =
+            snapshot.order_name || null;
+
+        const tableNumber =
+            snapshot.table_number || null;
 
         const branchLines = [
             branch.branch_name,
@@ -527,6 +562,75 @@
                 `
                 : "";
 
+        const fiscalQr =
+            fiscal
+                ? localLogoRef(
+                    fiscal.billing_qr_ref
+                )
+                : null;
+
+        const fiscalHeaderSection =
+            fiscal
+                ? `
+                    <section class="receipt-fiscal receipt-fiscal--header">
+                        <div class="receipt-fiscal-title">
+                            DATOS FISCALES
+                        </div>
+
+                        <div class="receipt-fiscal-details">
+                            <div>
+                                <strong>RFC:</strong>
+                                ${escapeHtml(
+                                    fiscal.rfc
+                                )}
+                            </div>
+
+                            <div class="receipt-fiscal-address">
+                                ${escapeHtml(
+                                    fiscal.fiscal_address
+                                )}
+                            </div>
+                        </div>
+                    </section>
+                `
+                : "";
+
+        const billingSection =
+            fiscal
+                ? `
+                    <div class="receipt-divider"></div>
+
+                    <section class="receipt-fiscal receipt-billing">
+                        <div class="receipt-billing-title">
+                            ${escapeHtml(
+                                fiscal.billing_label ||
+                                "FACTURACIÓN"
+                            )}
+                        </div>
+
+                        <div class="receipt-billing-message">
+                            ${escapeHtml(
+                                fiscal.billing_message
+                            )}
+                        </div>
+
+                        ${
+                            fiscalQr
+                                ? `
+                                    <img
+                                        class="receipt-billing-qr"
+                                        src="${escapeHtml(
+                                            fiscalQr
+                                        )}"
+                                        alt="QR de facturación"
+                                    >
+                                `
+                                : ""
+                        }
+                    </section>
+                `
+                : "";
+
         return `
             <article class="receipt-paper" aria-label="Ticket de venta">
                 <header class="receipt-header">
@@ -542,14 +646,8 @@
                             : ""
                     }
 
-                    <h1>${escapeHtml(
-                        business.business_name ||
-                        "CofiCenter"
-                    )}</h1>
+                    ${fiscalHeaderSection}
 
-                    <div class="receipt-branch">
-                        ${branchLines}
-                    </div>
                 </header>
 
                 <div class="receipt-divider"></div>
@@ -570,6 +668,46 @@
                             snapshot
                         )}</strong>
                     </div>
+
+                    ${
+                        orderTypeLabel
+                            ? `
+                                <div class="receipt-row">
+                                    <span>Tipo</span>
+                                    <strong>${escapeHtml(
+                                        orderTypeLabel
+                                    )}</strong>
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        orderType === "DINE_IN" &&
+                        tableNumber
+                            ? `
+                                <div class="receipt-row">
+                                    <span>Mesa</span>
+                                    <strong>${escapeHtml(
+                                        tableNumber
+                                    )}</strong>
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        orderName
+                            ? `
+                                <div class="receipt-row">
+                                    <span>Nombre</span>
+                                    <strong>${escapeHtml(
+                                        orderName
+                                    )}</strong>
+                                </div>
+                            `
+                            : ""
+                    }
 
                     ${
                         customerName
@@ -627,6 +765,8 @@
 
                     ${cashDetails}
                 </section>
+
+                ${billingSection}
 
                 ${
                     business.footer_message
