@@ -104,16 +104,22 @@
                     ...value,
                 };
 
-                [
-                    "expected_cash",
-                    "expected_total",
-                    "difference",
-                    "variance",
-                    "ledger_total",
-                    "cash_ledger_total",
-                ].forEach(key => {
-                    delete sanitized[key];
-                });
+                if (
+                    value.status !==
+                    "CLOSING"
+                ) {
+                    [
+                        "counted_cash",
+                        "expected_cash",
+                        "expected_total",
+                        "difference",
+                        "variance",
+                        "ledger_total",
+                        "cash_ledger_total",
+                    ].forEach(key => {
+                        delete sanitized[key];
+                    });
+                }
 
                 return sanitized;
             }
@@ -535,11 +541,34 @@ async function finalizeClose(
             }
 
             function reconciliation() {
-                return reconciliationState
-                    ? {
+                if (reconciliationState) {
+                    return {
                         ...reconciliationState,
-                    }
-                    : null;
+                    };
+                }
+
+                if (
+                    currentShift?.status ===
+                        "CLOSING" &&
+                    currentShift.counted_cash != null &&
+                    currentShift.expected_cash != null &&
+                    currentShift.difference != null
+                ) {
+                    return {
+                        shift_uuid:
+                            currentShift.shift_uuid,
+                        status:
+                            "CLOSING",
+                        counted_cash:
+                            currentShift.counted_cash,
+                        expected_cash:
+                            currentShift.expected_cash,
+                        difference:
+                            currentShift.difference,
+                    };
+                }
+
+                return null;
             }
 
             function current() {
