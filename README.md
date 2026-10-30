@@ -6,6 +6,26 @@ CofiNet+ started as a captive portal for managed Wi-Fi and evolved into a broade
 
 This repository is presented as an **engineering portfolio project**. Production secrets, private keys, database dumps, certificate material, and live credentials are intentionally excluded.
 
+## My Role
+
+I designed, developed, integrated, and deployed CofiNet+ end to end, taking it from an initial captive Wi-Fi portal into a broader hospitality operations platform.
+
+My contribution includes:
+
+- Designing the overall application and deployment architecture
+- Building and evolving the **FastAPI + PostgreSQL** backend
+- Developing the touch-first **POS**, customer self-order experience, and kitchen/bar station interfaces
+- Modeling operational domains such as staff access, cash shifts, receipts, audit events, product variants, and modifiers
+- Implementing **multi-branch** behavior and branch-specific configuration
+- Integrating **MikroTik / RouterOS** connectivity and payment-related workflows
+- Building PWA/offline capabilities with **Service Workers and IndexedDB**
+- Managing database evolution through **Alembic migrations**
+- Containerizing and deploying the system with **Docker Compose and Nginx**
+- Creating automated tests, release checks, backup procedures, and rollback safeguards
+- Maintaining and iterating on a live production deployment
+
+The project reflects both product development and operational ownership: translating real business workflows into software, deploying them safely, and continuing to improve the system without interrupting day-to-day use.
+
 ## Highlights
 
 - **Captive Wi-Fi portal** with MikroTik / RouterOS integration
@@ -96,6 +116,21 @@ flowchart LR
 ```
 
 Nginx is the public entry point. Static interfaces are served directly while `/api/*` requests are proxied to FastAPI. PostgreSQL remains on the internal application network, and production media is persisted outside the application container.
+
+## Engineering Challenges & Decisions
+
+| Challenge | Engineering decision | Why it mattered |
+|---|---|---|
+| Grow beyond the original captive portal without turning the project into one tightly coupled application | Keep separate customer, POS, admin, kitchen, and bar interfaces behind a shared Nginx/API boundary | Each workflow can evolve independently while using the same backend and operational data |
+| Keep tablet POS workflows usable when connectivity is unreliable | Use Service Workers, IndexedDB, local caching, and offline-oriented receipt/order behavior | Reduces disruption during transient network problems and improves tablet responsiveness |
+| Support multiple branches without duplicating the product | Make catalog behavior, manifests, fiscal settings, and operational configuration branch-aware | One codebase can serve different locations while preserving local requirements |
+| Route orders through different preparation workflows | Use dedicated kitchen and bar station views with explicit order-state transitions | Makes the software match the real handoff between sales and preparation teams |
+| Prevent historical receipts from changing when product data changes later | Store stable receipt snapshots instead of rebuilding old receipts from the current catalog | Preserves transaction history and keeps printed/reviewed receipts consistent |
+| Add production features without risking the live database | Use reviewed Alembic migrations, environment isolation, backups, health checks, smoke tests, and rollback procedures | Allows the platform to evolve while protecting production data and uptime |
+| Integrate external systems without spreading provider-specific logic across the codebase | Keep payment and MikroTik behavior behind backend services and API boundaries | Makes integrations easier to test, replace, and troubleshoot |
+| Keep operational actions traceable | Add staff authentication, cash-shift controls, and audit events as explicit backend domains | Improves accountability and makes business operations easier to review |
+
+These decisions came from operating the platform as a real system rather than treating it as a demo. The focus has been on reliability, maintainability, safe releases, and matching the software to actual hospitality workflows.
 
 ## Main Applications
 
