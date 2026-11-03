@@ -95,3 +95,15 @@ __all__ += [
     "PosCashMovement",
     "PosCashShift",
 ]
+
+from app.models.retail_catalog import (
+    RetailCatalogItem,
+    RetailPresentation,
+    RetailServicePriceTier,
+)
+
+__all__ += [
+    "RetailCatalogItem",
+    "RetailPresentation",
+    "RetailServicePriceTier",
+]
