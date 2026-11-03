@@ -124,3 +124,14 @@ class RetailSaleResponse(BaseModel):
     returns: list[
         RetailReturnResponse
     ] = []
+
+
+class RetailHeldSaleLineInput(BaseModel):
+    item_id: int
+    presentation_id: int | None = None
+    quantity: Decimal
+
+
+class RetailHeldSaleUpsert(BaseModel):
+    label: str | None = None
+    lines: list[RetailHeldSaleLineInput]
