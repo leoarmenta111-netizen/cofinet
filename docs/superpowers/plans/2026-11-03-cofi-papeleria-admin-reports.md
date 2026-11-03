@@ -189,7 +189,7 @@ git commit -m "feat(retail-admin): manage papeleria staff"
 
 - [ ] **Step 1: Write failing sales-history filter tests**
 
-Include overlapping Cafetería data and prove no Cafetería rows appear.
+Include overlapping Cafetería data and prove no Cafetería rows appear. Also cover global-admin partial return/cancel authorization, required reason, idempotency, inventory restoration, and preservation of the original sale.
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -278,7 +278,7 @@ git commit -m "feat(retail-admin): add papeleria operational reports"
 - `admin/papeleria.html` contains tabs/sections for Catalog, Services, Inventory/Kardex, Sales, Reports and Audit.
 - Catalog UI creates products, presentations, barcodes, costs, normal/bulk pricing and service tiers.
 - Inventory UI exposes current/low stock plus admin-only entry/removal/adjustment with mandatory reason.
-- Sales UI filters history, opens sale detail and reprints stored receipt.
+- Sales UI filters history, opens sale detail, reprints stored receipt, and exposes global-admin return/cancel actions with required reason.
 - Reports UI consumes the endpoints from Task 5.
 - No Cafetería totals are shown in Papelería report cards.
 
