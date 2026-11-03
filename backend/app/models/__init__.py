@@ -107,3 +107,13 @@ __all__ += [
     "RetailPresentation",
     "RetailServicePriceTier",
 ]
+
+from app.models.retail_inventory import (
+    RetailInventoryBalance,
+    RetailInventoryMovement,
+)
+
+__all__ += [
+    "RetailInventoryBalance",
+    "RetailInventoryMovement",
+]
