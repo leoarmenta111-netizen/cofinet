@@ -323,7 +323,7 @@ Keep DOM rendering separate from price/business rules; server remains authoritat
 
 - [ ] **Step 3: Write failing payment/held-sale tests**
 
-Test manager overlay payload, CASH/CARD payloads, no PIN persistence and held-sale resume.
+Test manager overlay payload, CASH/CARD payloads, no PIN persistence, held-sale resume, and manager-authorized inventory adjustment payloads.
 
 - [ ] **Step 4: Implement UI shell and API adapter**
 
