@@ -117,3 +117,19 @@ __all__ += [
     "RetailInventoryBalance",
     "RetailInventoryMovement",
 ]
+
+from app.models.retail_sales import (
+    RetailPayment,
+    RetailReturn,
+    RetailReturnLine,
+    RetailSale,
+    RetailSaleLine,
+)
+
+__all__ += [
+    "RetailSale",
+    "RetailSaleLine",
+    "RetailPayment",
+    "RetailReturn",
+    "RetailReturnLine",
+]
