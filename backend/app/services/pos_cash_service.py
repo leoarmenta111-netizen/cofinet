@@ -6,6 +6,10 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.domain.operational_module import (
+    OperationalModule,
+    operational_module_value,
+)
 from app.models.branch import Branch
 from app.models.pos_cash import (
     ACTIVE_SHIFT_STATUSES,
@@ -39,6 +43,7 @@ class PosCashService:
         *,
         staff: PosStaff,
         branch_id: int,
+        module_code: OperationalModule | str,
     ) -> None:
         if not staff.is_active:
             raise HTTPException(
@@ -52,16 +57,31 @@ class PosCashService:
                 detail="POS staff branch mismatch",
             )
 
+        expected_module = operational_module_value(
+            module_code
+        )
+
+        if staff.module_code != expected_module:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="POS staff module mismatch",
+            )
+
     @staticmethod
     def current_shift(
         db: Session,
         *,
         branch_code: str,
         terminal_id: str,
+        module_code: OperationalModule | str = OperationalModule.CAFE,
     ) -> PosCashShift | None:
         branch = BranchService.get_by_code(
             db,
             branch_code,
+        )
+
+        module_value = operational_module_value(
+            module_code
         )
 
         return db.execute(
@@ -69,6 +89,7 @@ class PosCashService:
             .where(
                 PosCashShift.branch_id == branch.id,
                 PosCashShift.terminal_id == terminal_id,
+                PosCashShift.module_code == module_value,
                 PosCashShift.status.in_(
                     ACTIVE_SHIFT_STATUSES
                 ),
@@ -87,20 +108,27 @@ class PosCashService:
         opening_amount: Decimal | None = None,
         requesting_staff: PosStaff,
         authorizing_manager: PosStaff,
+        module_code: OperationalModule | str = OperationalModule.CAFE,
     ) -> PosCashShift:
         branch = BranchService.get_by_code(
             db,
             branch_code,
         )
 
+        module_value = operational_module_value(
+            module_code
+        )
+
         cls._validate_staff(
             staff=requesting_staff,
             branch_id=branch.id,
+            module_code=module_value,
         )
 
         cls._validate_staff(
             staff=authorizing_manager,
             branch_id=branch.id,
+            module_code=module_value,
         )
 
         if (
@@ -143,6 +171,7 @@ class PosCashService:
             .where(
                 PosCashShift.branch_id == branch.id,
                 PosCashShift.terminal_id == terminal_id,
+                PosCashShift.module_code == module_value,
                 PosCashShift.status.in_(
                     ACTIVE_SHIFT_STATUSES
                 ),
@@ -208,6 +237,7 @@ class PosCashService:
         shift = PosCashShift(
             branch_id=branch.id,
             terminal_id=terminal_id,
+            module_code=module_value,
             status="OPEN",
             opened_by_staff_id=requesting_staff.id,
             opening_authorized_by_staff_id=(
@@ -248,6 +278,7 @@ class PosCashService:
             event_type="SHIFT_OPENED",
             branch_id=branch.id,
             terminal_id=terminal_id,
+            module_code=module_value,
             actor_staff_id=requesting_staff.id,
             authorizer_staff_id=authorizing_manager.id,
             target_type="cash_shift",
@@ -412,11 +443,13 @@ class PosCashService:
         cls._validate_staff(
             staff=requesting_staff,
             branch_id=shift.branch_id,
+            module_code=shift.module_code,
         )
 
         cls._validate_staff(
             staff=authorizing_manager,
             branch_id=shift.branch_id,
+            module_code=shift.module_code,
         )
 
         if (
@@ -503,6 +536,7 @@ class PosCashService:
             event_type="CASH_MOVEMENT",
             branch_id=shift.branch_id,
             terminal_id=shift.terminal_id,
+            module_code=shift.module_code,
             actor_staff_id=requesting_staff.id,
             authorizer_staff_id=authorizing_manager.id,
             target_type="cash_movement",
@@ -560,6 +594,7 @@ class PosCashService:
         cls._validate_staff(
             staff=staff,
             branch_id=shift.branch_id,
+            module_code=shift.module_code,
         )
 
         if shift.status != "OPEN":
@@ -681,6 +716,7 @@ class PosCashService:
         cls._validate_staff(
             staff=manager,
             branch_id=shift.branch_id,
+            module_code=shift.module_code,
         )
 
         if (
@@ -740,6 +776,7 @@ class PosCashService:
             event_type="SHIFT_CLOSED",
             branch_id=shift.branch_id,
             terminal_id=shift.terminal_id,
+            module_code=shift.module_code,
             actor_staff_id=shift.closed_by_staff_id,
             authorizer_staff_id=manager.id,
             target_type="cash_shift",

@@ -64,6 +64,7 @@ class PosCashShiftResponse(BaseModel):
     shift_uuid: str
     branch_id: int
     terminal_id: str
+    module_code: Literal["CAFE", "PAPELERIA"]
     status: Literal["OPEN", "CLOSING", "CLOSED"]
     opened_by_staff_id: int
     opening_authorized_by_staff_id: int

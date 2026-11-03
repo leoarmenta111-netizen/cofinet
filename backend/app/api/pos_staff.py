@@ -36,6 +36,7 @@ def unlock_pos_staff(
         staff_id=payload.staff_id,
         pin=payload.pin,
         branch_code=payload.branch_code,
+        module_code=payload.module_code,
     )
 
     branch = BranchService.get_by_id(
@@ -61,6 +62,7 @@ def unlock_pos_staff(
         role=role,
         branch_code=branch.code,
         terminal_id=payload.terminal_id,
+        module_code=staff.module_code,
         access_token=token,
     )
 
@@ -82,12 +84,17 @@ def get_pos_staff_session(
 
     branch_code = token_payload.get("branch_code")
     terminal_id = token_payload.get("terminal_id")
+    module_code = token_payload.get(
+        "module_code",
+        "CAFE",
+    )
 
     if (
         not isinstance(branch_code, str)
         or branch_code != branch.code
         or not isinstance(terminal_id, str)
         or not terminal_id.strip()
+        or module_code != current_staff.module_code
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -106,4 +113,5 @@ def get_pos_staff_session(
         role=role,
         branch_code=branch.code,
         terminal_id=terminal_id,
+        module_code=current_staff.module_code,
     )

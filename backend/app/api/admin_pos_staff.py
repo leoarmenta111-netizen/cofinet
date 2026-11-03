@@ -44,6 +44,7 @@ def list_pos_staff(
             id=staff.id,
             branch_id=staff.branch_id,
             branch_code=branch.code,
+            module_code=staff.module_code,
             display_name=staff.display_name,
             role=staff.role,
             is_active=staff.is_active,
@@ -71,6 +72,7 @@ def create_pos_staff(
             display_name=data.display_name,
             role=data.role,
             pin=data.pin,
+            module_code=data.module_code,
         )
     )
 
@@ -78,6 +80,7 @@ def create_pos_staff(
         id=staff.id,
         branch_id=staff.branch_id,
         branch_code=branch.code,
+        module_code=staff.module_code,
         display_name=staff.display_name,
         role=staff.role,
         is_active=staff.is_active,
@@ -104,6 +107,7 @@ def update_pos_staff(
             display_name=data.display_name,
             role=data.role,
             is_active=data.is_active,
+            module_code=data.module_code,
         )
     )
 
@@ -111,6 +115,7 @@ def update_pos_staff(
         id=staff.id,
         branch_id=staff.branch_id,
         branch_code=branch.code,
+        module_code=staff.module_code,
         display_name=staff.display_name,
         role=staff.role,
         is_active=staff.is_active,
@@ -142,6 +147,7 @@ def reset_pos_staff_pin(
         id=staff.id,
         branch_id=staff.branch_id,
         branch_code=branch.code,
+        module_code=staff.module_code,
         display_name=staff.display_name,
         role=staff.role,
         is_active=staff.is_active,

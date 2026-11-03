@@ -10,6 +10,7 @@ from sqlalchemy import (
 from sqlalchemy.sql import func
 
 from app.database.session import Base
+from app.domain.operational_module import OperationalModule
 
 
 class PosAuditEvent(Base):
@@ -40,6 +41,14 @@ class PosAuditEvent(Base):
     terminal_id = Column(
         String(80),
         nullable=False,
+        index=True,
+    )
+
+    module_code = Column(
+        String(20),
+        nullable=False,
+        default=OperationalModule.CAFE.value,
+        server_default=OperationalModule.CAFE.value,
         index=True,
     )
 
@@ -91,5 +100,9 @@ class PosAuditEvent(Base):
             "event_type IN "
             "('SHIFT_OPENED','SHIFT_CLOSED','CASH_MOVEMENT')",
             name="ck_pos_audit_events_event_type",
+        ),
+        CheckConstraint(
+            "module_code IN ('CAFE','PAPELERIA')",
+            name="ck_pos_audit_events_module_code",
         ),
     )

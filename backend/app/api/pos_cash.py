@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.auth.pos_staff_security import get_current_pos_staff
 from app.auth.security import get_current_token
 from app.database.deps import get_db
+from app.domain.operational_module import OperationalModule
 from app.models.pos_staff import PosStaff
 from app.schemas.pos_cash import (
     PosCashCloseRequest,
@@ -31,22 +32,41 @@ router = APIRouter(
 
 def _session_context(
     token_payload: dict[str, object],
-) -> tuple[str, str]:
+) -> tuple[str, str, OperationalModule]:
     branch_code = token_payload.get("branch_code")
     terminal_id = token_payload.get("terminal_id")
+    raw_module = token_payload.get(
+        "module_code",
+        OperationalModule.CAFE.value,
+    )
 
     if (
         not isinstance(branch_code, str)
         or not branch_code.strip()
         or not isinstance(terminal_id, str)
         or not terminal_id.strip()
+        or not isinstance(raw_module, str)
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
 
-    return branch_code, terminal_id
+    try:
+        module_code = OperationalModule(
+            raw_module
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        ) from exc
+
+    return (
+        branch_code,
+        terminal_id,
+        module_code,
+    )
 
 
 @router.post(
@@ -63,8 +83,8 @@ def open_cash_shift(
     ),
     db: Session = Depends(get_db),
 ) -> PosCashShiftResponse:
-    branch_code, terminal_id = _session_context(
-        token_payload
+    branch_code, terminal_id, module_code = (
+        _session_context(token_payload)
     )
 
     manager = PosStaffService.authorize_manager(
@@ -72,6 +92,7 @@ def open_cash_shift(
         staff_id=payload.authorizing_manager_staff_id,
         pin=payload.manager_pin,
         branch_code=branch_code,
+        module_code=module_code,
     )
 
     shift = PosCashService.open_shift(
@@ -82,6 +103,7 @@ def open_cash_shift(
         opening_amount=payload.opening_amount,
         requesting_staff=requesting_staff,
         authorizing_manager=manager,
+        module_code=module_code,
     )
 
     db.commit()
@@ -105,14 +127,15 @@ def get_current_cash_shift(
 ) -> PosCashShiftResponse | None:
     del requesting_staff
 
-    branch_code, terminal_id = _session_context(
-        token_payload
+    branch_code, terminal_id, module_code = (
+        _session_context(token_payload)
     )
 
     shift = PosCashService.current_shift(
         db,
         branch_code=branch_code,
         terminal_id=terminal_id,
+        module_code=module_code,
     )
 
     if shift is None:
@@ -136,8 +159,8 @@ def record_cash_movement(
     ),
     db: Session = Depends(get_db),
 ) -> PosCashMovementResponse:
-    branch_code, _ = _session_context(
-        token_payload
+    branch_code, _, module_code = (
+        _session_context(token_payload)
     )
 
     manager = PosStaffService.authorize_manager(
@@ -145,6 +168,7 @@ def record_cash_movement(
         staff_id=payload.authorizing_manager_staff_id,
         pin=payload.manager_pin,
         branch_code=branch_code,
+        module_code=module_code,
     )
 
     movement = PosCashService.record_movement(
@@ -212,8 +236,8 @@ def finalize_cash_shift(
 ) -> PosCashShiftResponse:
     del requesting_staff
 
-    branch_code, _ = _session_context(
-        token_payload
+    branch_code, _, module_code = (
+        _session_context(token_payload)
     )
 
     manager = PosStaffService.authorize_manager(
@@ -221,6 +245,7 @@ def finalize_cash_shift(
         staff_id=payload.authorizing_manager_staff_id,
         pin=payload.manager_pin,
         branch_code=branch_code,
+        module_code=module_code,
     )
 
     shift = PosCashService.authorize_close(

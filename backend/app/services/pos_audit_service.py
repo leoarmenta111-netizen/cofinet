@@ -1,5 +1,9 @@
 from sqlalchemy.orm import Session
 
+from app.domain.operational_module import (
+    OperationalModule,
+    operational_module_value,
+)
 from app.models.pos_audit import PosAuditEvent
 
 
@@ -12,6 +16,7 @@ class PosAuditService:
         branch_id: int,
         terminal_id: str,
         actor_staff_id: int | None,
+        module_code: OperationalModule | str = OperationalModule.CAFE,
         authorizer_staff_id: int | None = None,
         target_type: str | None = None,
         target_id: str | None = None,
@@ -21,6 +26,9 @@ class PosAuditService:
             event_type=event_type,
             branch_id=branch_id,
             terminal_id=terminal_id,
+            module_code=operational_module_value(
+                module_code
+            ),
             actor_staff_id=actor_staff_id,
             authorizer_staff_id=authorizer_staff_id,
             target_type=target_type,

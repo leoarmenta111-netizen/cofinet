@@ -17,6 +17,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.database.session import Base
+from app.domain.operational_module import OperationalModule
 
 
 ACTIVE_SHIFT_STATUSES = ("OPEN", "CLOSING")
@@ -65,6 +66,14 @@ class PosCashShift(Base):
     terminal_id = Column(
         String(80),
         nullable=False,
+        index=True,
+    )
+
+    module_code = Column(
+        String(20),
+        nullable=False,
+        default=OperationalModule.CAFE.value,
+        server_default=OperationalModule.CAFE.value,
         index=True,
     )
 
@@ -166,10 +175,15 @@ class PosCashShift(Base):
             "opening_total >= 0",
             name="ck_pos_cash_shifts_opening_total_nonnegative",
         ),
+        CheckConstraint(
+            "module_code IN ('CAFE','PAPELERIA')",
+            name="ck_pos_cash_shifts_module_code",
+        ),
         Index(
             "uq_pos_cash_shifts_active_branch_terminal",
             "branch_id",
             "terminal_id",
+            "module_code",
             unique=True,
             sqlite_where=text(
                 "status IN ('OPEN','CLOSING')"

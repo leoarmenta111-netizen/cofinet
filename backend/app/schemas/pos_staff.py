@@ -2,6 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.domain.operational_module import OperationalModule
 from app.models.pos_staff import PosStaffRole
 
 
@@ -10,6 +11,7 @@ class PosStaffUnlockRequest(BaseModel):
     pin: str = Field(min_length=4, max_length=32)
     branch_code: str = Field(min_length=1, max_length=50)
     terminal_id: str = Field(min_length=1, max_length=80)
+    module_code: OperationalModule = OperationalModule.CAFE
 
     @field_validator("branch_code", "terminal_id")
     @classmethod
@@ -28,6 +30,7 @@ class PosStaffUnlockResponse(BaseModel):
     role: PosStaffRole
     branch_code: str
     terminal_id: str
+    module_code: OperationalModule
     access_token: str
     token_type: Literal["bearer"] = "bearer"
 
@@ -38,10 +41,12 @@ class PosStaffSessionResponse(BaseModel):
     role: PosStaffRole
     branch_code: str
     terminal_id: str
+    module_code: OperationalModule
 
 
 class AdminPosStaffCreate(BaseModel):
     branch_id: int = Field(gt=0)
+    module_code: OperationalModule = OperationalModule.CAFE
     display_name: str = Field(
         min_length=1,
         max_length=120,
@@ -72,12 +77,14 @@ class AdminPosStaffResponse(BaseModel):
     id: int
     branch_id: int
     branch_code: str
+    module_code: OperationalModule
     display_name: str
     role: PosStaffRole
     is_active: bool
 
 
 class AdminPosStaffUpdate(BaseModel):
+    module_code: OperationalModule | None = None
     display_name: str | None = Field(
         default=None,
         min_length=1,

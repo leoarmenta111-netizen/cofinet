@@ -3,6 +3,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.security import hash_password, verify_password
+from app.domain.operational_module import (
+    OperationalModule,
+    operational_module_value,
+)
 from app.models.branch import Branch
 from app.models.pos_staff import (
     PosStaff,
@@ -20,6 +24,7 @@ class PosStaffService:
         display_name: str,
         role: PosStaffRole,
         pin: str,
+        module_code: OperationalModule | str = OperationalModule.CAFE,
     ) -> tuple[PosStaff, Branch]:
         branch = db.get(
             Branch,
@@ -35,6 +40,7 @@ class PosStaffService:
         staff = PosStaff(
             branch_id=branch.id,
             display_name=display_name,
+            module_code=operational_module_value(module_code),
             role=role,
             pin_hash=hash_password(pin),
             is_active=True,
@@ -72,6 +78,7 @@ class PosStaffService:
         display_name: str | None = None,
         role: PosStaffRole | None = None,
         is_active: bool | None = None,
+        module_code: OperationalModule | str | None = None,
     ) -> tuple[PosStaff, Branch]:
         staff = db.get(
             PosStaff,
@@ -89,6 +96,11 @@ class PosStaffService:
 
         if role is not None:
             staff.role = role
+
+        if module_code is not None:
+            staff.module_code = operational_module_value(
+                module_code
+            )
 
         if is_active is not None:
             staff.is_active = is_active
@@ -152,6 +164,7 @@ class PosStaffService:
         staff_id: int,
         pin: str,
         branch_code: str,
+        module_code: OperationalModule | str = OperationalModule.CAFE,
     ) -> PosStaff:
         branch = BranchService.get_by_code(
             db,
@@ -178,6 +191,16 @@ class PosStaffService:
                 detail="Inactive POS staff",
             )
 
+        expected_module = operational_module_value(
+            module_code
+        )
+
+        if staff.module_code != expected_module:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="POS staff module mismatch",
+            )
+
         if not verify_password(
             pin,
             staff.pin_hash,
@@ -197,12 +220,14 @@ class PosStaffService:
         staff_id: int,
         pin: str,
         branch_code: str,
+        module_code: OperationalModule | str = OperationalModule.CAFE,
     ) -> PosStaff:
         staff = cls.verify_pin(
             db,
             staff_id=staff_id,
             pin=pin,
             branch_code=branch_code,
+            module_code=module_code,
         )
 
         role = (

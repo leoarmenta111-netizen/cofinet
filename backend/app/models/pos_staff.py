@@ -13,6 +13,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.database.session import Base
+from app.domain.operational_module import OperationalModule
 
 
 class PosStaffRole(str, Enum):
@@ -42,6 +43,14 @@ class PosStaff(Base):
     display_name = Column(
         String(120),
         nullable=False,
+    )
+
+    module_code = Column(
+        String(20),
+        nullable=False,
+        default=OperationalModule.CAFE.value,
+        server_default=OperationalModule.CAFE.value,
+        index=True,
     )
 
     role = Column(
@@ -84,5 +93,9 @@ class PosStaff(Base):
         CheckConstraint(
             "role IN ('CASHIER','MANAGER')",
             name="ck_pos_staff_role",
+        ),
+        CheckConstraint(
+            "module_code IN ('CAFE','PAPELERIA')",
+            name="ck_pos_staff_module_code",
         ),
     )
