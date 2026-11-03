@@ -161,7 +161,7 @@ Add:
 - `test_product_uses_bulk_price_at_threshold`
 - `test_service_tier_boundary_20_and_21`
 - `test_service_uses_open_ended_final_tier`
-- `test_quote_rejects_fractional_or_nonpositive_quantity_when_item_requires_integer_quantity` only if the schema marks the item integer-only; otherwise omit this test and allow decimal quantities.
+- `test_quote_accepts_positive_decimal_quantity_without_float_rounding`\n- `test_quote_rejects_zero_or_negative_quantity`
 
 - [ ] **Step 5: Implement `RetailPricingService.quote`**
 
@@ -261,11 +261,11 @@ git commit -m "feat(retail): add transactional papeleria inventory"
 - Exact barcode result includes the matching presentation and `exact_barcode_match=true`.
 - Produces: `GET /retail/catalog/items/{item_id}`.
 - Produces: `GET /retail/inventory?branch_code=&status=` for employee stock lookup.
-- Produces: `GET /retail/inventory/{item_id}/movements` for authorized Papelería manager/admin use.
+- Produces: `GET /retail/inventory/{item_id}/movements` for authorized Papelería manager use.\n- Produces manager-PIN endpoints `POST /retail/inventory/{item_id}/entries`, `POST /retail/inventory/{item_id}/removals`, and `POST /retail/inventory/{item_id}/adjustments`.\n- Each stock mutation requires a non-empty `reason`, idempotency key, acting Papelería staff session, and `PosStaffService.authorize_manager(..., module_code=PAPELERIA)`; it records both actor and authorizer on the immutable movement.
 
 - [ ] **Step 1: Write failing API tests for module authorization and search ordering**
 
-Include cross-module rejection, barcode exact-match precedence and branch-scoped barcode behavior.
+Include cross-module rejection, barcode exact-match precedence, branch-scoped barcode behavior, rejection of stock mutations without manager PIN, and successful manager-authorized entry/removal/physical-count adjustment.
 
 - [ ] **Step 2: Run API tests to verify they fail**
 
@@ -276,7 +276,7 @@ Expected: FAIL.
 
 - [ ] **Step 3: Implement routers and register them in `app.main`**
 
-Use existing `get_current_pos_staff` plus a small Papelería-module guard rather than duplicating token parsing.
+Use existing `get_current_pos_staff` plus a small Papelería-module guard rather than duplicating token parsing. Stock mutation routes must call the inventory service; they must never assign the balance directly.
 
 - [ ] **Step 4: Run API and existing Cafetería regression tests**
 
@@ -290,7 +290,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/app/api/retail_catalog.py backend/app/api/retail_inventory.py backend/app/main.py backend/app/services/retail_catalog_service.py backend/tests/test_retail_catalog_api.py backend/tests/test_retail_inventory_api.py
+git add backend/app/api/retail_catalog.py backend/app/api/retail_inventory.py backend/app/schemas/retail_inventory.py backend/app/main.py backend/app/services/retail_catalog_service.py backend/tests/test_retail_catalog_api.py backend/tests/test_retail_inventory_api.py
 git commit -m "feat(retail): expose papeleria catalog and stock APIs"
 ```
 
