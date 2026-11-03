@@ -135,3 +135,37 @@ class RetailHeldSaleLineInput(BaseModel):
 class RetailHeldSaleUpsert(BaseModel):
     label: str | None = None
     lines: list[RetailHeldSaleLineInput]
+
+
+class RetailCheckoutLineInput(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+
+    item_id: int
+    presentation_id: int | None = None
+    quantity: Decimal
+    discount_amount: Decimal = Decimal(
+        "0.00"
+    )
+
+
+class RetailCheckoutRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+
+    sale_uuid: str
+    held_sale_uuid: str | None = None
+    lines: list[RetailCheckoutLineInput]
+    sale_discount_amount: Decimal = Decimal(
+        "0.00"
+    )
+    payment_uuid: str
+    payment_method: RetailPaymentMethod
+    amount_tendered: Decimal | None = None
+    external_reference: str | None = None
+    authorizing_manager_staff_id: int | None = None
+    manager_pin: str | None = None
+    authorizing_manager_staff_id: int | None = None
+    manager_pin: str | None = None

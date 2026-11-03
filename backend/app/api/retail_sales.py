@@ -14,8 +14,12 @@ from app.database.deps import get_db
 from app.models.branch import Branch
 from app.models.pos_staff import PosStaff
 from app.schemas.retail_sales import (
+    RetailCheckoutRequest,
     RetailHeldSaleUpsert,
     RetailSaleResponse,
+)
+from app.services.pos_staff_service import (
+    PosStaffService,
 )
 from app.services.retail_sale_service import (
     RetailSaleService,
@@ -192,6 +196,92 @@ def list_held_sales(
         )
         for sale in sales
     ]
+
+
+@router.post(
+    "/checkout",
+    response_model=RetailSaleResponse,
+)
+def checkout_retail_sale(
+    payload: RetailCheckoutRequest,
+    staff: PosStaff = Depends(
+        get_current_pos_staff
+    ),
+    token_payload: dict[str, object] = Depends(
+        get_current_token
+    ),
+    db: Session = Depends(get_db),
+) -> RetailSaleResponse:
+    branch_code, terminal_id = _session_context(
+        staff=staff,
+        token_payload=token_payload,
+        db=db,
+    )
+
+    discount_required = (
+        payload.sale_discount_amount > 0
+        or any(
+            line.discount_amount > 0
+            for line in payload.lines
+        )
+    )
+
+    manager = None
+
+    try:
+        if discount_required:
+            if (
+                payload.authorizing_manager_staff_id
+                is None
+                or payload.manager_pin is None
+                or not payload.manager_pin.strip()
+            ):
+                raise HTTPException(
+                    status_code=(
+                        status.HTTP_403_FORBIDDEN
+                    ),
+                    detail=(
+                        "Manager authorization "
+                        "required"
+                    ),
+                )
+
+            manager = (
+                PosStaffService.authorize_manager(
+                    db,
+                    staff_id=(
+                        payload
+                        .authorizing_manager_staff_id
+                    ),
+                    pin=payload.manager_pin,
+                    branch_code=branch_code,
+                    module_code="PAPELERIA",
+                )
+            )
+
+        sale = RetailSaleService.checkout(
+            db,
+            payload=payload,
+            staff=staff,
+            terminal_id=terminal_id,
+            manager=manager,
+        )
+
+        db.commit()
+
+    except Exception:
+        db.rollback()
+        raise
+
+    sale = RetailSaleService.get_sale(
+        db,
+        sale_uuid=sale.sale_uuid,
+        staff=staff,
+    )
+
+    return RetailSaleResponse.model_validate(
+        sale
+    )
 
 
 @router.get(
