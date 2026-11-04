@@ -1,5 +1,19 @@
 from datetime import datetime, timezone
 from decimal import Decimal
+
+from typing import Any
+
+from app.models.branch import Branch
+from app.models.pos_audit import PosAuditEvent
+from app.models.retail_inventory import (
+    RetailInventoryBalance,
+    RetailInventoryMovement,
+)
+from app.models.retail_sales import (
+    RetailReturn,
+    RetailReturnLine,
+)
+from app.services.pos_audit_service import PosAuditService
 from uuid import uuid4
 
 from fastapi import HTTPException, status
@@ -814,6 +828,1123 @@ class RetailSaleService:
                     "lock_key": lock_key,
                 },
             )
+
+
+    @staticmethod
+    def _retail_return_money(
+        value: Any,
+    ) -> Decimal:
+        amount = Decimal(str(value)).quantize(
+            Decimal("0.01")
+        )
+
+        if not amount.is_finite():
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid monetary amount",
+            )
+
+        return amount
+
+    @staticmethod
+    def _retail_return_quantity(
+        value: Any,
+    ) -> Decimal:
+        quantity = Decimal(str(value)).quantize(
+            Decimal("0.001")
+        )
+
+        if (
+            not quantity.is_finite()
+            or quantity <= Decimal("0.000")
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Return quantity must "
+                    "be positive"
+                ),
+            )
+
+        return quantity
+
+    @classmethod
+    def _require_return_manager(
+        cls,
+        *,
+        staff: PosStaff,
+        manager: PosStaff | None,
+    ) -> None:
+        cls._require_papeleria_staff(staff)
+
+        if manager is None:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Manager authorization "
+                    "is required"
+                ),
+            )
+
+        cls._require_papeleria_staff(manager)
+
+        if (
+            manager.branch_id != staff.branch_id
+            or manager.role != "MANAGER"
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Papeleria manager "
+                    "authorization required"
+                ),
+            )
+
+    @classmethod
+    def _locked_retail_sale(
+        cls,
+        db: Session,
+        *,
+        sale_uuid: str,
+        staff: PosStaff,
+    ) -> RetailSale:
+        normalized_uuid = sale_uuid.strip()
+
+        if not normalized_uuid:
+            raise HTTPException(
+                status_code=422,
+                detail="Sale UUID is required",
+            )
+
+        sale = db.execute(
+            select(RetailSale)
+            .where(
+                RetailSale.sale_uuid
+                == normalized_uuid,
+                RetailSale.branch_id
+                == staff.branch_id,
+                RetailSale.module_code
+                == "PAPELERIA",
+            )
+            .with_for_update()
+            .execution_options(
+                populate_existing=True
+            )
+        ).scalar_one_or_none()
+
+        if sale is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Retail sale not found",
+            )
+
+        return sale
+
+    @staticmethod
+    def _prior_return_lines(
+        db: Session,
+        *,
+        sale_id: int,
+    ) -> list[RetailReturnLine]:
+        return list(
+            db.execute(
+                select(RetailReturnLine)
+                .join(
+                    RetailReturn,
+                    RetailReturn.id
+                    == RetailReturnLine.return_id,
+                )
+                .where(
+                    RetailReturn.sale_id
+                    == sale_id
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    @classmethod
+    def _returned_quantity_by_line(
+        cls,
+        db: Session,
+        *,
+        sale_id: int,
+    ) -> dict[int, Decimal]:
+        totals: dict[int, Decimal] = {}
+
+        for row in cls._prior_return_lines(
+            db,
+            sale_id=sale_id,
+        ):
+            line_id = int(row.sale_line_id)
+
+            totals[line_id] = (
+                totals.get(
+                    line_id,
+                    Decimal("0.000"),
+                )
+                + Decimal(row.quantity)
+            ).quantize(
+                Decimal("0.001")
+            )
+
+        return totals
+
+    @classmethod
+    def _returned_amount_by_line(
+        cls,
+        db: Session,
+        *,
+        sale_id: int,
+    ) -> dict[int, Decimal]:
+        totals: dict[int, Decimal] = {}
+
+        for row in cls._prior_return_lines(
+            db,
+            sale_id=sale_id,
+        ):
+            line_id = int(row.sale_line_id)
+
+            totals[line_id] = (
+                totals.get(
+                    line_id,
+                    Decimal("0.00"),
+                )
+                + Decimal(row.line_total)
+            ).quantize(
+                Decimal("0.01")
+            )
+
+        return totals
+
+    @classmethod
+    def _sale_line_refund_caps(
+        cls,
+        sale: RetailSale,
+    ) -> dict[int, Decimal]:
+        ordered = sorted(
+            list(sale.lines),
+            key=lambda line: line.id,
+        )
+
+        if not ordered:
+            return {}
+
+        weights = {
+            line.id: Decimal(
+                line.line_total
+            )
+            for line in ordered
+        }
+
+        weight_total = sum(
+            weights.values(),
+            Decimal("0.00"),
+        )
+
+        sale_total = cls._retail_return_money(
+            sale.total
+        )
+
+        if weight_total <= Decimal("0.00"):
+            return {
+                line.id: Decimal("0.00")
+                for line in ordered
+            }
+
+        caps: dict[int, Decimal] = {}
+        allocated = Decimal("0.00")
+
+        for line in ordered[:-1]:
+            cap = (
+                sale_total
+                * weights[line.id]
+                / weight_total
+            ).quantize(
+                Decimal("0.01")
+            )
+
+            caps[line.id] = cap
+            allocated += cap
+
+        caps[ordered[-1].id] = (
+            sale_total - allocated
+        ).quantize(
+            Decimal("0.01")
+        )
+
+        return caps
+
+    @classmethod
+    def _original_sale_movement(
+        cls,
+        db: Session,
+        *,
+        sale_line_id: int,
+    ) -> RetailInventoryMovement | None:
+        return db.execute(
+            select(RetailInventoryMovement)
+            .where(
+                RetailInventoryMovement.sale_line_id
+                == sale_line_id,
+                RetailInventoryMovement.movement_type
+                == "SALE",
+            )
+        ).scalar_one_or_none()
+
+    @classmethod
+    def _restore_stock_effect(
+        cls,
+        db: Session,
+        *,
+        sale: RetailSale,
+        line: RetailSaleLine,
+        quantity: Decimal,
+        movement_type: str,
+        idempotency_key: str,
+        reason: str,
+        staff: PosStaff,
+        manager: PosStaff,
+    ) -> None:
+        original = cls._original_sale_movement(
+            db,
+            sale_line_id=line.id,
+        )
+
+        # SERVICE and non-tracked items have no SALE
+        # inventory movement, therefore no reversal.
+        if original is None:
+            return
+
+        sold_quantity = Decimal(
+            line.quantity
+        ).quantize(
+            Decimal("0.001")
+        )
+
+        if sold_quantity <= Decimal("0.000"):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Invalid original sale "
+                    "quantity"
+                ),
+            )
+
+        original_base_effect = abs(
+            Decimal(original.quantity_delta)
+        )
+
+        base_quantity = (
+            original_base_effect
+            * quantity
+            / sold_quantity
+        ).quantize(
+            Decimal("0.001")
+        )
+
+        balance = db.execute(
+            select(RetailInventoryBalance)
+            .where(
+                RetailInventoryBalance.branch_id
+                == original.branch_id,
+                RetailInventoryBalance.item_id
+                == original.item_id,
+            )
+            .with_for_update()
+            .execution_options(
+                populate_existing=True
+            )
+        ).scalar_one_or_none()
+
+        if balance is None:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Inventory balance is "
+                    "not configured"
+                ),
+            )
+
+        RetailInventoryService.apply_movement(
+            db,
+            balance=balance,
+            movement_type=movement_type,
+            quantity_delta=base_quantity,
+            idempotency_key=idempotency_key,
+            note=reason,
+            actor_staff_id=staff.id,
+            authorizer_staff_id=manager.id,
+            sale_id=sale.id,
+            sale_line_id=line.id,
+        )
+
+    @classmethod
+    def _apply_retail_refund(
+        cls,
+        db: Session,
+        *,
+        sale: RetailSale,
+        refund_method: str,
+        amount: Decimal,
+        idempotency_key: str,
+        reference_type: str,
+        reference_id: str,
+        external_reference: str | None,
+    ) -> None:
+        method = refund_method.strip().upper()
+
+        if method not in {"CASH", "CARD"}:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Refund method must be "
+                    "CASH or CARD"
+                ),
+            )
+
+        if method == "CARD":
+            if (
+                external_reference is None
+                or not external_reference.strip()
+            ):
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        "Card refund reference "
+                        "is required"
+                    ),
+                )
+
+            # V1 intentionally does not call a
+            # payment processor.
+            return
+
+        branch = db.get(
+            Branch,
+            sale.branch_id,
+        )
+
+        if branch is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Branch not found",
+            )
+
+        shift = PosCashService.current_shift(
+            db,
+            branch_code=branch.code,
+            terminal_id=sale.terminal_id,
+            module_code="PAPELERIA",
+        )
+
+        if shift is None:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Open Papeleria cash "
+                    "shift required"
+                ),
+            )
+
+        PosCashService.append_ledger_entry(
+            db,
+            shift_id=shift.id,
+            entry_type="RETAIL_REFUND",
+            amount=-amount,
+            idempotency_key=idempotency_key,
+            reference_type=reference_type,
+            reference_id=reference_id,
+        )
+
+    @classmethod
+    def return_items(
+        cls,
+        db: Session,
+        *,
+        sale_uuid: str,
+        payload: Any,
+        staff: PosStaff,
+        manager: PosStaff | None,
+    ) -> RetailReturn:
+        cls._require_return_manager(
+            staff=staff,
+            manager=manager,
+        )
+
+        assert manager is not None
+
+        sale = cls._locked_retail_sale(
+            db,
+            sale_uuid=sale_uuid,
+            staff=staff,
+        )
+
+        return_uuid = str(
+            payload.return_uuid
+        ).strip()
+
+        if not return_uuid:
+            raise HTTPException(
+                status_code=422,
+                detail="Return UUID is required",
+            )
+
+        existing = db.execute(
+            select(RetailReturn).where(
+                RetailReturn.return_uuid
+                == return_uuid
+            )
+        ).scalar_one_or_none()
+
+        if existing is not None:
+            if existing.sale_id != sale.id:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "Return UUID already "
+                        "used"
+                    ),
+                )
+
+            return existing
+
+        if sale.status not in {
+            "PAID",
+            "PARTIALLY_RETURNED",
+        }:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Sale cannot accept "
+                    "returns"
+                ),
+            )
+
+        reason = str(
+            payload.reason
+        ).strip()
+
+        if not reason:
+            raise HTTPException(
+                status_code=422,
+                detail="Return reason is required",
+            )
+
+        refund_method = str(
+            payload.refund_method
+        ).strip().upper()
+
+        external_reference = getattr(
+            payload,
+            "external_reference",
+            None,
+        )
+
+        payload_lines = list(
+            payload.lines
+        )
+
+        if not payload_lines:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Return requires at "
+                    "least one line"
+                ),
+            )
+
+        requested_ids = [
+            int(row.sale_line_id)
+            for row in payload_lines
+        ]
+
+        if (
+            len(requested_ids)
+            != len(set(requested_ids))
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Duplicate return "
+                    "sale line"
+                ),
+            )
+
+        sale_lines = {
+            line.id: line
+            for line in sale.lines
+        }
+
+        returned_qty = (
+            cls._returned_quantity_by_line(
+                db,
+                sale_id=sale.id,
+            )
+        )
+
+        returned_amount = (
+            cls._returned_amount_by_line(
+                db,
+                sale_id=sale.id,
+            )
+        )
+
+        caps = cls._sale_line_refund_caps(
+            sale
+        )
+
+        normalized: list[
+            tuple[
+                RetailSaleLine,
+                Decimal,
+                Decimal,
+                Decimal,
+            ]
+        ] = []
+
+        subtotal = Decimal("0.00")
+        total = Decimal("0.00")
+
+        current_quantities: dict[
+            int,
+            Decimal,
+        ] = {}
+
+        for row in payload_lines:
+            line_id = int(
+                row.sale_line_id
+            )
+
+            line = sale_lines.get(
+                line_id
+            )
+
+            if line is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        "Retail sale line "
+                        "not found"
+                    ),
+                )
+
+            quantity = (
+                cls._retail_return_quantity(
+                    row.quantity
+                )
+            )
+
+            sold_quantity = Decimal(
+                line.quantity
+            ).quantize(
+                Decimal("0.001")
+            )
+
+            previous_quantity = (
+                returned_qty.get(
+                    line.id,
+                    Decimal("0.000"),
+                )
+            )
+
+            remaining_quantity = (
+                sold_quantity
+                - previous_quantity
+            ).quantize(
+                Decimal("0.001")
+            )
+
+            if quantity > remaining_quantity:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "Return quantity exceeds "
+                        "remaining sold quantity"
+                    ),
+                )
+
+            cap = caps[line.id]
+
+            prior_money = (
+                returned_amount.get(
+                    line.id,
+                    Decimal("0.00"),
+                )
+            )
+
+            remaining_money = (
+                cap - prior_money
+            ).quantize(
+                Decimal("0.01")
+            )
+
+            if quantity == remaining_quantity:
+                line_total = remaining_money
+            else:
+                line_total = (
+                    cap
+                    * quantity
+                    / sold_quantity
+                ).quantize(
+                    Decimal("0.01")
+                )
+
+                if line_total > remaining_money:
+                    line_total = remaining_money
+
+            unit_amount = (
+                line_total / quantity
+            ).quantize(
+                Decimal("0.01")
+            )
+
+            line_subtotal = (
+                Decimal(line.line_subtotal)
+                * quantity
+                / sold_quantity
+            ).quantize(
+                Decimal("0.01")
+            )
+
+            subtotal += line_subtotal
+            total += line_total
+
+            current_quantities[
+                line.id
+            ] = quantity
+
+            normalized.append(
+                (
+                    line,
+                    quantity,
+                    unit_amount,
+                    line_total,
+                )
+            )
+
+        subtotal = subtotal.quantize(
+            Decimal("0.01")
+        )
+
+        total = total.quantize(
+            Decimal("0.01")
+        )
+
+        if total <= Decimal("0.00"):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Return has no refundable "
+                    "amount"
+                ),
+            )
+
+        retail_return = RetailReturn(
+            return_uuid=return_uuid,
+            sale_id=sale.id,
+            cashier_staff_id=staff.id,
+            authorizer_staff_id=manager.id,
+            reason=reason,
+            subtotal=subtotal,
+            total=total,
+        )
+
+        db.add(retail_return)
+        db.flush()
+
+        for (
+            line,
+            quantity,
+            unit_amount,
+            line_total,
+        ) in normalized:
+            db.add(
+                RetailReturnLine(
+                    return_id=retail_return.id,
+                    sale_line_id=line.id,
+                    quantity=quantity,
+                    unit_amount=unit_amount,
+                    line_total=line_total,
+                )
+            )
+
+            cls._restore_stock_effect(
+                db,
+                sale=sale,
+                line=line,
+                quantity=quantity,
+                movement_type="RETURN",
+                idempotency_key=(
+                    f"retail-return:"
+                    f"{return_uuid}:"
+                    f"line:{line.id}"
+                ),
+                reason=reason,
+                staff=staff,
+                manager=manager,
+            )
+
+        cls._apply_retail_refund(
+            db,
+            sale=sale,
+            refund_method=refund_method,
+            amount=total,
+            idempotency_key=(
+                f"retail-return:"
+                f"{return_uuid}"
+            ),
+            reference_type="retail_return",
+            reference_id=return_uuid,
+            external_reference=(
+                external_reference
+            ),
+        )
+
+        all_returned = True
+
+        for line in sale.lines:
+            cumulative = (
+                returned_qty.get(
+                    line.id,
+                    Decimal("0.000"),
+                )
+                + current_quantities.get(
+                    line.id,
+                    Decimal("0.000"),
+                )
+            ).quantize(
+                Decimal("0.001")
+            )
+
+            sold = Decimal(
+                line.quantity
+            ).quantize(
+                Decimal("0.001")
+            )
+
+            if cumulative < sold:
+                all_returned = False
+                break
+
+        sale.status = (
+            "RETURNED"
+            if all_returned
+            else "PARTIALLY_RETURNED"
+        )
+
+        PosAuditService.record(
+            db,
+            event_type=(
+                "RETAIL_RETURN_AUTHORIZED"
+            ),
+            branch_id=sale.branch_id,
+            terminal_id=sale.terminal_id,
+            actor_staff_id=staff.id,
+            authorizer_staff_id=manager.id,
+            target_type="retail_sale",
+            target_id=sale.sale_uuid,
+            metadata={
+                "return_uuid": return_uuid,
+                "reason": reason,
+                "refund_method": (
+                    refund_method
+                ),
+                "external_reference": (
+                    external_reference
+                ),
+                "refund_amount": (
+                    f"{total:.2f}"
+                ),
+                "quantities": [
+                    {
+                        "sale_line_id": (
+                            line.id
+                        ),
+                        "quantity": (
+                            f"{quantity:.3f}"
+                        ),
+                    }
+                    for (
+                        line,
+                        quantity,
+                        _unit_amount,
+                        _line_total,
+                    ) in normalized
+                ],
+            },
+        )
+
+        db.flush()
+
+        return retail_return
+
+    @classmethod
+    def cancel_paid_sale(
+        cls,
+        db: Session,
+        *,
+        sale_uuid: str,
+        payload: Any,
+        staff: PosStaff,
+        manager: PosStaff | None,
+    ) -> RetailSale:
+        cls._require_return_manager(
+            staff=staff,
+            manager=manager,
+        )
+
+        assert manager is not None
+
+        sale = cls._locked_retail_sale(
+            db,
+            sale_uuid=sale_uuid,
+            staff=staff,
+        )
+
+        cancellation_uuid = str(
+            payload.cancellation_uuid
+        ).strip()
+
+        if not cancellation_uuid:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Cancellation UUID "
+                    "is required"
+                ),
+            )
+
+        prior_events = list(
+            db.execute(
+                select(PosAuditEvent).where(
+                    PosAuditEvent.event_type
+                    == (
+                        "RETAIL_CANCELLATION_"
+                        "AUTHORIZED"
+                    ),
+                    PosAuditEvent.target_type
+                    == "retail_sale",
+                    PosAuditEvent.target_id
+                    == sale.sale_uuid,
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        for event in prior_events:
+            metadata = (
+                event.metadata_json
+                or {}
+            )
+
+            if (
+                metadata.get(
+                    "cancellation_uuid"
+                )
+                == cancellation_uuid
+            ):
+                if sale.status == "CANCELLED":
+                    return sale
+
+        if sale.status == "CANCELLED":
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Sale is already "
+                    "cancelled"
+                ),
+            )
+
+        if sale.status not in {
+            "PAID",
+            "PARTIALLY_RETURNED",
+        }:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Sale cannot be "
+                    "cancelled"
+                ),
+            )
+
+        reason = str(
+            payload.reason
+        ).strip()
+
+        if not reason:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Cancellation reason "
+                    "is required"
+                ),
+            )
+
+        refund_method = str(
+            payload.refund_method
+        ).strip().upper()
+
+        external_reference = getattr(
+            payload,
+            "external_reference",
+            None,
+        )
+
+        returned_qty = (
+            cls._returned_quantity_by_line(
+                db,
+                sale_id=sale.id,
+            )
+        )
+
+        prior_returns = list(
+            db.execute(
+                select(RetailReturn).where(
+                    RetailReturn.sale_id
+                    == sale.id
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        already_refunded = sum(
+            (
+                Decimal(row.total)
+                for row in prior_returns
+            ),
+            Decimal("0.00"),
+        ).quantize(
+            Decimal("0.01")
+        )
+
+        refund_amount = (
+            Decimal(sale.total)
+            - already_refunded
+        ).quantize(
+            Decimal("0.01")
+        )
+
+        if refund_amount <= Decimal("0.00"):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Sale has no remaining "
+                    "refundable amount"
+                ),
+            )
+
+        quantities: list[
+            dict[str, object]
+        ] = []
+
+        for line in sale.lines:
+            sold = Decimal(
+                line.quantity
+            ).quantize(
+                Decimal("0.001")
+            )
+
+            returned = (
+                returned_qty.get(
+                    line.id,
+                    Decimal("0.000"),
+                )
+            )
+
+            remaining = (
+                sold - returned
+            ).quantize(
+                Decimal("0.001")
+            )
+
+            if remaining <= Decimal("0.000"):
+                continue
+
+            cls._restore_stock_effect(
+                db,
+                sale=sale,
+                line=line,
+                quantity=remaining,
+                movement_type=(
+                    "CANCELLATION_REVERSAL"
+                ),
+                idempotency_key=(
+                    f"retail-cancel:"
+                    f"{cancellation_uuid}:"
+                    f"line:{line.id}"
+                ),
+                reason=reason,
+                staff=staff,
+                manager=manager,
+            )
+
+            quantities.append(
+                {
+                    "sale_line_id": line.id,
+                    "quantity": (
+                        f"{remaining:.3f}"
+                    ),
+                }
+            )
+
+        cls._apply_retail_refund(
+            db,
+            sale=sale,
+            refund_method=refund_method,
+            amount=refund_amount,
+            idempotency_key=(
+                f"retail-cancel:"
+                f"{cancellation_uuid}"
+            ),
+            reference_type=(
+                "retail_cancellation"
+            ),
+            reference_id=(
+                cancellation_uuid
+            ),
+            external_reference=(
+                external_reference
+            ),
+        )
+
+        sale.status = "CANCELLED"
+
+        PosAuditService.record(
+            db,
+            event_type=(
+                "RETAIL_CANCELLATION_"
+                "AUTHORIZED"
+            ),
+            branch_id=sale.branch_id,
+            terminal_id=sale.terminal_id,
+            actor_staff_id=staff.id,
+            authorizer_staff_id=manager.id,
+            target_type="retail_sale",
+            target_id=sale.sale_uuid,
+            metadata={
+                "cancellation_uuid": (
+                    cancellation_uuid
+                ),
+                "reason": reason,
+                "refund_method": (
+                    refund_method
+                ),
+                "external_reference": (
+                    external_reference
+                ),
+                "refund_amount": (
+                    f"{refund_amount:.2f}"
+                ),
+                "quantities": quantities,
+            },
+        )
+
+        db.flush()
+
+        return sale
 
     @classmethod
     def checkout(

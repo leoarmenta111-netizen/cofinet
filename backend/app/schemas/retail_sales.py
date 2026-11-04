@@ -169,3 +169,90 @@ class RetailCheckoutRequest(BaseModel):
     manager_pin: str | None = None
     authorizing_manager_staff_id: int | None = None
     manager_pin: str | None = None
+
+
+# ---- Papeleria returns / cancellations ----
+from decimal import Decimal as _RetailDecimal
+from typing import Literal as _RetailLiteral
+
+from pydantic import (
+    BaseModel as _RetailBaseModel,
+    ConfigDict as _RetailConfigDict,
+    Field as _RetailField,
+)
+
+
+class RetailReturnLineRequest(_RetailBaseModel):
+    sale_line_id: int = _RetailField(gt=0)
+    quantity: _RetailDecimal = _RetailField(gt=0)
+
+    model_config = _RetailConfigDict(
+        extra="forbid"
+    )
+
+
+class RetailReturnRequest(_RetailBaseModel):
+    return_uuid: str = _RetailField(
+        min_length=1,
+        max_length=120,
+    )
+    reason: str = _RetailField(
+        min_length=1,
+        max_length=500,
+    )
+    refund_method: _RetailLiteral[
+        "CASH",
+        "CARD",
+    ]
+    external_reference: str | None = (
+        _RetailField(
+            default=None,
+            max_length=200,
+        )
+    )
+    authorizing_manager_staff_id: int = (
+        _RetailField(gt=0)
+    )
+    manager_pin: str = _RetailField(
+        min_length=1,
+        max_length=64,
+    )
+    lines: list[RetailReturnLineRequest] = (
+        _RetailField(min_length=1)
+    )
+
+    model_config = _RetailConfigDict(
+        extra="forbid"
+    )
+
+
+class RetailCancellationRequest(_RetailBaseModel):
+    cancellation_uuid: str = _RetailField(
+        min_length=1,
+        max_length=120,
+    )
+    reason: str = _RetailField(
+        min_length=1,
+        max_length=500,
+    )
+    refund_method: _RetailLiteral[
+        "CASH",
+        "CARD",
+    ]
+    external_reference: str | None = (
+        _RetailField(
+            default=None,
+            max_length=200,
+        )
+    )
+    authorizing_manager_staff_id: int = (
+        _RetailField(gt=0)
+    )
+    manager_pin: str = _RetailField(
+        min_length=1,
+        max_length=64,
+    )
+
+    model_config = _RetailConfigDict(
+        extra="forbid"
+    )

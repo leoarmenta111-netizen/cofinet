@@ -98,7 +98,7 @@ class PosAuditEvent(Base):
     __table_args__ = (
         CheckConstraint(
             "event_type IN "
-            "('SHIFT_OPENED','SHIFT_CLOSED','CASH_MOVEMENT','RETAIL_DISCOUNT_AUTHORIZED')",
+            "('SHIFT_OPENED','SHIFT_CLOSED','CASH_MOVEMENT','RETAIL_DISCOUNT_AUTHORIZED','RETAIL_RETURN_AUTHORIZED','RETAIL_CANCELLATION_AUTHORIZED')",
             name="ck_pos_audit_events_event_type",
         ),
         CheckConstraint(

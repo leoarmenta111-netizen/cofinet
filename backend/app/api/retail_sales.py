@@ -344,3 +344,151 @@ def get_retail_sale(
     return RetailSaleResponse.model_validate(
         sale
     )
+
+
+# ---- Papeleria returns / cancellations ----
+from app.schemas.retail_sales import (
+    RetailCancellationRequest,
+    RetailReturnRequest,
+)
+from app.services.pos_staff_service import (
+    PosStaffService,
+)
+
+
+@router.post(
+    "/{sale_uuid}/returns",
+)
+def return_retail_sale_items(
+    sale_uuid: str,
+    payload: RetailReturnRequest,
+    staff: PosStaff = Depends(
+        get_current_pos_staff
+    ),
+    token_payload: dict[str, object] = Depends(
+        get_current_token
+    ),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    _session_context(
+        staff=staff,
+        token_payload=token_payload,
+        db=db,
+    )
+
+    try:
+        manager = (
+            PosStaffService.authorize_manager(
+                db,
+                staff_id=(
+                    payload
+                    .authorizing_manager_staff_id
+                ),
+                pin=payload.manager_pin,
+                branch_code=staff.branch.code,
+                module_code="PAPELERIA",
+            )
+        )
+
+        retail_return = (
+            RetailSaleService.return_items(
+                db,
+                sale_uuid=sale_uuid,
+                payload=payload,
+                staff=staff,
+                manager=manager,
+            )
+        )
+
+        db.commit()
+        db.refresh(retail_return)
+
+        return {
+            "id": retail_return.id,
+            "return_uuid": (
+                retail_return.return_uuid
+            ),
+            "sale_id": retail_return.sale_id,
+            "cashier_staff_id": (
+                retail_return.cashier_staff_id
+            ),
+            "authorizer_staff_id": (
+                retail_return
+                .authorizer_staff_id
+            ),
+            "reason": retail_return.reason,
+            "subtotal": str(
+                retail_return.subtotal
+            ),
+            "total": str(
+                retail_return.total
+            ),
+            "created_at": (
+                retail_return.created_at
+                .isoformat()
+                if retail_return.created_at
+                is not None
+                else None
+            ),
+        }
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.post(
+    "/{sale_uuid}/cancel",
+)
+def cancel_retail_paid_sale(
+    sale_uuid: str,
+    payload: RetailCancellationRequest,
+    staff: PosStaff = Depends(
+        get_current_pos_staff
+    ),
+    token_payload: dict[str, object] = Depends(
+        get_current_token
+    ),
+    db: Session = Depends(get_db),
+) -> RetailSaleResponse:
+    _session_context(
+        staff=staff,
+        token_payload=token_payload,
+        db=db,
+    )
+
+    try:
+        manager = (
+            PosStaffService.authorize_manager(
+                db,
+                staff_id=(
+                    payload
+                    .authorizing_manager_staff_id
+                ),
+                pin=payload.manager_pin,
+                branch_code=staff.branch.code,
+                module_code="PAPELERIA",
+            )
+        )
+
+        sale = (
+            RetailSaleService.cancel_paid_sale(
+                db,
+                sale_uuid=sale_uuid,
+                payload=payload,
+                staff=staff,
+                manager=manager,
+            )
+        )
+
+        db.commit()
+        db.refresh(sale)
+
+        return (
+            RetailSaleResponse
+            .model_validate(sale)
+        )
+
+    except Exception:
+        db.rollback()
+        raise
