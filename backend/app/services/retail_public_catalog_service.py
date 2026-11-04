@@ -7,7 +7,6 @@ from sqlalchemy.orm import (
 from app.models.retail_catalog import (
     RetailCatalogItem,
     RetailPresentation,
-    RetailServicePriceTier,
 )
 
 
@@ -33,11 +32,6 @@ class RetailPublicCatalogService:
                 selectinload(
                     RetailCatalogItem
                     .service_price_tiers
-                    .and_(
-                        RetailServicePriceTier
-                        .is_active
-                        .is_(True)
-                    )
                 ),
             )
             .where(

@@ -1,0 +1,171 @@
+#retail-product-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(170px, 1fr)
+        );
+    gap: 12px;
+}
+
+.retail-product-card {
+    min-height: 136px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 14px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 14px;
+}
+
+.retail-product-category {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.retail-product-name {
+    font-size: 1rem;
+    line-height: 1.25;
+}
+
+.retail-product-sku {
+    font-size: 0.78rem;
+    opacity: 0.68;
+}
+
+.retail-product-price {
+    margin-top: auto;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.retail-empty-state {
+    margin: 0;
+    padding: 18px 8px;
+    opacity: 0.7;
+}
+
+#retail-cart-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.retail-cart-line {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+    gap: 10px 12px;
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.retail-cart-line-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.retail-cart-presentation,
+.retail-cart-unit-price {
+    font-size: 0.8rem;
+    opacity: 0.72;
+}
+
+.retail-cart-controls {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.retail-cart-controls button {
+    min-width: 40px;
+    min-height: 38px;
+}
+
+.retail-cart-quantity {
+    min-width: 32px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.retail-cart-remove {
+    margin-left: auto;
+}
+
+.retail-cart-line-total {
+    align-self: start;
+    white-space: nowrap;
+}
+
+.retail-dialog {
+    width: min(560px, calc(100vw - 32px));
+    max-height: 80vh;
+    border: 0;
+    border-radius: 18px;
+    padding: 18px;
+}
+
+.retail-dialog::backdrop {
+    background:
+        rgb(0 0 0 / 45%);
+}
+
+.retail-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.retail-dialog-header h2 {
+    margin: 0;
+}
+
+#retail-presentation-close {
+    min-width: 42px;
+    min-height: 42px;
+    font-size: 1.4rem;
+}
+
+.retail-presentation-options {
+    display: grid;
+    gap: 10px;
+}
+
+.retail-presentation-option {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+    gap: 4px 12px;
+    padding: 14px;
+    text-align: left;
+    border-radius: 12px;
+}
+
+.retail-presentation-option small {
+    grid-column: 1 / -1;
+    opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+    #retail-product-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+    .retail-product-card {
+        min-height: 120px;
+        padding: 11px;
+    }
+}

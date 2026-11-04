@@ -14,6 +14,7 @@
         rel="stylesheet"
         href="../css/pos.css"
     >
+    <link rel="stylesheet" href="../css/retail-papeleria.css">
 </head>
 
 <body>
@@ -123,7 +124,34 @@
         </main>
 
 
-        <dialog
+
+    <dialog
+        id="retail-presentation-modal"
+        class="retail-dialog"
+    >
+        <div class="retail-dialog-header">
+            <h2
+                id="retail-presentation-title"
+            >
+                Selecciona presentación
+            </h2>
+
+            <button
+                id="retail-presentation-close"
+                type="button"
+                aria-label="Cerrar selector de presentación"
+            >
+                ×
+            </button>
+        </div>
+
+        <div
+            id="retail-presentation-options"
+            class="retail-presentation-options"
+        ></div>
+    </dialog>
+
+<dialog
             id="retail-manager-modal"
         >
             <form method="dialog">
@@ -166,7 +194,8 @@
         src="../js/retail-cart.js"
     ></script>
 
-    <script
+        <script src="../js/retail-catalog.js"></script>
+<script
         src="../js/retail-app.js"
     ></script>
 </body>
