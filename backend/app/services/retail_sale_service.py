@@ -27,6 +27,7 @@ from app.services.pos_audit_service import PosAuditService
 from app.services.pos_cash_service import (
     PosCashService,
 )
+from app.services.retail_receipt_service import RetailReceiptService
 from app.services.retail_inventory_service import (
     RetailInventoryService,
 )
@@ -1303,6 +1304,19 @@ class RetailSaleService:
                 detail=(
                     "Unsupported payment method"
                 ),
+            )
+
+        db.flush()
+
+        if sale.receipt_snapshot is None:
+            sale.receipt_snapshot = (
+                RetailReceiptService
+                .build_snapshot(
+                    sale=sale,
+                    branch=branch,
+                    cashier=staff,
+                    authorizer=manager,
+                )
             )
 
         db.flush()

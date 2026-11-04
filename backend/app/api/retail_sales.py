@@ -21,6 +21,7 @@ from app.schemas.retail_sales import (
 from app.services.pos_staff_service import (
     PosStaffService,
 )
+from app.services.retail_receipt_service import RetailReceiptService
 from app.services.retail_sale_service import (
     RetailSaleService,
 )
@@ -281,6 +282,36 @@ def checkout_retail_sale(
 
     return RetailSaleResponse.model_validate(
         sale
+    )
+
+
+@router.get(
+    "/{sale_uuid}/receipt",
+)
+def get_retail_sale_receipt(
+    sale_uuid: str,
+    staff: PosStaff = Depends(
+        get_current_pos_staff
+    ),
+    token_payload: dict[str, object] = Depends(
+        get_current_token
+    ),
+    db: Session = Depends(get_db),
+) -> dict:
+    _session_context(
+        staff=staff,
+        token_payload=token_payload,
+        db=db,
+    )
+
+    sale = RetailSaleService.get_sale(
+        db,
+        sale_uuid=sale_uuid,
+        staff=staff,
+    )
+
+    return RetailReceiptService.stored_snapshot(
+        sale=sale,
     )
 
 
