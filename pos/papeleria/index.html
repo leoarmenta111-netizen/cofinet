@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+
+    <title>COFI Papelería</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/pos.css"
+    >
+</head>
+
+<body>
+    <div
+        id="retail-pos"
+        data-module="PAPELERIA"
+    >
+        <header class="app-header">
+            <div>
+                <strong>
+                    COFI Papelería
+                </strong>
+
+                <small>
+                    Punto de venta · PAPELERIA
+                </small>
+            </div>
+
+            <div
+                id="retail-session-status"
+                aria-live="polite"
+            >
+                Caja de Papelería
+            </div>
+        </header>
+
+
+        <main class="pos-layout">
+            <section
+                aria-label="Catálogo de Papelería"
+            >
+                <label
+                    for="retail-search"
+                >
+                    Buscar producto,
+                    código o servicio
+                </label>
+
+                <input
+                    id="retail-search"
+                    type="search"
+                    autocomplete="off"
+                    placeholder="Escanea o escribe para buscar"
+                >
+
+                <div
+                    id="retail-product-grid"
+                    aria-live="polite"
+                ></div>
+            </section>
+
+
+            <aside
+                id="retail-cart"
+                aria-label="Venta actual"
+            >
+                <header>
+                    <h1>
+                        Venta actual
+                    </h1>
+                </header>
+
+                <div
+                    id="retail-cart-lines"
+                    aria-live="polite"
+                ></div>
+
+                <footer>
+                    <div>
+                        <span>Total</span>
+
+                        <strong
+                            id="retail-cart-total"
+                        >
+                            $0.00
+                        </strong>
+                    </div>
+
+                    <button
+                        id="retail-hold-sale"
+                        type="button"
+                    >
+                        Poner en espera
+                    </button>
+
+                    <button
+                        id="retail-pay-cash"
+                        type="button"
+                    >
+                        Cobrar efectivo
+                    </button>
+
+                    <button
+                        id="retail-pay-card"
+                        type="button"
+                    >
+                        Cobrar tarjeta
+                    </button>
+                </footer>
+            </aside>
+
+
+            <section
+                id="retail-held-sales"
+                aria-label="Ventas en espera"
+            ></section>
+        </main>
+
+
+        <dialog
+            id="retail-manager-modal"
+        >
+            <form method="dialog">
+                <h2>
+                    Autorización de gerente
+                </h2>
+
+                <p>
+                    Esta operación requiere
+                    autorización.
+                </p>
+
+                <button
+                    type="submit"
+                >
+                    Cerrar
+                </button>
+            </form>
+        </dialog>
+    </div>
+
+
+    <script src="../js/db.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/uuid.js"></script>
+
+    <script
+        src="../js/staff-session.js"
+    ></script>
+
+    <script
+        src="../js/cash-shift.js"
+    ></script>
+
+    <script
+        src="../js/retail-api.js"
+    ></script>
+
+    <script
+        src="../js/retail-cart.js"
+    ></script>
+
+    <script
+        src="../js/retail-app.js"
+    ></script>
+</body>
+</html>

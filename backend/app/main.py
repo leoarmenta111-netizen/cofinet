@@ -21,6 +21,7 @@ from app.api.admin_pos_customers import router as admin_pos_customers_router
 from app.api.pos_customers import router as pos_customers_router
 from app.api.pos_staff import router as pos_staff_router
 from app.api.pos_cash import router as pos_cash_router
+from app.api.retail_catalog import router as retail_catalog_router
 from app.api.retail_sales import router as retail_sales_router
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -63,6 +64,7 @@ app.include_router(admin_pos_customers_router)
 app.include_router(pos_customers_router)
 app.include_router(pos_staff_router)
 app.include_router(pos_cash_router)
+app.include_router(retail_catalog_router)
 app.include_router(retail_sales_router)
 
 @app.get("/")
