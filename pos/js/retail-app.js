@@ -8,6 +8,9 @@ window.CofiRetailApp = (() => {
         query: "",
         pendingItem: null,
         paymentMethod: null,
+        activeHeldSaleUuid: null,
+        lastServerSale: null,
+        lastReceipt: null,
         busy: false,
         initialized: false,
     };
@@ -987,6 +990,1019 @@ window.CofiRetailApp = (() => {
     }
 
 
+    function uuid() {
+        if (
+            !window.CofiUUID
+            || typeof (
+                window.CofiUUID.v4
+            ) !== "function"
+        ) {
+            throw new Error(
+                "UUID generator is unavailable"
+            );
+        }
+
+        return window.CofiUUID.v4();
+    }
+
+
+    function setSaleMessage(
+        message,
+        isError = false
+    ) {
+        const target =
+            element(
+                "retail-sale-message"
+            );
+
+        if (!target) {
+            return;
+        }
+
+        target.textContent =
+            message || "";
+
+        target.dataset.state =
+            isError
+                ? "error"
+                : "info";
+    }
+
+
+    function saleLinesToCart(
+        sale
+    ) {
+        const cart =
+            window.CofiRetailCart
+                .create();
+
+        const lines =
+            Array.isArray(
+                sale?.lines
+            )
+                ? sale.lines
+                : [];
+
+        for (
+            const line
+            of lines
+        ) {
+            const item =
+                itemById(
+                    line.item_id
+                );
+
+            if (!item) {
+                continue;
+            }
+
+            const presentation =
+                presentationById(
+                    item,
+                    line.presentation_id
+                );
+
+            const quantity =
+                Number(
+                    line.quantity
+                );
+
+            let unitPrice =
+                Number(
+                    line.unit_price
+                    ?? line
+                        .unit_price_snapshot
+                );
+
+            if (
+                !Number.isFinite(
+                    unitPrice
+                )
+            ) {
+                unitPrice =
+                    Number(
+                        window
+                            .CofiRetailCatalog
+                            .estimateUnitPrice(
+                                item,
+                                presentation,
+                                quantity
+                            )
+                    );
+            }
+
+            if (
+                !Number.isFinite(
+                    unitPrice
+                )
+            ) {
+                unitPrice = 0;
+            }
+
+            window.CofiRetailCart.add(
+                cart,
+                {
+                    item_id:
+                        item.id,
+
+                    presentation_id:
+                        presentation
+                            ? presentation.id
+                            : null,
+
+                    quantity:
+                        quantity > 0
+                            ? quantity
+                            : 1,
+
+                    discount_amount:
+                        Number(
+                            line
+                                .discount_amount
+                            || 0
+                        ),
+
+                    unit_price:
+                        unitPrice,
+
+                    name:
+                        item.name,
+
+                    presentation_name:
+                        presentation
+                            ? presentation
+                                .name
+                            : "Servicio",
+                }
+            );
+        }
+
+        return cart;
+    }
+
+
+    function renderHeldSales() {
+        const container =
+            element(
+                "retail-held-sales"
+            );
+
+        if (!container) {
+            return;
+        }
+
+        container.replaceChildren();
+
+        if (
+            !state.heldSales.length
+        ) {
+            const empty =
+                document.createElement(
+                    "p"
+                );
+
+            empty.className =
+                "retail-empty-state";
+
+            empty.textContent =
+                "No hay ventas en espera.";
+
+            container.appendChild(
+                empty
+            );
+
+            return;
+        }
+
+        for (
+            const sale
+            of state.heldSales
+        ) {
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.className =
+                "retail-held-sale";
+
+            const label =
+                document.createElement(
+                    "strong"
+                );
+
+            label.textContent =
+                sale.label
+                || "Venta en espera";
+
+            const total =
+                document.createElement(
+                    "span"
+                );
+
+            total.textContent =
+                money(
+                    sale.total
+                    || sale.subtotal
+                    || 0
+                );
+
+            const meta =
+                document.createElement(
+                    "small"
+                );
+
+            meta.textContent =
+                String(
+                    sale.sale_uuid
+                    || ""
+                );
+
+            button.append(
+                label,
+                total,
+                meta
+            );
+
+            button.addEventListener(
+                "click",
+                () => {
+                    state.cart =
+                        saleLinesToCart(
+                            sale
+                        );
+
+                    state
+                        .activeHeldSaleUuid =
+                            sale.sale_uuid;
+
+                    renderCart();
+
+                    setSaleMessage(
+                        `Venta recuperada: ${
+                            sale.label
+                            || sale.sale_uuid
+                        }`
+                    );
+                }
+            );
+
+            container.appendChild(
+                button
+            );
+        }
+    }
+
+
+    async function loadHeldSales() {
+        try {
+            const response =
+                await window
+                    .CofiRetailAPI
+                    .listHeldSales();
+
+            state.heldSales =
+                Array.isArray(response)
+                    ? response
+                    : [];
+
+            renderHeldSales();
+
+        } catch (error) {
+            console.error(
+                "Held sales load failed",
+                error
+            );
+
+            state.heldSales = [];
+
+            renderHeldSales();
+
+            setSaleMessage(
+                "No fue posible cargar "
+                + "ventas en espera.",
+                true
+            );
+        }
+    }
+
+
+    async function holdCurrentSale() {
+        if (
+            !state.cart
+            || !state.cart.lines
+            || state.cart.lines.length
+            === 0
+        ) {
+            setSaleMessage(
+                "Agrega artículos antes "
+                + "de guardar la venta.",
+                true
+            );
+
+            return;
+        }
+
+        const defaultLabel =
+            "Venta "
+            + new Date()
+                .toLocaleTimeString(
+                    "es-MX",
+                    {
+                        hour:
+                            "2-digit",
+                        minute:
+                            "2-digit",
+                    }
+                );
+
+        const requested =
+            window.prompt(
+                "Nombre para la venta "
+                + "en espera:",
+                defaultLabel
+            );
+
+        if (requested === null) {
+            return;
+        }
+
+        const payload =
+            window
+                .CofiRetailSales
+                .buildHeldPayload(
+                    state.cart,
+                    requested
+                );
+
+        try {
+            let saved;
+
+            if (
+                state
+                    .activeHeldSaleUuid
+            ) {
+                saved =
+                    await window
+                        .CofiRetailAPI
+                        .updateHeldSale(
+                            state
+                                .activeHeldSaleUuid,
+                            payload
+                        );
+            } else {
+                saved =
+                    await window
+                        .CofiRetailAPI
+                        .holdSale(
+                            payload
+                        );
+            }
+
+            const savedUuid =
+                saved?.sale_uuid
+                || state
+                    .activeHeldSaleUuid;
+
+            state.cart =
+                window
+                    .CofiRetailCart
+                    .create();
+
+            state
+                .activeHeldSaleUuid =
+                    null;
+
+            renderCart();
+
+            await loadHeldSales();
+
+            setSaleMessage(
+                "Venta guardada"
+                + (
+                    savedUuid
+                        ? `: ${savedUuid}`
+                        : "."
+                )
+            );
+
+        } catch (error) {
+            console.error(
+                "Hold sale failed",
+                error
+            );
+
+            setSaleMessage(
+                error.message
+                || "No fue posible "
+                + "guardar la venta.",
+                true
+            );
+        }
+    }
+
+
+    function closePaymentModal() {
+        const modal =
+            element(
+                "retail-payment-modal"
+            );
+
+        state.paymentMethod =
+            null;
+
+        if (
+            modal
+            && typeof modal.close
+            === "function"
+            && modal.open
+        ) {
+            modal.close();
+        }
+    }
+
+
+    function openPaymentModal(
+        method
+    ) {
+        if (
+            !state.cart
+            || !state.cart.lines
+            || state.cart.lines.length
+            === 0
+        ) {
+            setSaleMessage(
+                "Agrega artículos antes "
+                + "de cobrar.",
+                true
+            );
+
+            return;
+        }
+
+        const normalized =
+            String(method)
+                .toUpperCase();
+
+        state.paymentMethod =
+            normalized;
+
+        const modal =
+            element(
+                "retail-payment-modal"
+            );
+
+        const title =
+            element(
+                "retail-payment-title"
+            );
+
+        const estimate =
+            element(
+                "retail-payment-estimate"
+            );
+
+        const cashField =
+            element(
+                "retail-cash-field"
+            );
+
+        const cardField =
+            element(
+                "retail-card-field"
+            );
+
+        const cashInput =
+            element(
+                "retail-amount-tendered"
+            );
+
+        const cardInput =
+            element(
+                "retail-card-reference"
+            );
+
+        const error =
+            element(
+                "retail-payment-error"
+            );
+
+        if (
+            !modal
+            || !title
+        ) {
+            return;
+        }
+
+        title.textContent =
+            normalized === "CASH"
+                ? "Cobro en efectivo"
+                : "Cobro con tarjeta";
+
+        if (estimate) {
+            estimate.textContent =
+                money(
+                    window
+                        .CofiRetailCart
+                        .total(
+                            state.cart
+                        )
+                );
+        }
+
+        if (cashField) {
+            cashField.hidden =
+                normalized !== "CASH";
+        }
+
+        if (cardField) {
+            cardField.hidden =
+                normalized !== "CARD";
+        }
+
+        if (cashInput) {
+            cashInput.value =
+                normalized === "CASH"
+                    ? String(
+                        window
+                            .CofiRetailCart
+                            .total(
+                                state.cart
+                            )
+                    )
+                    : "";
+        }
+
+        if (cardInput) {
+            cardInput.value = "";
+        }
+
+        if (error) {
+            error.hidden = true;
+            error.textContent = "";
+        }
+
+        if (
+            typeof modal.showModal
+            === "function"
+        ) {
+            modal.showModal();
+        } else {
+            modal.setAttribute(
+                "open",
+                ""
+            );
+        }
+
+        if (
+            normalized === "CASH"
+            && cashInput
+        ) {
+            cashInput.focus();
+        }
+
+        if (
+            normalized === "CARD"
+            && cardInput
+        ) {
+            cardInput.focus();
+        }
+    }
+
+
+    function renderReceipt(
+        sale,
+        receipt
+    ) {
+        const modal =
+            element(
+                "retail-receipt-modal"
+            );
+
+        const body =
+            element(
+                "retail-receipt-body"
+            );
+
+        if (
+            !modal
+            || !body
+        ) {
+            return;
+        }
+
+        body.replaceChildren();
+
+        const total =
+            window
+                .CofiRetailSales
+                .serverTotal(
+                    sale
+                );
+
+        const payment =
+            window
+                .CofiRetailSales
+                .paymentSummary(
+                    sale
+                );
+
+        const totalRow =
+            document.createElement(
+                "div"
+            );
+
+        totalRow.className =
+            "retail-receipt-total";
+
+        const totalLabel =
+            document.createElement(
+                "span"
+            );
+
+        totalLabel.textContent =
+            "Total servidor";
+
+        const totalValue =
+            document.createElement(
+                "strong"
+            );
+
+        totalValue.textContent =
+            money(total);
+
+        totalRow.append(
+            totalLabel,
+            totalValue
+        );
+
+        const paymentBlock =
+            document.createElement(
+                "div"
+            );
+
+        paymentBlock.className =
+            "retail-receipt-payment";
+
+        const method =
+            document.createElement(
+                "strong"
+            );
+
+        method.textContent =
+            payment.method === "CASH"
+                ? "Efectivo"
+                : "Tarjeta";
+
+        paymentBlock.appendChild(
+            method
+        );
+
+        if (
+            payment.method
+            === "CASH"
+        ) {
+            const received =
+                document.createElement(
+                    "span"
+                );
+
+            received.textContent =
+                "Recibido: "
+                + money(
+                    payment
+                        .amountTendered
+                );
+
+            const change =
+                document.createElement(
+                    "span"
+                );
+
+            change.textContent =
+                "Cambio: "
+                + money(
+                    payment.changeDue
+                );
+
+            paymentBlock.append(
+                received,
+                change
+            );
+        }
+
+        if (
+            payment.method
+            === "CARD"
+        ) {
+            const reference =
+                document.createElement(
+                    "span"
+                );
+
+            reference.textContent =
+                "Referencia: "
+                + (
+                    payment
+                        .externalReference
+                    || "—"
+                );
+
+            paymentBlock.appendChild(
+                reference
+            );
+        }
+
+        const snapshot =
+            document.createElement(
+                "pre"
+            );
+
+        snapshot.className =
+            "retail-receipt-snapshot";
+
+        snapshot.textContent =
+            JSON.stringify(
+                receipt,
+                null,
+                2
+            );
+
+        body.append(
+            totalRow,
+            paymentBlock,
+            snapshot
+        );
+
+        if (
+            typeof modal.showModal
+            === "function"
+        ) {
+            modal.showModal();
+        } else {
+            modal.setAttribute(
+                "open",
+                ""
+            );
+        }
+    }
+
+
+    async function confirmPayment() {
+        if (
+            state.busy
+            || !state.paymentMethod
+        ) {
+            return;
+        }
+
+        const errorTarget =
+            element(
+                "retail-payment-error"
+            );
+
+        const cashInput =
+            element(
+                "retail-amount-tendered"
+            );
+
+        const cardInput =
+            element(
+                "retail-card-reference"
+            );
+
+        try {
+            state.busy = true;
+
+            if (errorTarget) {
+                errorTarget.hidden =
+                    true;
+
+                errorTarget.textContent =
+                    "";
+            }
+
+            const payload =
+                window
+                    .CofiRetailSales
+                    .buildCheckoutPayload(
+                        {
+                            cart:
+                                state.cart,
+
+                            saleUuid:
+                                uuid(),
+
+                            paymentUuid:
+                                uuid(),
+
+                            heldSaleUuid:
+                                state
+                                    .activeHeldSaleUuid,
+
+                            paymentMethod:
+                                state
+                                    .paymentMethod,
+
+                            amountTendered:
+                                cashInput
+                                    ? cashInput
+                                        .value
+                                    : null,
+
+                            externalReference:
+                                cardInput
+                                    ? cardInput
+                                        .value
+                                    : null,
+                        }
+                    );
+
+            const sale =
+                await window
+                    .CofiRetailAPI
+                    .checkout(
+                        payload
+                    );
+
+            const serverTotal =
+                window
+                    .CofiRetailSales
+                    .serverTotal(
+                        sale
+                    );
+
+            const saleUuid =
+                sale.sale_uuid
+                || payload.sale_uuid;
+
+            const receipt =
+                await window
+                    .CofiRetailAPI
+                    .receipt(
+                        saleUuid
+                    );
+
+            state.lastServerSale =
+                sale;
+
+            state.lastReceipt =
+                receipt;
+
+            closePaymentModal();
+
+            renderReceipt(
+                sale,
+                receipt
+            );
+
+            state.cart =
+                window
+                    .CofiRetailCart
+                    .create();
+
+            state
+                .activeHeldSaleUuid =
+                    null;
+
+            renderCart();
+
+            await loadHeldSales();
+
+            setSaleMessage(
+                "Venta cobrada: "
+                + money(
+                    serverTotal
+                )
+            );
+
+        } catch (error) {
+            console.error(
+                "Retail checkout failed",
+                error
+            );
+
+            if (errorTarget) {
+                errorTarget.hidden =
+                    false;
+
+                errorTarget.textContent =
+                    error.message
+                    || "No fue posible "
+                    + "completar el cobro.";
+            }
+
+        } finally {
+            state.busy = false;
+        }
+    }
+
+
+    function bindSalesWorkflow() {
+        const hold =
+            element(
+                "retail-hold-sale"
+            );
+
+        const cash =
+            element(
+                "retail-pay-cash"
+            );
+
+        const card =
+            element(
+                "retail-pay-card"
+            );
+
+        const confirm =
+            element(
+                "retail-payment-confirm"
+            );
+
+        const cancel =
+            element(
+                "retail-payment-cancel"
+            );
+
+        const receiptClose =
+            element(
+                "retail-receipt-close"
+            );
+
+        const receiptModal =
+            element(
+                "retail-receipt-modal"
+            );
+
+        if (hold) {
+            hold.addEventListener(
+                "click",
+                holdCurrentSale
+            );
+        }
+
+        if (cash) {
+            cash.addEventListener(
+                "click",
+                () => {
+                    openPaymentModal(
+                        "CASH"
+                    );
+                }
+            );
+        }
+
+        if (card) {
+            card.addEventListener(
+                "click",
+                () => {
+                    openPaymentModal(
+                        "CARD"
+                    );
+                }
+            );
+        }
+
+        if (confirm) {
+            confirm.addEventListener(
+                "click",
+                confirmPayment
+            );
+        }
+
+        if (cancel) {
+            cancel.addEventListener(
+                "click",
+                closePaymentModal
+            );
+        }
+
+        if (receiptClose) {
+            receiptClose
+                .addEventListener(
+                    "click",
+                    () => {
+                        if (
+                            receiptModal
+                            && typeof (
+                                receiptModal
+                                    .close
+                            ) === "function"
+                            && receiptModal
+                                .open
+                        ) {
+                            receiptModal
+                                .close();
+                        }
+                    }
+                );
+        }
+    }
+
+
     async function init() {
         if (state.initialized) {
             return;
@@ -1010,10 +2026,12 @@ window.CofiRetailApp = (() => {
 
         bindSearch();
         bindPresentationModal();
+        bindSalesWorkflow();
 
         renderCart();
 
         await loadCatalog();
+        await loadHeldSales();
 
         const search =
             element(

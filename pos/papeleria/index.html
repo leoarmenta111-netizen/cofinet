@@ -117,7 +117,15 @@
             </aside>
 
 
-            <section
+
+            <p
+                id="retail-sale-message"
+                class="retail-sale-message"
+                role="status"
+                aria-live="polite"
+            ></p>
+
+<section
                 id="retail-held-sales"
                 aria-label="Ventas en espera"
             ></section>
@@ -148,6 +156,105 @@
         <div
             id="retail-presentation-options"
             class="retail-presentation-options"
+        ></div>
+    </dialog>
+
+
+    <dialog
+        id="retail-payment-modal"
+        class="retail-dialog"
+    >
+        <div class="retail-dialog-header">
+            <h2 id="retail-payment-title">
+                Cobrar venta
+            </h2>
+
+            <button
+                id="retail-payment-cancel"
+                type="button"
+                aria-label="Cancelar cobro"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="retail-payment-summary">
+            <span>Total estimado</span>
+            <strong
+                id="retail-payment-estimate"
+            >
+                $0.00
+            </strong>
+        </div>
+
+        <label
+            id="retail-cash-field"
+            class="retail-payment-field"
+        >
+            <span>Efectivo recibido</span>
+
+            <input
+                id="retail-amount-tendered"
+                type="number"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+                autocomplete="off"
+            >
+        </label>
+
+        <label
+            id="retail-card-field"
+            class="retail-payment-field"
+            hidden
+        >
+            <span>
+                Referencia / autorización
+            </span>
+
+            <input
+                id="retail-card-reference"
+                type="text"
+                maxlength="120"
+                autocomplete="off"
+            >
+        </label>
+
+        <p
+            id="retail-payment-error"
+            class="retail-payment-error"
+            role="alert"
+            hidden
+        ></p>
+
+        <button
+            id="retail-payment-confirm"
+            type="button"
+            class="retail-primary-action"
+        >
+            Confirmar cobro
+        </button>
+    </dialog>
+
+    <dialog
+        id="retail-receipt-modal"
+        class="retail-dialog retail-receipt-dialog"
+    >
+        <div class="retail-dialog-header">
+            <h2>Venta completada</h2>
+
+            <button
+                id="retail-receipt-close"
+                type="button"
+                aria-label="Cerrar ticket"
+            >
+                ×
+            </button>
+        </div>
+
+        <div
+            id="retail-receipt-body"
+            class="retail-receipt-body"
         ></div>
     </dialog>
 
@@ -195,6 +302,7 @@
     ></script>
 
         <script src="../js/retail-catalog.js"></script>
+    <script src="../js/retail-sales.js"></script>
 <script
         src="../js/retail-app.js"
     ></script>
