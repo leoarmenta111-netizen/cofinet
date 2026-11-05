@@ -2072,3 +2072,860 @@ window.CofiRetailApp = (() => {
         chooseItem,
     };
 })();
+
+/* TASK 6D RETAIL ADJUSTMENTS */
+(function () {
+    "use strict";
+
+    if (
+        window.CofiRetailAdjustmentsUI
+    ) {
+        return;
+    }
+
+
+    const localState = {
+        returnedByLine:
+            new Map(),
+        busy:
+            false,
+    };
+
+
+    function appState() {
+        return (
+            window.CofiRetailApp
+                ?.state
+            ?? null
+        );
+    }
+
+
+    function currentSale() {
+        return (
+            appState()
+                ?.lastServerSale
+            ?? null
+        );
+    }
+
+
+    function uuid() {
+        return (
+            window.CofiUUID.v4()
+        );
+    }
+
+
+    function el(id) {
+        return (
+            document
+                .getElementById(id)
+        );
+    }
+
+
+    function setMessage(message) {
+        const target =
+            el(
+                "retail-sale-message"
+            );
+
+        if (target) {
+            target.textContent =
+                String(
+                    message ?? ""
+                );
+        }
+    }
+
+
+    function setError(
+        id,
+        message
+    ) {
+        const target =
+            el(id);
+
+        if (target) {
+            target.textContent =
+                String(
+                    message ?? ""
+                );
+        }
+    }
+
+
+    function showDialog(dialog) {
+        if (!dialog) {
+            return;
+        }
+
+        if (
+            typeof dialog.showModal
+            === "function"
+        ) {
+            dialog.showModal();
+            return;
+        }
+
+        dialog.setAttribute(
+            "open",
+            ""
+        );
+    }
+
+
+    function closeDialog(dialog) {
+        if (!dialog) {
+            return;
+        }
+
+        if (
+            typeof dialog.close
+            === "function"
+        ) {
+            dialog.close();
+            return;
+        }
+
+        dialog.removeAttribute(
+            "open"
+        );
+    }
+
+
+    function saleStatusAllowsAdjustment(
+        sale
+    ) {
+        return [
+            "PAID",
+            "PARTIALLY_RETURNED",
+        ].includes(
+            String(
+                sale?.status ?? ""
+            ).toUpperCase()
+        );
+    }
+
+
+    function originalMethod(sale) {
+        return (
+            window
+                .CofiRetailAdjustments
+                .originalPaymentMethod(
+                    sale
+                )
+        );
+    }
+
+
+    function lineName(line) {
+        return (
+            line?.item_name
+            ?? line?.name
+            ?? (
+                "Línea "
+                + String(
+                    line?.id ?? ""
+                )
+            )
+        );
+    }
+
+
+    function lineQuantity(line) {
+        const quantity =
+            Number(
+                line?.quantity
+            );
+
+        return (
+            Number.isFinite(quantity)
+                ? quantity
+                : 0
+        );
+    }
+
+
+    function returnedQuantity(
+        lineId
+    ) {
+        return (
+            localState
+                .returnedByLine
+                .get(
+                    Number(lineId)
+                )
+            ?? 0
+        );
+    }
+
+
+    function remainingQuantity(
+        line
+    ) {
+        return Math.max(
+            0,
+            lineQuantity(line)
+            - returnedQuantity(
+                line.id
+            )
+        );
+    }
+
+
+    function renderReturnLines() {
+        const container =
+            el(
+                "retail-return-lines"
+            );
+
+        const sale =
+            currentSale();
+
+        if (!container) {
+            return;
+        }
+
+        container.replaceChildren();
+
+        const lines =
+            Array.isArray(
+                sale?.lines
+            )
+                ? sale.lines
+                : [];
+
+        for (const line of lines) {
+            const remaining =
+                remainingQuantity(
+                    line
+                );
+
+            if (remaining <= 0) {
+                continue;
+            }
+
+            const wrapper =
+                document.createElement(
+                    "label"
+                );
+
+            wrapper.className =
+                "retail-return-line";
+
+            const description =
+                document.createElement(
+                    "div"
+                );
+
+            const name =
+                document.createElement(
+                    "div"
+                );
+
+            name.className =
+                "retail-return-line-name";
+
+            name.textContent =
+                lineName(line);
+
+            const meta =
+                document.createElement(
+                    "div"
+                );
+
+            meta.className =
+                "retail-return-line-meta";
+
+            meta.textContent =
+                `Disponible: ${remaining}`;
+
+            description.append(
+                name,
+                meta
+            );
+
+            const quantity =
+                document.createElement(
+                    "input"
+                );
+
+            quantity.type =
+                "number";
+
+            quantity.min =
+                "0";
+
+            quantity.max =
+                String(remaining);
+
+            quantity.step =
+                "any";
+
+            quantity.value =
+                "0";
+
+            quantity.dataset.saleLineId =
+                String(line.id);
+
+            quantity.dataset.maxQuantity =
+                String(remaining);
+
+            wrapper.append(
+                description,
+                quantity
+            );
+
+            container.append(
+                wrapper
+            );
+        }
+
+        if (
+            container
+                .children
+                .length === 0
+        ) {
+            const empty =
+                document.createElement(
+                    "p"
+                );
+
+            empty.textContent =
+                "No hay líneas disponibles "
+                + "para devolución.";
+
+            container.append(empty);
+        }
+    }
+
+
+    function selectedReturnLines() {
+        const container =
+            el(
+                "retail-return-lines"
+            );
+
+        if (!container) {
+            return [];
+        }
+
+        return Array.from(
+            container.querySelectorAll(
+                "input[data-sale-line-id]"
+            )
+        )
+            .map(
+                input => ({
+                    sale_line_id:
+                        Number(
+                            input.dataset
+                                .saleLineId
+                        ),
+
+                    quantity:
+                        input.value,
+                })
+            )
+            .filter(
+                line =>
+                    Number(
+                        line.quantity
+                    ) > 0
+            );
+    }
+
+
+    function applyMethodVisibility(
+        prefix
+    ) {
+        const method =
+            el(
+                `retail-${prefix}`
+                + "-refund-method"
+            );
+
+        const field =
+            el(
+                `retail-${prefix}`
+                + "-reference-field"
+            );
+
+        if (
+            !method
+            || !field
+        ) {
+            return;
+        }
+
+        field.hidden =
+            method.value !== "CARD";
+    }
+
+
+    function initializeRefundMethod(
+        prefix,
+        sale
+    ) {
+        const method =
+            el(
+                `retail-${prefix}`
+                + "-refund-method"
+            );
+
+        if (!method) {
+            return;
+        }
+
+        method.value =
+            originalMethod(sale);
+
+        applyMethodVisibility(
+            prefix
+        );
+    }
+
+
+    function openReturn() {
+        const sale =
+            currentSale();
+
+        if (
+            !sale
+            || !saleStatusAllowsAdjustment(
+                sale
+            )
+        ) {
+            setMessage(
+                "No hay una venta pagada "
+                + "disponible para devolver."
+            );
+            return;
+        }
+
+        renderReturnLines();
+
+        const reason =
+            el(
+                "retail-return-reason"
+            );
+
+        const reference =
+            el(
+                "retail-return-external-reference"
+            );
+
+        const pin =
+            el(
+                "retail-return-manager-pin"
+            );
+
+        if (reason) {
+            reason.value = "";
+        }
+
+        if (reference) {
+            reference.value = "";
+        }
+
+        if (pin) {
+            pin.value = "";
+        }
+
+        setError(
+            "retail-return-error",
+            ""
+        );
+
+        initializeRefundMethod(
+            "return",
+            sale
+        );
+
+        showDialog(
+            el(
+                "retail-return-modal"
+            )
+        );
+    }
+
+
+    async function confirmReturn() {
+        if (localState.busy) {
+            return;
+        }
+
+        const sale =
+            currentSale();
+
+        if (!sale?.sale_uuid) {
+            setError(
+                "retail-return-error",
+                "Venta no disponible."
+            );
+            return;
+        }
+
+        try {
+            localState.busy = true;
+
+            const payload =
+                window
+                    .CofiRetailAdjustments
+                    .buildReturnPayload({
+                        returnUuid:
+                            uuid(),
+
+                        reason:
+                            el(
+                                "retail-return-reason"
+                            )?.value,
+
+                        refundMethod:
+                            el(
+                                "retail-return-refund-method"
+                            )?.value,
+
+                        externalReference:
+                            el(
+                                "retail-return-external-reference"
+                            )?.value,
+
+                        managerStaffId:
+                            el(
+                                "retail-return-manager-staff-id"
+                            )?.value,
+
+                        managerPin:
+                            el(
+                                "retail-return-manager-pin"
+                            )?.value,
+
+                        lines:
+                            selectedReturnLines(),
+                    });
+
+            const result =
+                await window
+                    .CofiRetailAPI
+                    .returnItems(
+                        sale.sale_uuid,
+                        payload
+                    );
+
+            for (
+                const line
+                of payload.lines
+            ) {
+                const current =
+                    returnedQuantity(
+                        line.sale_line_id
+                    );
+
+                localState
+                    .returnedByLine
+                    .set(
+                        Number(
+                            line.sale_line_id
+                        ),
+                        current
+                        + Number(
+                            line.quantity
+                        )
+                    );
+            }
+
+            if (
+                appState()
+            ) {
+                appState()
+                    .lastReturn =
+                    result;
+
+                appState()
+                    .lastServerSale
+                    .status =
+                    "PARTIALLY_RETURNED";
+            }
+
+            closeDialog(
+                el(
+                    "retail-return-modal"
+                )
+            );
+
+            setMessage(
+                "Devolución registrada "
+                + "correctamente."
+            );
+        } catch (error) {
+            setError(
+                "retail-return-error",
+                error?.message
+                ?? "No se pudo registrar "
+                + "la devolución."
+            );
+        } finally {
+            localState.busy = false;
+        }
+    }
+
+
+    function openCancellation() {
+        const sale =
+            currentSale();
+
+        if (
+            !sale
+            || !saleStatusAllowsAdjustment(
+                sale
+            )
+        ) {
+            setMessage(
+                "No hay una venta activa "
+                + "para cancelar."
+            );
+            return;
+        }
+
+        const reason =
+            el(
+                "retail-cancel-reason"
+            );
+
+        const reference =
+            el(
+                "retail-cancel-external-reference"
+            );
+
+        const pin =
+            el(
+                "retail-cancel-manager-pin"
+            );
+
+        if (reason) {
+            reason.value = "";
+        }
+
+        if (reference) {
+            reference.value = "";
+        }
+
+        if (pin) {
+            pin.value = "";
+        }
+
+        setError(
+            "retail-cancel-error",
+            ""
+        );
+
+        initializeRefundMethod(
+            "cancel",
+            sale
+        );
+
+        showDialog(
+            el(
+                "retail-cancel-modal"
+            )
+        );
+    }
+
+
+    async function confirmCancellation() {
+        if (localState.busy) {
+            return;
+        }
+
+        const sale =
+            currentSale();
+
+        if (!sale?.sale_uuid) {
+            setError(
+                "retail-cancel-error",
+                "Venta no disponible."
+            );
+            return;
+        }
+
+        try {
+            localState.busy = true;
+
+            const payload =
+                window
+                    .CofiRetailAdjustments
+                    .buildCancellationPayload({
+                        cancellationUuid:
+                            uuid(),
+
+                        reason:
+                            el(
+                                "retail-cancel-reason"
+                            )?.value,
+
+                        refundMethod:
+                            el(
+                                "retail-cancel-refund-method"
+                            )?.value,
+
+                        externalReference:
+                            el(
+                                "retail-cancel-external-reference"
+                            )?.value,
+
+                        managerStaffId:
+                            el(
+                                "retail-cancel-manager-staff-id"
+                            )?.value,
+
+                        managerPin:
+                            el(
+                                "retail-cancel-manager-pin"
+                            )?.value,
+                    });
+
+            const result =
+                await window
+                    .CofiRetailAPI
+                    .cancelSale(
+                        sale.sale_uuid,
+                        payload
+                    );
+
+            if (
+                appState()
+            ) {
+                appState()
+                    .lastCancellation =
+                    result;
+
+                appState()
+                    .lastServerSale
+                    .status =
+                    "CANCELLED";
+            }
+
+            closeDialog(
+                el(
+                    "retail-cancel-modal"
+                )
+            );
+
+            setMessage(
+                "Venta cancelada "
+                + "correctamente."
+            );
+        } catch (error) {
+            setError(
+                "retail-cancel-error",
+                error?.message
+                ?? "No se pudo cancelar "
+                + "la venta."
+            );
+        } finally {
+            localState.busy = false;
+        }
+    }
+
+
+    function bind() {
+        el(
+            "retail-return-sale"
+        )?.addEventListener(
+            "click",
+            openReturn
+        );
+
+        el(
+            "retail-cancel-sale"
+        )?.addEventListener(
+            "click",
+            openCancellation
+        );
+
+        el(
+            "retail-return-confirm"
+        )?.addEventListener(
+            "click",
+            confirmReturn
+        );
+
+        el(
+            "retail-return-close"
+        )?.addEventListener(
+            "click",
+            () =>
+                closeDialog(
+                    el(
+                        "retail-return-modal"
+                    )
+                )
+        );
+
+        el(
+            "retail-cancel-confirm"
+        )?.addEventListener(
+            "click",
+            confirmCancellation
+        );
+
+        el(
+            "retail-cancel-close"
+        )?.addEventListener(
+            "click",
+            () =>
+                closeDialog(
+                    el(
+                        "retail-cancel-modal"
+                    )
+                )
+        );
+
+        el(
+            "retail-return-refund-method"
+        )?.addEventListener(
+            "change",
+            () =>
+                applyMethodVisibility(
+                    "return"
+                )
+        );
+
+        el(
+            "retail-cancel-refund-method"
+        )?.addEventListener(
+            "change",
+            () =>
+                applyMethodVisibility(
+                    "cancel"
+                )
+        );
+    }
+
+
+    window.CofiRetailAdjustmentsUI = {
+        openReturn,
+        confirmReturn,
+        openCancellation,
+        confirmCancellation,
+    };
+
+
+    if (
+        document.readyState
+        === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            bind,
+            {
+                once: true,
+            }
+        );
+    } else {
+        bind();
+    }
+})();

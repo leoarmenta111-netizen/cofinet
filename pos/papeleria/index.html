@@ -243,7 +243,28 @@
         <div class="retail-dialog-header">
             <h2>Venta completada</h2>
 
+
+        <div
+            class="retail-adjustment-actions"
+        >
             <button
+                id="retail-return-sale"
+                type="button"
+                class="retail-secondary-button"
+            >
+                Devolver productos
+            </button>
+
+            <button
+                id="retail-cancel-sale"
+                type="button"
+                class="retail-danger-button"
+            >
+                Cancelar venta
+            </button>
+        </div>
+
+<button
                 id="retail-receipt-close"
                 type="button"
                 aria-label="Cerrar ticket"
@@ -303,8 +324,226 @@
 
         <script src="../js/retail-catalog.js"></script>
     <script src="../js/retail-sales.js"></script>
+<script src="../js/retail-adjustments.js"></script>
 <script
         src="../js/retail-app.js"
     ></script>
+
+    <dialog
+        id="retail-return-modal"
+        class="retail-modal"
+    >
+        <form
+            method="dialog"
+            class="retail-adjustment-form"
+            onsubmit="return false;"
+        >
+            <h2>Devolución</h2>
+
+            <p>
+                Selecciona los artículos
+                y cantidades a devolver.
+            </p>
+
+            <div
+                id="retail-return-lines"
+                class="retail-return-lines"
+            ></div>
+
+            <label>
+                Motivo
+                <textarea
+                    id="retail-return-reason"
+                    rows="3"
+                    required
+                ></textarea>
+            </label>
+
+            <label>
+                Método de reembolso
+                <select
+                    id="retail-return-refund-method"
+                >
+                    <option value="CASH">
+                        Efectivo
+                    </option>
+                    <option value="CARD">
+                        Tarjeta
+                    </option>
+                </select>
+            </label>
+
+            <label
+                id="retail-return-reference-field"
+            >
+                Referencia de reembolso
+                <input
+                    id="retail-return-external-reference"
+                    type="text"
+                    autocomplete="off"
+                >
+            </label>
+
+            <fieldset
+                class="retail-manager-authorization"
+            >
+                <legend>
+                    Autorización de manager
+                </legend>
+
+                <label>
+                    ID de manager
+                    <input
+                        id="retail-return-manager-staff-id"
+                        type="number"
+                        min="1"
+                        inputmode="numeric"
+                    >
+                </label>
+
+                <label>
+                    PIN de manager
+                    <input
+                        id="retail-return-manager-pin"
+                        type="password"
+                        inputmode="numeric"
+                        autocomplete="off"
+                    >
+                </label>
+            </fieldset>
+
+            <p
+                id="retail-return-error"
+                class="retail-adjustment-error"
+                role="alert"
+            ></p>
+
+            <div
+                class="retail-modal-actions"
+            >
+                <button
+                    id="retail-return-close"
+                    type="button"
+                >
+                    Cerrar
+                </button>
+
+                <button
+                    id="retail-return-confirm"
+                    type="button"
+                    class="retail-primary-button"
+                >
+                    Confirmar devolución
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+
+    <dialog
+        id="retail-cancel-modal"
+        class="retail-modal"
+    >
+        <form
+            method="dialog"
+            class="retail-adjustment-form"
+            onsubmit="return false;"
+        >
+            <h2>Cancelar venta</h2>
+
+            <p>
+                Esta operación revierte
+                el saldo restante de la venta.
+            </p>
+
+            <label>
+                Motivo
+                <textarea
+                    id="retail-cancel-reason"
+                    rows="3"
+                    required
+                ></textarea>
+            </label>
+
+            <label>
+                Método de reembolso
+                <select
+                    id="retail-cancel-refund-method"
+                >
+                    <option value="CASH">
+                        Efectivo
+                    </option>
+                    <option value="CARD">
+                        Tarjeta
+                    </option>
+                </select>
+            </label>
+
+            <label
+                id="retail-cancel-reference-field"
+            >
+                Referencia de reembolso
+                <input
+                    id="retail-cancel-external-reference"
+                    type="text"
+                    autocomplete="off"
+                >
+            </label>
+
+            <fieldset
+                class="retail-manager-authorization"
+            >
+                <legend>
+                    Autorización de manager
+                </legend>
+
+                <label>
+                    ID de manager
+                    <input
+                        id="retail-cancel-manager-staff-id"
+                        type="number"
+                        min="1"
+                        inputmode="numeric"
+                    >
+                </label>
+
+                <label>
+                    PIN de manager
+                    <input
+                        id="retail-cancel-manager-pin"
+                        type="password"
+                        inputmode="numeric"
+                        autocomplete="off"
+                    >
+                </label>
+            </fieldset>
+
+            <p
+                id="retail-cancel-error"
+                class="retail-adjustment-error"
+                role="alert"
+            ></p>
+
+            <div
+                class="retail-modal-actions"
+            >
+                <button
+                    id="retail-cancel-close"
+                    type="button"
+                >
+                    Cerrar
+                </button>
+
+                <button
+                    id="retail-cancel-confirm"
+                    type="button"
+                    class="retail-danger-button"
+                >
+                    Confirmar cancelación
+                </button>
+            </div>
+        </form>
+    </dialog>
+
 </body>
 </html>
