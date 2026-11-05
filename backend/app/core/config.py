@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     MERCADOPAGO_ACCESS_TOKEN: str | None = None
     MERCADOPAGO_PUBLIC_KEY: str | None = None
     MERCADOPAGO_POINT_TERMINAL_ID: str | None = None
+    MERCADOPAGO_WEBHOOK_SECRET: str | None = None
 
     @property
     def database_url(self) -> str:

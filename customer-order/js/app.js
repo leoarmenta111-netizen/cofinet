@@ -21,6 +21,7 @@
         paymentAttemptUuid: null,
         lastSelfOrder: null,
         paymentBusy: false,
+        paymentPollBusy: false,
 
         idleWarningTimer: null,
         idleResetTimer: null,
@@ -133,6 +134,7 @@
         state.paymentAttemptUuid = null;
         state.lastSelfOrder = null;
         state.paymentBusy = false;
+        state.paymentPollBusy = false;
 
         clearCheckoutSession();
         closeOverlays();
@@ -1827,6 +1829,109 @@
     }
 
 
+    function paymentPollDelay(
+        milliseconds
+    ) {
+        return new Promise(
+            resolve => {
+                setTimeout(
+                    resolve,
+                    milliseconds
+                );
+            }
+        );
+    }
+
+
+    async function pollPointPayment() {
+        if (
+            state.paymentPollBusy ||
+            !state.selfOrderUuid ||
+            state.selfOrderStatus !==
+                "PAYMENT_PROCESSING"
+        ) {
+            return;
+        }
+
+        state.paymentPollBusy = true;
+
+        try {
+            for (
+                let attempt = 0;
+                attempt < 75;
+                attempt += 1
+            ) {
+                if (
+                    state.selfOrderStatus !==
+                    "PAYMENT_PROCESSING"
+                ) {
+                    return;
+                }
+
+                if (attempt > 0) {
+                    await paymentPollDelay(
+                        2000
+                    );
+                }
+
+                try {
+                    const order =
+                        await window
+                            .CofiCustomerAPI
+                            .reconcilePayment(
+                                state
+                                    .selfOrderUuid,
+                                state
+                                    .deviceCode
+                            );
+
+                    applySelfOrder(order);
+
+                    if (
+                        order.status ===
+                        "PAYMENT_DECLINED"
+                    ) {
+                        state
+                            .paymentAttemptUuid =
+                            null;
+
+                        saveCheckoutSession();
+                    }
+
+                    renderPaymentView(
+                        order
+                    );
+
+                    if (
+                        order.status !==
+                        "PAYMENT_PROCESSING"
+                    ) {
+                        return;
+                    }
+
+                } catch {
+                    setPaymentMessage(
+                        "Confirmando pago con la terminal…"
+                    );
+                }
+            }
+
+            if (
+                state.selfOrderStatus ===
+                "PAYMENT_PROCESSING"
+            ) {
+                setPaymentMessage(
+                    "El pago sigue en verificación. No vuelvas a pagar; COFI conservará esta operación."
+                );
+            }
+
+        } finally {
+            state.paymentPollBusy =
+                false;
+        }
+    }
+
+
     async function startCardPayment() {
         if (
             state.paymentBusy ||
@@ -1884,6 +1989,13 @@
             }
 
             renderPaymentView(order);
+
+            if (
+                order.status ===
+                "PAYMENT_PROCESSING"
+            ) {
+                await pollPointPayment();
+            }
 
         } catch {
             await refreshSelfOrder({
@@ -1998,6 +2110,13 @@
             false;
 
         renderPaymentView(order);
+
+        if (
+            order.status ===
+            "PAYMENT_PROCESSING"
+        ) {
+            pollPointPayment();
+        }
     }
 
 

@@ -149,6 +149,29 @@
     }
 
 
+    function reconcilePayment(
+        selfOrderUuid,
+        deviceCode
+    ) {
+        return request(
+            `/self-orders/${
+                encodeURIComponent(
+                    selfOrderUuid
+                )
+            }/payment-status`,
+            {
+                method: "POST",
+                body:
+                    JSON.stringify({
+                        device_code:
+                            deviceCode,
+                    }),
+                timeout: 12000,
+            }
+        );
+    }
+
+
     function cancelSelfOrder(
         selfOrderUuid,
         deviceCode
@@ -178,6 +201,7 @@
         createSelfOrder,
         getSelfOrder,
         createPaymentAttempt,
+        reconcilePayment,
         cancelSelfOrder,
     };
 })();

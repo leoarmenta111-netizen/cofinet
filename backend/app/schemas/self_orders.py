@@ -40,6 +40,13 @@ class SelfOrderCancelRequest(BaseModel):
     )
 
 
+class SelfOrderPaymentStatusRequest(BaseModel):
+    device_code: str = Field(
+        min_length=1,
+        max_length=80,
+    )
+
+
 class SelfOrderPaymentAttemptCreate(BaseModel):
     device_code: str = Field(
         min_length=1,

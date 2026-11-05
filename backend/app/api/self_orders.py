@@ -1,7 +1,9 @@
 from fastapi import (
     APIRouter,
     Depends,
+    HTTPException,
     Query,
+    Request,
     status,
 )
 from sqlalchemy.orm import Session
@@ -15,6 +17,7 @@ from app.schemas.self_orders import (
     SelfOrderItemResponse,
     SelfOrderModifierResponse,
     SelfOrderPaymentAttemptCreate,
+    SelfOrderPaymentStatusRequest,
     SelfOrderResponse,
 )
 from app.services.pos_pricing_service import money
@@ -22,6 +25,7 @@ from app.services.self_order_payment import (
     MercadoPagoPointProvider,
     SelfOrderPaymentService,
     SimulatedPaymentProvider,
+    validate_mercadopago_webhook_signature,
 )
 from app.services.self_order_service import (
     SelfOrderService,
@@ -162,6 +166,144 @@ def cancel_self_order(
     )
 
     return _response(order)
+
+
+@router.post(
+    '/{self_order_uuid}/payment-status',
+    response_model=SelfOrderResponse,
+)
+def reconcile_payment_status(
+    self_order_uuid: str,
+    payload: SelfOrderPaymentStatusRequest,
+    db: Session = Depends(get_db),
+) -> SelfOrderResponse:
+    provider = MercadoPagoPointProvider(
+        access_token=(
+            settings.MERCADOPAGO_ACCESS_TOKEN
+        ),
+        terminal_id=(
+            settings
+            .MERCADOPAGO_POINT_TERMINAL_ID
+        ),
+    )
+
+    order = SelfOrderPaymentService.reconcile(
+        db=db,
+        self_order_uuid=self_order_uuid,
+        device_code=payload.device_code,
+        provider=provider,
+    )
+
+    return _response(order)
+
+
+@router.post(
+    '/point/webhook',
+    status_code=status.HTTP_200_OK,
+)
+async def mercadopago_point_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail='Invalid webhook payload',
+        )
+
+    if not isinstance(payload, dict):
+        raise HTTPException(
+            status_code=400,
+            detail='Invalid webhook payload',
+        )
+
+    if payload.get('type') != 'order':
+        return {
+            'status': 'ignored',
+        }
+
+    data = payload.get('data') or {}
+
+    if not isinstance(data, dict):
+        return {
+            'status': 'ignored',
+        }
+
+    order_id = str(
+        data.get('id') or ''
+    ).strip()
+
+    if not order_id:
+        return {
+            'status': 'ignored',
+        }
+
+    secret = str(
+        settings
+        .MERCADOPAGO_WEBHOOK_SECRET
+        or ''
+    ).strip()
+
+    if not secret:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                'Mercado Pago webhook secret '
+                'is not configured'
+            ),
+        )
+
+    valid = (
+        validate_mercadopago_webhook_signature(
+            data_id=order_id,
+            x_request_id=(
+                request.headers.get(
+                    'x-request-id'
+                )
+            ),
+            x_signature=(
+                request.headers.get(
+                    'x-signature'
+                )
+            ),
+            secret=secret,
+        )
+    )
+
+    if not valid:
+        raise HTTPException(
+            status_code=401,
+            detail='Invalid webhook signature',
+        )
+
+    provider = MercadoPagoPointProvider(
+        access_token=(
+            settings.MERCADOPAGO_ACCESS_TOKEN
+        ),
+        terminal_id=(
+            settings
+            .MERCADOPAGO_POINT_TERMINAL_ID
+        ),
+    )
+
+    order = (
+        SelfOrderPaymentService
+        .reconcile_by_provider_reference(
+            db=db,
+            provider_reference=order_id,
+            provider=provider,
+        )
+    )
+
+    return {
+        'status': (
+            'processed'
+            if order is not None
+            else 'ignored'
+        ),
+    }
 
 
 @router.post(

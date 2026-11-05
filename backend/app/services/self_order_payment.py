@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import json
 import uuid
 from urllib.error import HTTPError, URLError
@@ -46,6 +48,82 @@ NEW_ATTEMPT_STATUSES = {
 class PaymentResult:
     status: str
     external_reference: str | None = None
+
+
+def validate_mercadopago_webhook_signature(
+    *,
+    data_id,
+    x_request_id,
+    x_signature,
+    secret,
+) -> bool:
+    data_id = str(
+        data_id or ''
+    ).strip()
+
+    request_id = str(
+        x_request_id or ''
+    ).strip()
+
+    signature = str(
+        x_signature or ''
+    ).strip()
+
+    secret = str(
+        secret or ''
+    ).strip()
+
+    if (
+        not data_id
+        or not signature
+        or not secret
+    ):
+        return False
+
+    parts = {}
+
+    for fragment in signature.split(','):
+        key, separator, value = (
+            fragment
+            .strip()
+            .partition('=')
+        )
+
+        if separator:
+            parts[key] = value
+
+    ts = str(
+        parts.get('ts') or ''
+    ).strip()
+
+    received = str(
+        parts.get('v1') or ''
+    ).strip()
+
+    if not ts or not received:
+        return False
+
+    manifest = (
+        f'id:{data_id.lower()};'
+    )
+
+    if request_id:
+        manifest += (
+            f'request-id:{request_id};'
+        )
+
+    manifest += f'ts:{ts};'
+
+    expected = hmac.new(
+        secret.encode('utf-8'),
+        manifest.encode('utf-8'),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return hmac.compare_digest(
+        expected,
+        received,
+    )
 
 
 class SimulatedPaymentProvider:
@@ -698,6 +776,272 @@ class SelfOrderPaymentService:
             db,
             order_id,
         )
+
+
+    @classmethod
+    def reconcile(
+        cls,
+        *,
+        db: Session,
+        self_order_uuid,
+        device_code: str,
+        provider,
+    ) -> SelfOrder:
+        cls._assert_provider_allowed(
+            provider
+        )
+
+        order = SelfOrderService.get(
+            db=db,
+            self_order_uuid=str(
+                self_order_uuid
+            ),
+            device_code=device_code,
+        )
+
+        order = cls._locked_order(
+            db,
+            order.id,
+        )
+
+        if order.status not in {
+            'PAYMENT_PROCESSING',
+            'PAYMENT_UNKNOWN',
+        }:
+            return order
+
+        attempt = (
+            db.execute(
+                select(
+                    SelfOrderPaymentAttempt
+                )
+                .where(
+                    SelfOrderPaymentAttempt
+                    .self_order_id
+                    == order.id
+                )
+                .order_by(
+                    SelfOrderPaymentAttempt
+                    .id.desc()
+                )
+            )
+            .scalars()
+            .first()
+        )
+
+        if attempt is None:
+            return order
+
+        if attempt.status == 'APPROVED':
+            return order
+
+        try:
+            if attempt.external_reference:
+                result = provider.retrieve(
+                    attempt.external_reference
+                )
+            else:
+                # Safe recovery after a process crash:
+                # retry creation with the SAME provider
+                # idempotency key.
+                result = provider.charge(
+                    payment_attempt_uuid=(
+                        attempt
+                        .payment_attempt_uuid
+                    ),
+                    amount=attempt.amount,
+                )
+
+        except Exception:
+            # A temporary Mercado Pago/network error
+            # must never trigger a second customer
+            # charge or falsely decline the payment.
+            return cls._refresh_order(
+                db,
+                order.id,
+            )
+
+        result_status = str(
+            result.status
+        ).strip().upper()
+
+        order = cls._locked_order(
+            db,
+            order.id,
+        )
+
+        attempt = cls._locked_attempt(
+            db,
+            attempt.id,
+        )
+
+        if attempt.status == 'APPROVED':
+            return order
+
+        if result.external_reference:
+            attempt.external_reference = (
+                result.external_reference
+            )
+
+        if result_status == 'PROCESSING':
+            attempt.status = 'PROCESSING'
+            order.status = (
+                'PAYMENT_PROCESSING'
+            )
+
+            db.commit()
+
+            return cls._refresh_order(
+                db,
+                order.id,
+            )
+
+        if result_status == 'DECLINED':
+            attempt.status = 'DECLINED'
+            order.status = (
+                'PAYMENT_DECLINED'
+            )
+
+            db.commit()
+
+            return cls._refresh_order(
+                db,
+                order.id,
+            )
+
+        if result_status != 'APPROVED':
+            attempt.status = 'UNKNOWN'
+            order.status = (
+                'PAYMENT_UNKNOWN'
+            )
+
+            db.commit()
+
+            return cls._refresh_order(
+                db,
+                order.id,
+            )
+
+        attempt.status = 'APPROVED'
+        order.status = 'PAID'
+
+        db.flush()
+
+        cls._materialize_pos_order(
+            db=db,
+            self_order=order,
+            attempt=attempt,
+        )
+
+        order.status = 'SUBMITTED'
+
+        try:
+            db.commit()
+
+        except IntegrityError:
+            db.rollback()
+
+            recovered_order = (
+                cls._refresh_order(
+                    db,
+                    order.id,
+                )
+            )
+
+            existing_pos_order = (
+                db.execute(
+                    select(PosOrder).where(
+                        PosOrder.self_order_id
+                        == recovered_order.id
+                    )
+                )
+                .scalar_one_or_none()
+            )
+
+            if existing_pos_order is None:
+                raise
+
+            recovered_attempt = (
+                cls._existing_attempt(
+                    db,
+                    attempt
+                    .payment_attempt_uuid,
+                )
+            )
+
+            if recovered_attempt is not None:
+                recovered_attempt.status = (
+                    'APPROVED'
+                )
+
+            recovered_order.status = (
+                'SUBMITTED'
+            )
+
+            db.commit()
+
+            return cls._refresh_order(
+                db,
+                recovered_order.id,
+            )
+
+        return cls._refresh_order(
+            db,
+            order.id,
+        )
+
+    @classmethod
+    def reconcile_by_provider_reference(
+        cls,
+        *,
+        db: Session,
+        provider_reference: str,
+        provider,
+    ):
+        reference = str(
+            provider_reference or ''
+        ).strip()
+
+        if not reference:
+            return None
+
+        attempt = (
+            db.execute(
+                select(
+                    SelfOrderPaymentAttempt
+                ).where(
+                    SelfOrderPaymentAttempt
+                    .external_reference
+                    == reference
+                )
+            )
+            .scalar_one_or_none()
+        )
+
+        if attempt is None:
+            return None
+
+        order = db.get(
+            SelfOrder,
+            attempt.self_order_id,
+        )
+
+        if order is None:
+            return None
+
+        db.refresh(order)
+
+        return cls.reconcile(
+            db=db,
+            self_order_uuid=(
+                order.self_order_uuid
+            ),
+            device_code=(
+                order.device.device_code
+            ),
+            provider=provider,
+        )
+
 
     @classmethod
     def process(
