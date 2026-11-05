@@ -1,4 +1,7 @@
+import json
 import uuid
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -29,6 +32,7 @@ from app.services.self_order_service import (
 PAYMENT_OUTCOMES = {
     'APPROVED',
     'DECLINED',
+    'PROCESSING',
     'UNKNOWN',
 }
 
@@ -71,6 +75,299 @@ class SimulatedPaymentProvider:
             status=self.outcome,
             external_reference=(
                 f'sim-{payment_attempt_uuid}'
+            ),
+        )
+
+
+class MercadoPagoPointProvider:
+    provider_name = 'MERCADOPAGO_POINT'
+
+    BASE_URL = (
+        'https://api.mercadopago.com'
+    )
+
+    MINIMUM_AMOUNT = Decimal('5.00')
+
+    def __init__(
+        self,
+        *,
+        access_token=None,
+        terminal_id=None,
+        request_json=None,
+    ):
+        self.access_token = str(
+            access_token or ''
+        ).strip()
+
+        self.terminal_id = str(
+            terminal_id or ''
+        ).strip()
+
+        if not self.access_token:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_503_SERVICE_UNAVAILABLE
+                ),
+                detail=(
+                    'Mercado Pago Point access '
+                    'token is not configured'
+                ),
+            )
+
+        if not self.terminal_id:
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_503_SERVICE_UNAVAILABLE
+                ),
+                detail=(
+                    'Mercado Pago Point terminal '
+                    'is not configured'
+                ),
+            )
+
+        self.request_json = (
+            request_json
+            or self._http_request_json
+        )
+
+    @staticmethod
+    def _http_request_json(
+        *,
+        method,
+        url,
+        headers,
+        payload=None,
+    ):
+        encoded = None
+
+        if payload is not None:
+            encoded = json.dumps(
+                payload
+            ).encode('utf-8')
+
+        request = Request(
+            url,
+            data=encoded,
+            headers=headers,
+            method=method,
+        )
+
+        try:
+            with urlopen(
+                request,
+                timeout=15,
+            ) as response:
+                raw = (
+                    response
+                    .read()
+                    .decode('utf-8')
+                )
+
+        except HTTPError as exc:
+            raise RuntimeError(
+                'Mercado Pago Point '
+                f'HTTP {exc.code}'
+            ) from exc
+
+        except (
+            URLError,
+            TimeoutError,
+        ) as exc:
+            raise RuntimeError(
+                'Mercado Pago Point '
+                'connection failed'
+            ) from exc
+
+        try:
+            body = json.loads(raw)
+
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                'Mercado Pago Point returned '
+                'invalid JSON'
+            ) from exc
+
+        if not isinstance(body, dict):
+            raise RuntimeError(
+                'Mercado Pago Point returned '
+                'an invalid response'
+            )
+
+        return body
+
+    @staticmethod
+    def _map_status(
+        body,
+    ) -> str:
+        provider_status = str(
+            body.get('status') or ''
+        ).strip().lower()
+
+        status_detail = str(
+            body.get('status_detail') or ''
+        ).strip().lower()
+
+        if (
+            provider_status
+            == 'processed'
+            and status_detail
+            in {
+                '',
+                'processed',
+                'accredited',
+            }
+        ):
+            return 'APPROVED'
+
+        if provider_status in {
+            'failed',
+            'expired',
+            'canceled',
+            'refunded',
+        }:
+            return 'DECLINED'
+
+        if provider_status in {
+            'created',
+            'at_terminal',
+            'processing',
+            'action_required',
+            'waiting_capture',
+        }:
+            return 'PROCESSING'
+
+        return 'UNKNOWN'
+
+    def charge(
+        self,
+        *,
+        payment_attempt_uuid,
+        amount,
+    ) -> PaymentResult:
+        amount = money(amount)
+
+        if amount < self.MINIMUM_AMOUNT:
+            return PaymentResult(
+                status='DECLINED',
+                external_reference=None,
+            )
+
+        attempt_uuid = str(
+            payment_attempt_uuid
+        )
+
+        payload = {
+            'type': 'point',
+            'external_reference': (
+                f'COFI-{attempt_uuid}'
+            ),
+            'expiration_time': 'PT2M',
+            'transactions': {
+                'payments': [
+                    {
+                        'amount': (
+                            f'{amount:.2f}'
+                        ),
+                    }
+                ],
+            },
+            'config': {
+                'point': {
+                    'terminal_id': (
+                        self.terminal_id
+                    ),
+                    'screen_time': 'PT30S',
+                    'print_on_terminal': (
+                        'no_ticket'
+                    ),
+                },
+            },
+            'description': (
+                'COFI Kiosk'
+            ),
+        }
+
+        body = self.request_json(
+            method='POST',
+            url=(
+                f'{self.BASE_URL}'
+                '/v1/orders'
+            ),
+            headers={
+                'Accept': (
+                    'application/json'
+                ),
+                'Content-Type': (
+                    'application/json'
+                ),
+                'Authorization': (
+                    'Bearer '
+                    f'{self.access_token}'
+                ),
+                'X-Idempotency-Key': (
+                    attempt_uuid
+                ),
+            },
+            payload=payload,
+        )
+
+        order_id = str(
+            body.get('id') or ''
+        ).strip()
+
+        if not order_id:
+            raise RuntimeError(
+                'Mercado Pago Point order '
+                'id is missing'
+            )
+
+        return PaymentResult(
+            status=self._map_status(
+                body
+            ),
+            external_reference=(
+                order_id
+            ),
+        )
+
+    def retrieve(
+        self,
+        order_id,
+    ) -> PaymentResult:
+        normalized = str(
+            order_id or ''
+        ).strip()
+
+        if not normalized:
+            return PaymentResult(
+                status='UNKNOWN',
+                external_reference=None,
+            )
+
+        body = self.request_json(
+            method='GET',
+            url=(
+                f'{self.BASE_URL}'
+                f'/v1/orders/{normalized}'
+            ),
+            headers={
+                'Accept': (
+                    'application/json'
+                ),
+                'Authorization': (
+                    'Bearer '
+                    f'{self.access_token}'
+                ),
+            },
+            payload=None,
+        )
+
+        return PaymentResult(
+            status=self._map_status(
+                body
+            ),
+            external_reference=(
+                normalized
             ),
         )
 
@@ -583,6 +880,19 @@ class SelfOrderPaymentService:
             payment_result
             .external_reference
         )
+
+        if result_status == 'PROCESSING':
+            attempt.status = 'PROCESSING'
+            order.status = (
+                'PAYMENT_PROCESSING'
+            )
+
+            db.commit()
+
+            return cls._refresh_order(
+                db,
+                order.id,
+            )
 
         if result_status == 'DECLINED':
             attempt.status = 'DECLINED'

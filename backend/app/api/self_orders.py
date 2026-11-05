@@ -6,6 +6,7 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.database.deps import get_db
 from app.models.self_orders import SelfOrder
 from app.schemas.self_orders import (
@@ -18,6 +19,7 @@ from app.schemas.self_orders import (
 )
 from app.services.pos_pricing_service import money
 from app.services.self_order_payment import (
+    MercadoPagoPointProvider,
     SelfOrderPaymentService,
     SimulatedPaymentProvider,
 )
@@ -171,9 +173,21 @@ def create_payment_attempt(
     payload: SelfOrderPaymentAttemptCreate,
     db: Session = Depends(get_db),
 ) -> SelfOrderResponse:
-    provider = SimulatedPaymentProvider(
-        outcome=payload.simulated_outcome,
-    )
+    if payload.simulated_outcome is not None:
+        provider = SimulatedPaymentProvider(
+            outcome=payload.simulated_outcome,
+        )
+    else:
+        provider = MercadoPagoPointProvider(
+            access_token=(
+                settings
+                .MERCADOPAGO_ACCESS_TOKEN
+            ),
+            terminal_id=(
+                settings
+                .MERCADOPAGO_POINT_TERMINAL_ID
+            ),
+        )
 
     order = SelfOrderPaymentService.process(
         db=db,

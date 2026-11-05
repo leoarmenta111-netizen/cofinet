@@ -1667,34 +1667,6 @@
     }
 
 
-    function simulatedOutcome() {
-        const params =
-            new URLSearchParams(
-                window.location.search
-            );
-
-        const requested =
-            String(
-                params.get(
-                    "payment_outcome"
-                ) ||
-                "APPROVED"
-            ).toUpperCase();
-
-        if (
-            [
-                "APPROVED",
-                "DECLINED",
-                "UNKNOWN",
-            ].includes(requested)
-        ) {
-            return requested;
-        }
-
-        return "APPROVED";
-    }
-
-
     async function createStagedOrder() {
         if (state.selfOrderUuid) {
             const existing =
@@ -1896,8 +1868,6 @@
                             payment_attempt_uuid:
                                 state
                                     .paymentAttemptUuid,
-                            simulated_outcome:
-                                simulatedOutcome(),
                         }
                     );
 

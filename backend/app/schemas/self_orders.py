@@ -50,7 +50,7 @@ class SelfOrderPaymentAttemptCreate(BaseModel):
         'APPROVED',
         'DECLINED',
         'UNKNOWN',
-    ]
+    ] | None = None
 
 
 class SelfOrderModifierResponse(BaseModel):
