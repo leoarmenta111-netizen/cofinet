@@ -153,6 +153,40 @@ def test_webhook_secret_is_server_configuration():
     )
 
 
+
+def test_point_webhook_uses_query_data_id_for_signature():
+    root = Path(__file__).resolve().parents[2]
+
+    source = (
+        root
+        / "backend"
+        / "app"
+        / "api"
+        / "self_orders.py"
+    ).read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        "request.query_params.get("
+        in source
+    )
+
+    assert (
+        "'data.id'"
+        in source
+        or
+        '"data.id"'
+        in source
+    )
+
+    assert (
+        "data_id=signature_data_id"
+        in source
+    )
+
+
+
 def test_point_payment_amount_stays_server_side():
     # Smoke assertion documenting that reconciliation
     # uses persisted SelfOrderPaymentAttempt.amount,

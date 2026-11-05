@@ -255,9 +255,25 @@ async def mercadopago_point_webhook(
             ),
         )
 
+    signature_data_id = str(
+        request.query_params.get(
+            'data.id'
+        )
+        or ''
+    ).strip()
+
+    if not signature_data_id:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                'Webhook data.id query '
+                'parameter is required'
+            ),
+        )
+
     valid = (
         validate_mercadopago_webhook_signature(
-            data_id=order_id,
+            data_id=signature_data_id,
             x_request_id=(
                 request.headers.get(
                     'x-request-id'
