@@ -20,12 +20,12 @@ test(
     () => {
         const adjustments =
             html.indexOf(
-                "../js/retail-adjustments.js"
+                "/pos/js/retail-adjustments.js"
             );
 
         const retailApp =
             html.indexOf(
-                "../js/retail-app.js"
+                "/pos/js/retail-app.js"
             );
 
         assert.ok(

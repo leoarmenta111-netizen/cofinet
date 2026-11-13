@@ -8,6 +8,7 @@ from app.models.payment import Payment
 from app.models.membership import Membership
 from app.models.purchase import Purchase
 from app.models.user import User
+import app.models.pos_customers
 from app.services.plan_service import PlanService
 
 Base.metadata.create_all(bind=engine)

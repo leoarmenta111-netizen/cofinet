@@ -35,12 +35,12 @@ test(
     () => {
         const sales =
             html.indexOf(
-                'src="../js/retail-sales.js"'
+                '/pos/js/retail-sales.js'
             );
 
         const appIndex =
             html.indexOf(
-                'src="../js/retail-app.js"'
+                '/pos/js/retail-app.js'
             );
 
         assert.notEqual(

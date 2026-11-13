@@ -56,32 +56,32 @@ test(
 
         assert.match(
             html,
-            /\.\.\/js\/api\.js/
+            /\/pos\/js\/api\.js/
         );
 
         assert.match(
             html,
-            /\.\.\/js\/staff-session\.js/
+            /\/pos\/js\/staff-session\.js/
         );
 
         assert.match(
             html,
-            /\.\.\/js\/cash-shift\.js/
+            /\/pos\/js\/cash-shift\.js/
         );
 
         assert.match(
             html,
-            /\.\.\/js\/retail-api\.js/
+            /\/pos\/js\/retail-api\.js/
         );
 
         assert.match(
             html,
-            /\.\.\/js\/retail-cart\.js/
+            /\/pos\/js\/retail-cart\.js/
         );
 
         assert.match(
             html,
-            /\.\.\/js\/retail-app\.js/
+            /\/pos\/js\/retail-app\.js/
         );
     }
 );

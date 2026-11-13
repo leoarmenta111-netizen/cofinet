@@ -281,6 +281,7 @@ window.CofiPosAPI = (() => {
         {
             branchCode,
             terminalId,
+            moduleCode = "CAFE",
         }
     ) {
         return request(
@@ -296,6 +297,8 @@ window.CofiPosAPI = (() => {
                         branchCode,
                     terminal_id:
                         terminalId,
+                    module_code:
+                        moduleCode,
                 }),
             }
         );

@@ -35,12 +35,12 @@ test(
     () => {
         const catalogScript =
             html.indexOf(
-                'src="../js/retail-catalog.js"'
+                '/pos/js/retail-catalog.js'
             );
 
         const appScript =
             html.indexOf(
-                'src="../js/retail-app.js"'
+                '/pos/js/retail-app.js'
             );
 
         assert.notEqual(

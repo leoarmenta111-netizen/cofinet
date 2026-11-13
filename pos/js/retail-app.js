@@ -1624,7 +1624,7 @@ window.CofiRetailApp = (() => {
             );
 
         totalLabel.textContent =
-            "Total servidor";
+            "Total";
 
         const totalValue =
             document.createElement(
@@ -1716,25 +1716,267 @@ window.CofiRetailApp = (() => {
             );
         }
 
-        const snapshot =
+        const receiptCard =
             document.createElement(
-                "pre"
+                "section"
             );
 
-        snapshot.className =
-            "retail-receipt-snapshot";
+        receiptCard.className =
+            "retail-receipt-card";
 
-        snapshot.textContent =
-            JSON.stringify(
-                receipt,
-                null,
-                2
+
+        const receiptHeader =
+            document.createElement(
+                "div"
             );
 
-        body.append(
+        receiptHeader.className =
+            "retail-receipt-meta";
+
+
+        const folioBlock =
+            document.createElement(
+                "div"
+            );
+
+        const folioLabel =
+            document.createElement(
+                "small"
+            );
+
+        folioLabel.textContent =
+            "Folio";
+
+        const folioValue =
+            document.createElement(
+                "strong"
+            );
+
+        folioValue.textContent =
+            String(
+                receipt?.folio
+                ?? sale?.folio
+                ?? "—"
+            );
+
+        folioBlock.append(
+            folioLabel,
+            folioValue
+        );
+
+
+        const cashierBlock =
+            document.createElement(
+                "div"
+            );
+
+        const cashierLabel =
+            document.createElement(
+                "small"
+            );
+
+        cashierLabel.textContent =
+            "Cajero";
+
+        const cashierValue =
+            document.createElement(
+                "strong"
+            );
+
+        cashierValue.textContent =
+            receipt?.cashier
+                ?.display_name
+            || "—";
+
+        cashierBlock.append(
+            cashierLabel,
+            cashierValue
+        );
+
+
+        receiptHeader.append(
+            folioBlock,
+            cashierBlock
+        );
+
+
+        const linesContainer =
+            document.createElement(
+                "div"
+            );
+
+        linesContainer.className =
+            "retail-receipt-lines";
+
+
+        const receiptLines =
+            Array.isArray(
+                receipt?.lines
+            )
+                ? receipt.lines
+                : [];
+
+
+        receiptLines.forEach(
+            line => {
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+                row.className =
+                    "retail-receipt-line";
+
+
+                const info =
+                    document.createElement(
+                        "div"
+                    );
+
+                const name =
+                    document.createElement(
+                        "strong"
+                    );
+
+                name.textContent =
+                    line?.name
+                    || "Producto";
+
+
+                const presentation =
+                    document.createElement(
+                        "span"
+                    );
+
+                presentation.textContent =
+                    [
+                        line
+                            ?.presentation_name,
+                        `Cant. ${
+                            Number(
+                                line?.quantity
+                                || 0
+                            )
+                        }`,
+                        `${
+                            money(
+                                line
+                                    ?.unit_price
+                                || 0
+                            )
+                        } c/u`,
+                    ]
+                        .filter(Boolean)
+                        .join(" · ");
+
+
+                info.append(
+                    name,
+                    presentation
+                );
+
+
+                const lineTotal =
+                    document.createElement(
+                        "strong"
+                    );
+
+                lineTotal.className =
+                    "retail-receipt-line-total";
+
+                lineTotal.textContent =
+                    money(
+                        line?.line_total
+                        ?? line
+                            ?.line_subtotal
+                        ?? 0
+                    );
+
+
+                row.append(
+                    info,
+                    lineTotal
+                );
+
+                linesContainer
+                    .appendChild(
+                        row
+                    );
+            }
+        );
+
+
+        const saleInfo =
+            document.createElement(
+                "div"
+            );
+
+        saleInfo.className =
+            "retail-receipt-sale-info";
+
+
+        const date =
+            document.createElement(
+                "span"
+            );
+
+        if (receipt?.sold_at) {
+            const parsed =
+                new Date(
+                    receipt.sold_at
+                );
+
+            date.textContent =
+                Number.isNaN(
+                    parsed.getTime()
+                )
+                    ? String(
+                        receipt.sold_at
+                    )
+                    : parsed
+                        .toLocaleString(
+                            "es-MX"
+                        );
+        }
+
+
+        const terminal =
+            document.createElement(
+                "span"
+            );
+
+        terminal.textContent =
+            receipt?.terminal_id
+                ? `Terminal ${
+                    receipt.terminal_id
+                }`
+                : "";
+
+
+        if (date.textContent) {
+            saleInfo.appendChild(
+                date
+            );
+        }
+
+        if (terminal.textContent) {
+            saleInfo.appendChild(
+                terminal
+            );
+        }
+
+
+        receiptCard.append(
+            receiptHeader,
+            linesContainer,
             totalRow,
             paymentBlock,
-            snapshot
+            saleInfo
+        );
+
+
+        body.append(
+            receiptCard
         );
 
         if (
@@ -1879,6 +2121,24 @@ window.CofiRetailApp = (() => {
                 )
             );
 
+
+            /*
+             * Una venta NO cierra la caja.
+             * Avisamos al controlador para que
+             * confirme que el mismo turno sigue OPEN.
+             */
+            window.dispatchEvent(
+                new CustomEvent(
+                    "cofi:retail-sale-completed",
+                    {
+                        detail: {
+                            sale,
+                            receipt,
+                        },
+                    }
+                )
+            );
+
         } catch (error) {
             console.error(
                 "Retail checkout failed",
@@ -2003,6 +2263,12 @@ window.CofiRetailApp = (() => {
     }
 
 
+    async function loadOperationalData() {
+        await loadCatalog();
+        await loadHeldSales();
+    }
+
+
     async function init() {
         if (state.initialized) {
             return;
@@ -2029,9 +2295,6 @@ window.CofiRetailApp = (() => {
         bindSalesWorkflow();
 
         renderCart();
-
-        await loadCatalog();
-        await loadHeldSales();
 
         const search =
             element(
@@ -2064,6 +2327,8 @@ window.CofiRetailApp = (() => {
         state,
 
         init,
+
+        loadOperationalData,
 
         renderCatalog,
 

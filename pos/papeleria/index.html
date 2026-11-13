@@ -12,15 +12,77 @@
 
     <link
         rel="stylesheet"
-        href="../css/pos.css"
+        href="/pos/css/pos.css?v=20261109c"
     >
-    <link rel="stylesheet" href="../css/retail-papeleria.css">
+    <link rel="stylesheet" href="/pos/css/retail-papeleria.css?v=20261109s">
 </head>
 
 <body>
+    <section
+        id="retail-staff-lock"
+        class="retail-staff-lock"
+    >
+        <form
+            id="retail-staff-unlock-form"
+            class="retail-staff-login"
+        >
+            <h1>COFI Papelería</h1>
+
+            <p>
+                Desbloquea el punto de venta
+            </p>
+
+            <label for="retail-staff-id">
+                ID de empleado
+            </label>
+
+            <input
+                id="retail-staff-id"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                required
+                autocomplete="username"
+            >
+
+            <label for="retail-staff-pin">
+                PIN
+            </label>
+
+            <input
+                id="retail-staff-pin"
+                type="password"
+                inputmode="numeric"
+                required
+                autocomplete="current-password"
+            >
+
+            <button
+                id="retail-staff-unlock-submit"
+                type="submit"
+            >
+                Entrar
+            </button>
+
+            <p
+                id="retail-staff-unlock-error"
+                class="retail-staff-error"
+                aria-live="polite"
+            ></p>
+
+            <small>
+                Terminal:
+                <span id="retail-terminal-id">
+                    preparando...
+                </span>
+            </small>
+        </form>
+    </section>
+
     <div
         id="retail-pos"
         data-module="PAPELERIA"
+        hidden
     >
         <header class="app-header">
             <div>
@@ -302,32 +364,40 @@
     </div>
 
 
-    <script src="../js/db.js"></script>
-    <script src="../js/api.js"></script>
-    <script src="../js/uuid.js"></script>
+    <script src="/pos/js/db.js?v=20261109c"></script>
+    <script src="/pos/js/api.js?v=20261109c"></script>
+    <script src="/pos/js/uuid.js?v=20261109c"></script>
 
     <script
-        src="../js/staff-session.js"
+        src="/pos/js/staff-session.js?v=20261109c"
     ></script>
 
     <script
-        src="../js/cash-shift.js"
+        src="/pos/js/cash-shift.js?v=20261109c"
     ></script>
 
     <script
-        src="../js/retail-api.js"
+        src="/pos/js/retail-api.js?v=20261109c"
     ></script>
 
     <script
-        src="../js/retail-cart.js"
+        src="/pos/js/retail-cart.js?v=20261109c"
     ></script>
 
-        <script src="../js/retail-catalog.js"></script>
-    <script src="../js/retail-sales.js"></script>
-<script src="../js/retail-adjustments.js"></script>
+        <script src="/pos/js/retail-catalog.js?v=20261109l"></script>
+<script src="/pos/js/retail-price-fix.js?v=20261109l"></script>
+    <script src="/pos/js/retail-sales.js?v=20261109c"></script>
+<script src="/pos/js/retail-adjustments.js?v=20261109c"></script>
 <script
-        src="../js/retail-app.js"
+        src="/pos/js/retail-app.js?v=20261109q"
     ></script>
+
+    <script src="/pos/js/retail-cash-control.js?v=20261109r"></script>
+<script
+        src="/pos/js/retail-session.js?v=20261109m"
+    ></script>
+<script src="/pos/js/retail-cart-remove-fix.js?v=20261109k"></script>
+<script src="/pos/js/retail-change.js?v=20261109i"></script>
 
     <dialog
         id="retail-return-modal"
@@ -545,5 +615,7 @@
         </form>
     </dialog>
 
+    <script src="/pos/js/retail-receipt-ui.js?v=20261109p"></script>
+    <script src="/pos/js/retail-held-ui.js?v=20261109s"></script>
 </body>
 </html>

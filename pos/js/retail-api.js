@@ -2,6 +2,21 @@ window.CofiRetailAPI = (() => {
     const MODULE_CODE =
         "PAPELERIA";
 
+    let accessToken = null;
+
+
+    function setAccessToken(value) {
+        accessToken =
+            value
+                ? String(value)
+                : null;
+    }
+
+
+    function getAccessToken() {
+        return accessToken;
+    }
+
 
     function request(
         path,
@@ -22,7 +37,10 @@ window.CofiRetailAPI = (() => {
 
         return api.request(
             path,
-            options
+            {
+                ...options,
+                accessToken,
+            }
         );
     }
 
@@ -145,6 +163,9 @@ window.CofiRetailAPI = (() => {
     return {
         moduleCode:
             MODULE_CODE,
+
+        setAccessToken,
+        getAccessToken,
 
         loadCatalog,
         listHeldSales,
