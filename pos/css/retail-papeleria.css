@@ -4502,3 +4502,156 @@ label[for="retail-search"] {
         flex-direction: column;
     }
 }
+
+
+/* ==========================================================
+   PAPELERIA — MANAGER INVENTORY UI V2
+   ========================================================== */
+
+#retail-manager-modal {
+    width: min(92vw, 860px);
+    max-width: 860px;
+}
+
+#retail-manager-modal > div {
+    padding: 24px 28px 28px;
+}
+
+#retail-manager-modal .retail-dialog-header {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 42px;
+    padding-right: 52px;
+}
+
+#retail-manager-modal .retail-dialog-header h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 22px;
+    font-weight: 820;
+    letter-spacing: -0.025em;
+}
+
+#retail-manager-modal .retail-dialog-header p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+#retail-manager-inventory-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface-soft);
+    color: #52615d;
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+#retail-manager-inventory-close:hover {
+    background: #edf4f2;
+    color: var(--text);
+}
+
+#retail-manager-modal .retail-manager-inventory-toolbar {
+    margin: 18px 0 16px;
+}
+
+#retail-manager-inventory-refresh {
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 11px;
+    background: #fff;
+    font-weight: 700;
+}
+
+#retail-manager-inventory-manager-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 750;
+}
+
+#retail-manager-modal .retail-manager-inventory-table-wrap {
+    border-radius: 14px;
+}
+
+#retail-manager-modal .retail-manager-inventory-table-wrap.is-empty {
+    overflow: hidden;
+    border-style: dashed;
+    background: var(--surface-soft);
+}
+
+#retail-manager-modal .retail-manager-inventory-table.is-empty {
+    min-width: 0;
+}
+
+#retail-manager-modal .retail-manager-inventory-table.is-empty thead {
+    display: none;
+}
+
+#retail-manager-modal .retail-manager-inventory-empty {
+    padding: 30px 24px !important;
+    border-bottom: 0 !important;
+    text-align: center;
+    color: var(--muted);
+}
+
+#retail-manager-modal .retail-manager-inventory-empty strong,
+#retail-manager-modal .retail-manager-inventory-empty span {
+    display: block;
+}
+
+#retail-manager-modal .retail-manager-inventory-empty strong {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 780;
+}
+
+#retail-manager-modal .retail-manager-inventory-empty span {
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+    #retail-manager-modal {
+        width: calc(100vw - 20px);
+    }
+
+    #retail-manager-modal > div {
+        padding: 20px;
+    }
+
+    #retail-manager-modal .retail-manager-inventory-toolbar {
+        gap: 10px;
+    }
+
+    #retail-manager-inventory-manager-status {
+        align-self: flex-start;
+    }
+
+    #retail-manager-inventory-refresh {
+        width: auto;
+        align-self: flex-start;
+    }
+}
