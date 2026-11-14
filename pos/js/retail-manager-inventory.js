@@ -139,9 +139,32 @@ window.CofiRetailManagerInventory = (() => {
 
         if (!body) return;
 
+        const table =
+            body.closest(
+                ".retail-manager-inventory-table"
+            );
+
+        const wrap =
+            body.closest(
+                ".retail-manager-inventory-table-wrap"
+            );
+
         body.replaceChildren();
 
-        if (!state.inventory.length) {
+        const isEmpty =
+            state.inventory.length === 0;
+
+        table?.classList.toggle(
+            "is-empty",
+            isEmpty
+        );
+
+        wrap?.classList.toggle(
+            "is-empty",
+            isEmpty
+        );
+
+        if (isEmpty) {
             const row =
                 document.createElement(
                     "tr"
@@ -153,10 +176,32 @@ window.CofiRetailManagerInventory = (() => {
                 );
 
             cell.colSpan = 5;
+            cell.className =
+                "retail-manager-inventory-empty";
 
-            cell.textContent =
+            const title =
+                document.createElement(
+                    "strong"
+                );
+
+            title.textContent =
                 "No hay productos con "
                 + "inventario controlado.";
+
+            const hint =
+                document.createElement(
+                    "span"
+                );
+
+            hint.textContent =
+                "Los productos configurados "
+                + "con control de inventario "
+                + "aparecerán aquí.";
+
+            cell.append(
+                title,
+                hint
+            );
 
             row.append(cell);
             body.append(row);
