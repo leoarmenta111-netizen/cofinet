@@ -4655,3 +4655,140 @@ label[for="retail-search"] {
         align-self: flex-start;
     }
 }
+
+
+/* ==========================================================
+   PAPELERIA — CASH CLOSING UI
+   ========================================================== */
+
+.retail-cash-status.is-open,
+.retail-cash-status.is-closing {
+    cursor: pointer;
+}
+
+.retail-cash-status.is-open:hover,
+.retail-cash-status.is-closing:hover {
+    border-color: #9fc9c0;
+    background: #eef8f5;
+}
+
+#retail-cash-closing-modal {
+    width: min(92vw, 520px);
+    max-width: 520px;
+}
+
+#retail-cash-closing-modal > form {
+    display: grid;
+    gap: 18px;
+    padding: 28px;
+}
+
+.retail-cash-closing-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.retail-cash-closing-head h2 {
+    margin: 3px 0 5px;
+    font-size: 24px;
+    letter-spacing: -0.035em;
+}
+
+.retail-cash-closing-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+#retail-cash-closing-cancel {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface-soft);
+    color: #52615d;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.retail-cash-closing-step {
+    display: grid;
+    gap: 16px;
+}
+
+.retail-cash-closing-step[hidden] {
+    display: none !important;
+}
+
+.retail-cash-reconciliation {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.retail-cash-reconciliation > div {
+    padding: 13px 12px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: var(--surface-soft);
+}
+
+.retail-cash-reconciliation span,
+.retail-cash-reconciliation strong {
+    display: block;
+}
+
+.retail-cash-reconciliation span {
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.retail-cash-reconciliation strong {
+    color: var(--text);
+    font-size: 16px;
+}
+
+#retail-closing-difference.has-difference {
+    color: #b42318;
+}
+
+#retail-closing-note-field {
+    display: grid;
+    gap: 7px;
+}
+
+#retail-closing-note-field[hidden] {
+    display: none !important;
+}
+
+#retail-closing-note {
+    width: 100%;
+    min-height: 84px;
+    padding: 11px 13px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+    resize: vertical;
+}
+
+@media (max-width: 560px) {
+    #retail-cash-closing-modal > form {
+        padding: 22px 20px;
+    }
+
+    .retail-cash-reconciliation {
+        grid-template-columns: 1fr;
+    }
+}
