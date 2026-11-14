@@ -141,7 +141,24 @@ def get_current_cash_shift(
     if shift is None:
         return None
 
-    return PosCashShiftResponse.model_validate(shift)
+    response = (
+        PosCashShiftResponse
+        .model_validate(
+            shift
+        )
+    )
+
+    summary = (
+        PosCashService
+        .retail_shift_summary(
+            db,
+            shift=shift,
+        )
+    )
+
+    return response.model_copy(
+        update=summary
+    )
 
 
 @router.post(
