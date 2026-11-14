@@ -5,6 +5,7 @@ window.CofiRetailCashControl = (() => {
         module: null,
         shift: null,
         busy: false,
+        closeBusy: false,
     };
 
 
@@ -144,14 +145,18 @@ window.CofiRetailCashControl = (() => {
                 button.addEventListener(
                     "click",
                     () => {
+                        const status =
+                            state.shift?.status;
+
                         if (
-                            !state.shift
-                            || state.shift
-                                .status
-                                !== "OPEN"
+                            status === "OPEN"
+                            || status === "CLOSING"
                         ) {
-                            openDialog();
+                            openCloseDialog();
+                            return;
                         }
+
+                        openDialog();
                     }
                 );
             }
@@ -291,6 +296,593 @@ window.CofiRetailCashControl = (() => {
                 "submit",
                 handleOpen
             );
+        }
+    }
+
+
+
+    function ensureCloseUI() {
+        if (
+            el(
+                "retail-cash-closing-modal"
+            )
+        ) {
+            return;
+        }
+
+        const dialog =
+            document.createElement(
+                "dialog"
+            );
+
+        dialog.id =
+            "retail-cash-closing-modal";
+
+        dialog.className =
+            "retail-cash-closing-modal";
+
+        dialog.innerHTML = `
+            <form
+                id="retail-cash-closing-form"
+                onsubmit="return false;"
+            >
+                <div class="retail-cash-closing-head">
+                    <div>
+                        <span class="retail-modal-eyebrow">
+                            Fin de turno
+                        </span>
+
+                        <h2>Cerrar caja</h2>
+
+                        <p>
+                            Cuenta el efectivo físico antes
+                            de finalizar el turno.
+                        </p>
+                    </div>
+
+                    <button
+                        id="retail-cash-closing-cancel"
+                        type="button"
+                        aria-label="Cerrar"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <section
+                    id="retail-cash-closing-count-step"
+                    class="retail-cash-closing-step"
+                >
+                    <label for="retail-closing-amount">
+                        Efectivo contado
+                    </label>
+
+                    <div class="retail-money-input">
+                        <span>$</span>
+
+                        <input
+                            id="retail-closing-amount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputmode="decimal"
+                            autocomplete="off"
+                            required
+                        >
+                    </div>
+
+                    <button
+                        id="retail-cash-closing-count-submit"
+                        type="button"
+                        class="retail-primary-action"
+                    >
+                        Revisar cierre
+                    </button>
+                </section>
+
+                <section
+                    id="retail-cash-closing-review-step"
+                    class="retail-cash-closing-step"
+                    hidden
+                >
+                    <div class="retail-cash-reconciliation">
+                        <div>
+                            <span>Esperado</span>
+                            <strong id="retail-closing-expected">—</strong>
+                        </div>
+
+                        <div>
+                            <span>Contado</span>
+                            <strong id="retail-closing-counted">—</strong>
+                        </div>
+
+                        <div>
+                            <span>Diferencia</span>
+                            <strong id="retail-closing-difference">—</strong>
+                        </div>
+                    </div>
+
+                    <label
+                        id="retail-closing-note-field"
+                        hidden
+                    >
+                        Motivo de la diferencia
+
+                        <textarea
+                            id="retail-closing-note"
+                            rows="3"
+                            maxlength="500"
+                            placeholder="Explica la diferencia encontrada"
+                        ></textarea>
+                    </label>
+
+                    <div class="retail-manager-box">
+                        <div>
+                            <strong>
+                                Autorización de gerente
+                            </strong>
+
+                            <small>
+                                Se requiere PIN de Manager
+                                para cerrar la caja.
+                            </small>
+                        </div>
+
+                        <label for="retail-closing-manager-id">
+                            ID de gerente
+                        </label>
+
+                        <input
+                            id="retail-closing-manager-id"
+                            type="number"
+                            min="1"
+                            required
+                            inputmode="numeric"
+                            autocomplete="off"
+                        >
+
+                        <label for="retail-closing-manager-pin">
+                            PIN de gerente
+                        </label>
+
+                        <input
+                            id="retail-closing-manager-pin"
+                            type="password"
+                            required
+                            inputmode="numeric"
+                            autocomplete="off"
+                        >
+                    </div>
+
+                    <button
+                        id="retail-cash-closing-finalize"
+                        type="button"
+                        class="retail-primary-action"
+                    >
+                        Cerrar caja
+                    </button>
+                </section>
+
+                <p
+                    id="retail-cash-closing-error"
+                    class="retail-cash-opening-error"
+                    hidden
+                ></p>
+            </form>
+        `;
+
+        document.body.appendChild(
+            dialog
+        );
+
+        el(
+            "retail-cash-closing-cancel"
+        )?.addEventListener(
+            "click",
+            () => {
+                if (
+                    dialog.open
+                    && typeof dialog.close
+                        === "function"
+                ) {
+                    dialog.close();
+                }
+            }
+        );
+
+        el(
+            "retail-cash-closing-count-submit"
+        )?.addEventListener(
+            "click",
+            handleClosingCount
+        );
+
+        el(
+            "retail-cash-closing-finalize"
+        )?.addEventListener(
+            "click",
+            handleFinalizeClose
+        );
+    }
+
+
+    function setClosingError(
+        message = ""
+    ) {
+        const target =
+            el(
+                "retail-cash-closing-error"
+            );
+
+        if (!target) {
+            return;
+        }
+
+        target.textContent =
+            String(
+                message || ""
+            );
+
+        target.hidden =
+            !message;
+    }
+
+
+    function renderReconciliation(
+        reconciliation
+    ) {
+        if (!reconciliation) {
+            return;
+        }
+
+        const expected =
+            Number(
+                reconciliation
+                    .expected_cash
+            );
+
+        const counted =
+            Number(
+                reconciliation
+                    .counted_cash
+            );
+
+        const difference =
+            Number(
+                reconciliation
+                    .difference
+            );
+
+        el(
+            "retail-closing-expected"
+        ).textContent =
+            money(expected);
+
+        el(
+            "retail-closing-counted"
+        ).textContent =
+            money(counted);
+
+        const differenceNode =
+            el(
+                "retail-closing-difference"
+            );
+
+        differenceNode.textContent =
+            money(difference);
+
+        differenceNode.classList.toggle(
+            "has-difference",
+            difference !== 0
+        );
+
+        const noteField =
+            el(
+                "retail-closing-note-field"
+            );
+
+        if (noteField) {
+            noteField.hidden =
+                difference === 0;
+        }
+
+        el(
+            "retail-cash-closing-count-step"
+        ).hidden = true;
+
+        el(
+            "retail-cash-closing-review-step"
+        ).hidden = false;
+    }
+
+
+    function openCloseDialog() {
+        ensureUI();
+        ensureCloseUI();
+
+        if (
+            state.closeBusy
+            || !state.shift
+            || ![
+                "OPEN",
+                "CLOSING",
+            ].includes(
+                state.shift.status
+            )
+        ) {
+            return;
+        }
+
+        setClosingError("");
+
+        const module =
+            ensureModule();
+
+        const reconciliation =
+            module.reconciliation();
+
+        const countStep =
+            el(
+                "retail-cash-closing-count-step"
+            );
+
+        const reviewStep =
+            el(
+                "retail-cash-closing-review-step"
+            );
+
+        if (reconciliation) {
+            renderReconciliation(
+                reconciliation
+            );
+        } else {
+            countStep.hidden = false;
+            reviewStep.hidden = true;
+
+            el(
+                "retail-closing-amount"
+            ).value = "";
+        }
+
+        el(
+            "retail-closing-manager-pin"
+        ).value = "";
+
+        el(
+            "retail-closing-note"
+        ).value = "";
+
+        const dialog =
+            el(
+                "retail-cash-closing-modal"
+            );
+
+        if (
+            dialog
+            && typeof dialog.showModal
+                === "function"
+            && !dialog.open
+        ) {
+            dialog.showModal();
+        }
+
+        setTimeout(
+            () => {
+                if (reconciliation) {
+                    el(
+                        "retail-closing-manager-id"
+                    )?.focus();
+                } else {
+                    el(
+                        "retail-closing-amount"
+                    )?.focus();
+                }
+            },
+            0
+        );
+    }
+
+
+    async function handleClosingCount() {
+        if (state.closeBusy) {
+            return;
+        }
+
+        setClosingError("");
+
+        const amount =
+            Number(
+                el(
+                    "retail-closing-amount"
+                )?.value
+            );
+
+        if (
+            !Number.isFinite(amount)
+            || amount < 0
+        ) {
+            setClosingError(
+                "Ingresa el efectivo contado."
+            );
+            return;
+        }
+
+        state.closeBusy = true;
+
+        const button =
+            el(
+                "retail-cash-closing-count-submit"
+            );
+
+        if (button) {
+            button.disabled = true;
+            button.textContent =
+                "Calculando...";
+        }
+
+        try {
+            const module =
+                ensureModule();
+
+            const reconciliation =
+                await module
+                    .submitClosingCount(
+                        amount
+                    );
+
+            state.shift =
+                normalizeShift(
+                    module.current()
+                );
+
+            renderStatus();
+            syncCheckoutAvailability();
+
+            renderReconciliation(
+                reconciliation
+            );
+
+        } catch (error) {
+            setClosingError(
+                error?.message
+                || "No fue posible registrar "
+                + "el conteo de cierre."
+            );
+
+        } finally {
+            state.closeBusy = false;
+
+            if (button) {
+                button.disabled = false;
+                button.textContent =
+                    "Revisar cierre";
+            }
+        }
+    }
+
+
+    async function handleFinalizeClose() {
+        if (state.closeBusy) {
+            return;
+        }
+
+        setClosingError("");
+
+        const managerId =
+            Number(
+                el(
+                    "retail-closing-manager-id"
+                )?.value
+            );
+
+        const managerPin =
+            String(
+                el(
+                    "retail-closing-manager-pin"
+                )?.value
+                || ""
+            ).trim();
+
+        const differenceNote =
+            String(
+                el(
+                    "retail-closing-note"
+                )?.value
+                || ""
+            ).trim();
+
+        if (
+            !Number.isInteger(managerId)
+            || managerId <= 0
+        ) {
+            setClosingError(
+                "Ingresa el ID del gerente."
+            );
+            return;
+        }
+
+        if (!managerPin) {
+            setClosingError(
+                "Ingresa el PIN del gerente."
+            );
+            return;
+        }
+
+        state.closeBusy = true;
+
+        const button =
+            el(
+                "retail-cash-closing-finalize"
+            );
+
+        if (button) {
+            button.disabled = true;
+            button.textContent =
+                "Cerrando caja...";
+        }
+
+        try {
+            const module =
+                ensureModule();
+
+            const result =
+                await module.finalizeClose(
+                    {
+                        staffId:
+                            managerId,
+                        pin:
+                            managerPin,
+                    },
+                    differenceNote
+                );
+
+            state.shift =
+                normalizeShift(
+                    result
+                );
+
+            await refresh();
+
+            renderStatus();
+            syncCheckoutAvailability();
+
+            const dialog =
+                el(
+                    "retail-cash-closing-modal"
+                );
+
+            if (
+                dialog?.open
+                && typeof dialog.close
+                    === "function"
+            ) {
+                dialog.close();
+            }
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "cofi:retail-cash-closed",
+                    {
+                        detail:
+                            result,
+                    }
+                )
+            );
+
+        } catch (error) {
+            setClosingError(
+                error?.message
+                || "No fue posible cerrar la caja."
+            );
+
+        } finally {
+            state.closeBusy = false;
+
+            if (button) {
+                button.disabled = false;
+                button.textContent =
+                    "Cerrar caja";
+            }
         }
     }
 
@@ -891,6 +1483,7 @@ window.CofiRetailCashControl = (() => {
 
     function init() {
         ensureUI();
+        ensureCloseUI();
 
         renderStatus();
         syncCheckoutAvailability();
@@ -951,5 +1544,6 @@ window.CofiRetailCashControl = (() => {
         refresh,
         afterUnlock,
         openDialog,
+        openCloseDialog,
     };
 })();
