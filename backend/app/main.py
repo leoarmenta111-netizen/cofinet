@@ -25,6 +25,7 @@ from app.api.pos_staff import router as pos_staff_router
 from app.api.pos_cash import router as pos_cash_router
 from app.api.retail_catalog import router as retail_catalog_router
 from app.api.retail_sales import router as retail_sales_router
+from app.api.retail_manager import router as retail_manager_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -70,6 +71,7 @@ app.include_router(pos_staff_router)
 app.include_router(pos_cash_router)
 app.include_router(retail_catalog_router)
 app.include_router(retail_sales_router)
+app.include_router(retail_manager_router)
 
 @app.get("/")
 async def root():
