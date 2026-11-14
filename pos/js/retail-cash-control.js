@@ -385,6 +385,33 @@ window.CofiRetailCashControl = (() => {
                     class="retail-cash-closing-step"
                     hidden
                 >
+                    <div class="retail-shift-sales-summary">
+                        <div class="retail-shift-sales-title">
+                            <span>Corte de ventas</span>
+                            <strong id="retail-closing-net-sales">—</strong>
+                        </div>
+
+                        <div class="retail-shift-sales-grid">
+                            <div>
+                                <span>Efectivo neto</span>
+                                <strong id="retail-closing-cash-net">—</strong>
+                                <small id="retail-closing-cash-detail">—</small>
+                            </div>
+
+                            <div>
+                                <span>Tarjeta neta</span>
+                                <strong id="retail-closing-card-net">—</strong>
+                                <small id="retail-closing-card-detail">—</small>
+                            </div>
+
+                            <div>
+                                <span>Venta bruta</span>
+                                <strong id="retail-closing-gross-sales">—</strong>
+                                <small>Antes de devoluciones</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="retail-cash-reconciliation">
                         <div>
                             <span>Esperado</span>
@@ -552,6 +579,111 @@ window.CofiRetailCashControl = (() => {
                 reconciliation
                     .difference
             );
+
+        const cashSales =
+            Number(
+                reconciliation
+                    .cash_sales
+                || 0
+            );
+
+        const cardSales =
+            Number(
+                reconciliation
+                    .card_sales
+                || 0
+            );
+
+        const cashRefunds =
+            Number(
+                reconciliation
+                    .cash_refunds
+                || 0
+            );
+
+        const cardRefunds =
+            Number(
+                reconciliation
+                    .card_refunds
+                || 0
+            );
+
+        const cashNet =
+            Number(
+                reconciliation
+                    .cash_net
+                ?? (
+                    cashSales
+                    - cashRefunds
+                )
+            );
+
+        const cardNet =
+            Number(
+                reconciliation
+                    .card_net
+                ?? (
+                    cardSales
+                    - cardRefunds
+                )
+            );
+
+        const grossSales =
+            Number(
+                reconciliation
+                    .gross_sales
+                ?? (
+                    cashSales
+                    + cardSales
+                )
+            );
+
+        const netSales =
+            Number(
+                reconciliation
+                    .net_sales
+                ?? (
+                    cashNet
+                    + cardNet
+                )
+            );
+
+        el(
+            "retail-closing-cash-net"
+        ).textContent =
+            money(cashNet);
+
+        el(
+            "retail-closing-card-net"
+        ).textContent =
+            money(cardNet);
+
+        el(
+            "retail-closing-gross-sales"
+        ).textContent =
+            money(grossSales);
+
+        el(
+            "retail-closing-net-sales"
+        ).textContent =
+            money(netSales);
+
+        el(
+            "retail-closing-cash-detail"
+        ).textContent =
+            "Ventas "
+            + money(cashSales)
+            + " · Dev. "
+            + money(cashRefunds);
+
+        el(
+            "retail-closing-card-detail"
+        ).textContent =
+            "Ventas "
+            + money(cardSales)
+            + " · Dev. "
+            + money(cardRefunds);
+
 
         el(
             "retail-closing-expected"
