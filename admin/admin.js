@@ -50,11 +50,36 @@ async function adminRequest(path, options = {}) {
 
     const payload = response.status === 204 ? null : await response.json().catch(() => null);
     if (!response.ok) {
-        if (response.status === 401) clearAdminSession();
+        if (response.status === 401) {
+            clearAdminSession();
+
+            const isLoginRequest =
+                path === "/admin/login";
+
+            const isLoginPage =
+                window.location.pathname
+                    .endsWith("/login.html");
+
+            if (
+                !isLoginRequest
+                && !isLoginPage
+            ) {
+                window.location.replace(
+                    "login.html"
+                );
+            }
+        }
+
         const detail = Array.isArray(payload?.detail)
             ? payload.detail.map(item => item.msg).join(" ")
             : payload?.detail;
-        throw new AdminApiError(detail || "No fue posible completar la solicitud.", response.status, payload);
+
+        throw new AdminApiError(
+            detail
+            || "No fue posible completar la solicitud.",
+            response.status,
+            payload
+        );
     }
     return payload;
 }
