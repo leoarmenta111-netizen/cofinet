@@ -344,6 +344,45 @@
                 )
             );
 
+            actions.append(
+                document.createTextNode(
+                    " "
+                ),
+                makeButton(
+                    item.item_type === "SERVICE"
+                        ? "Tarifas"
+                        : "Presentaciones",
+                    "button button-secondary",
+                    () => {
+                        const pricing =
+                            window.CofiRetailPricingUI;
+
+                        if (!pricing) {
+                            showToast(
+                                "El módulo de precios no está disponible.",
+                                "error"
+                            );
+                            return;
+                        }
+
+                        if (
+                            item.item_type
+                            === "SERVICE"
+                        ) {
+                            pricing.openService(
+                                item,
+                                currentBranch()
+                            );
+                        } else {
+                            pricing.openProduct(
+                                item,
+                                currentBranch()
+                            );
+                        }
+                    }
+                )
+            );
+
             if (
                 item.item_type === "PRODUCT"
                 && item.inventory_tracked
@@ -1076,6 +1115,21 @@
                 }
             );
     }
+
+
+    window.CofiRetailAdmin = {
+        reload: loadWorkspace,
+
+        getItem(itemId) {
+            return state.catalog.find(
+                item =>
+                    Number(item.id)
+                    === Number(itemId)
+            ) || null;
+        },
+
+        currentBranch,
+    };
 
 
     (async () => {

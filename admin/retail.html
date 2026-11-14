@@ -428,6 +428,349 @@
 
 
     <dialog
+        id="retail-presentations-dialog"
+        class="dialog dialog-large"
+    >
+        <div>
+            <h2>Presentaciones y precios</h2>
+
+            <p id="retail-presentations-item-name"></p>
+
+            <div class="dialog-actions">
+                <button
+                    id="retail-presentation-new"
+                    class="button button-primary"
+                    type="button"
+                >
+                    Nueva presentación
+                </button>
+
+                <button
+                    id="retail-presentations-close"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Cerrar
+                </button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Presentación</th>
+                            <th>Código</th>
+                            <th>Factor</th>
+                            <th>Precio</th>
+                            <th>Mayoreo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="retail-presentation-rows">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </dialog>
+
+
+    <dialog
+        id="retail-presentation-dialog"
+        class="dialog dialog-large"
+    >
+        <form id="retail-presentation-form">
+
+            <input
+                id="retail-presentation-id"
+                type="hidden"
+            >
+
+            <input
+                id="retail-presentation-item-id"
+                type="hidden"
+            >
+
+            <h2 id="retail-presentation-title">
+                Nueva presentación
+            </h2>
+
+            <p id="retail-presentation-item-name"></p>
+
+            <div class="dialog-form">
+
+                <div class="field">
+                    <label for="retail-presentation-name">
+                        Nombre
+                    </label>
+
+                    <input
+                        id="retail-presentation-name"
+                        required
+                        maxlength="120"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-presentation-barcode">
+                        Código de barras
+                    </label>
+
+                    <input
+                        id="retail-presentation-barcode"
+                        maxlength="120"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-presentation-factor">
+                        Factor de conversión
+                    </label>
+
+                    <input
+                        id="retail-presentation-factor"
+                        type="number"
+                        min="0.001"
+                        step="0.001"
+                        value="1.000"
+                        required
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-presentation-price">
+                        Precio de venta
+                    </label>
+
+                    <input
+                        id="retail-presentation-price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-presentation-bulk-price">
+                        Precio mayoreo
+                    </label>
+
+                    <input
+                        id="retail-presentation-bulk-price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-presentation-bulk-min">
+                        Cantidad mínima mayoreo
+                    </label>
+
+                    <input
+                        id="retail-presentation-bulk-min"
+                        type="number"
+                        min="0.001"
+                        step="0.001"
+                    >
+                </div>
+
+                <div class="field">
+                    <label>
+                        <input
+                            id="retail-presentation-default"
+                            type="checkbox"
+                        >
+                        Presentación predeterminada
+                    </label>
+                </div>
+
+                <div class="field">
+                    <label>
+                        <input
+                            id="retail-presentation-active"
+                            type="checkbox"
+                            checked
+                        >
+                        Activa
+                    </label>
+                </div>
+
+            </div>
+
+            <p
+                id="retail-presentation-error"
+                class="form-error"
+                role="alert"
+            ></p>
+
+            <div class="dialog-actions">
+                <button
+                    id="retail-presentation-cancel"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    id="retail-presentation-save"
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Guardar
+                </button>
+            </div>
+
+        </form>
+    </dialog>
+
+
+    <dialog
+        id="retail-tiers-dialog"
+        class="dialog dialog-large"
+    >
+        <div>
+            <h2>Tarifas por cantidad</h2>
+
+            <p id="retail-tiers-item-name"></p>
+
+            <div class="dialog-actions">
+                <button
+                    id="retail-tier-new"
+                    class="button button-primary"
+                    type="button"
+                >
+                    Nuevo rango
+                </button>
+
+                <button
+                    id="retail-tiers-close"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Cerrar
+                </button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Desde</th>
+                            <th>Hasta</th>
+                            <th>Precio unitario</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="retail-tier-rows">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </dialog>
+
+
+    <dialog
+        id="retail-tier-dialog"
+        class="dialog"
+    >
+        <form id="retail-tier-form">
+
+            <input
+                id="retail-tier-id"
+                type="hidden"
+            >
+
+            <input
+                id="retail-tier-item-id"
+                type="hidden"
+            >
+
+            <h2 id="retail-tier-title">
+                Nuevo rango
+            </h2>
+
+            <p id="retail-tier-item-name"></p>
+
+            <div class="field">
+                <label for="retail-tier-min">
+                    Cantidad mínima
+                </label>
+
+                <input
+                    id="retail-tier-min"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    required
+                >
+            </div>
+
+            <div class="field">
+                <label for="retail-tier-max">
+                    Cantidad máxima
+                </label>
+
+                <input
+                    id="retail-tier-max"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                >
+
+                <small class="field-hint">
+                    Déjalo vacío para un rango sin límite superior.
+                </small>
+            </div>
+
+            <div class="field">
+                <label for="retail-tier-price">
+                    Precio unitario
+                </label>
+
+                <input
+                    id="retail-tier-price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                >
+            </div>
+
+            <p
+                id="retail-tier-error"
+                class="form-error"
+                role="alert"
+            ></p>
+
+            <div class="dialog-actions">
+                <button
+                    id="retail-tier-cancel"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    id="retail-tier-save"
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Guardar
+                </button>
+            </div>
+
+        </form>
+    </dialog>
+
+
+    <dialog
         id="retail-inventory-dialog"
         class="dialog"
     >
@@ -524,6 +867,7 @@
 
 
     <script src="admin.js?v=20261114-retail"></script>
-    <script src="retail-admin.js?v=20261114-a4a1"></script>
+    <script src="retail-pricing.js?v=20261114-a4a2"></script>
+    <script src="retail-admin.js?v=20261114-a4a2"></script>
 </body>
 </html>
