@@ -85,6 +85,15 @@ class PosCashShiftResponse(BaseModel):
         validation_alias="variance",
     )
 
+    cash_sales: Decimal = Decimal("0.00")
+    card_sales: Decimal = Decimal("0.00")
+    gross_sales: Decimal = Decimal("0.00")
+    cash_refunds: Decimal = Decimal("0.00")
+    card_refunds: Decimal = Decimal("0.00")
+    cash_net: Decimal = Decimal("0.00")
+    card_net: Decimal = Decimal("0.00")
+    net_sales: Decimal = Decimal("0.00")
+
     @model_serializer(mode="wrap")
     def serialize_shift(self, handler):
         payload = handler(self)
@@ -159,6 +168,14 @@ class PosCashReconciliation(BaseModel):
     counted_cash: Decimal
     expected_cash: Decimal
     difference: Decimal
+    cash_sales: Decimal = Decimal("0.00")
+    card_sales: Decimal = Decimal("0.00")
+    gross_sales: Decimal = Decimal("0.00")
+    cash_refunds: Decimal = Decimal("0.00")
+    card_refunds: Decimal = Decimal("0.00")
+    cash_net: Decimal = Decimal("0.00")
+    card_net: Decimal = Decimal("0.00")
+    net_sales: Decimal = Decimal("0.00")
 
 
 class PosCashCloseRequest(BaseModel):
