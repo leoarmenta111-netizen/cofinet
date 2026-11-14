@@ -212,6 +212,22 @@
                                 result.expected_cash,
                             difference:
                                 result.difference,
+                            cash_sales:
+                                result.cash_sales,
+                            card_sales:
+                                result.card_sales,
+                            gross_sales:
+                                result.gross_sales,
+                            cash_refunds:
+                                result.cash_refunds,
+                            card_refunds:
+                                result.card_refunds,
+                            cash_net:
+                                result.cash_net,
+                            card_net:
+                                result.card_net,
+                            net_sales:
+                                result.net_sales,
                         }
                         : null;
 
@@ -565,6 +581,22 @@ async function finalizeClose(
                             currentShift.expected_cash,
                         difference:
                             currentShift.difference,
+                        cash_sales:
+                            currentShift.cash_sales,
+                        card_sales:
+                            currentShift.card_sales,
+                        gross_sales:
+                            currentShift.gross_sales,
+                        cash_refunds:
+                            currentShift.cash_refunds,
+                        card_refunds:
+                            currentShift.card_refunds,
+                        cash_net:
+                            currentShift.cash_net,
+                        card_net:
+                            currentShift.card_net,
+                        net_sales:
+                            currentShift.net_sales,
                     };
                 }
 
