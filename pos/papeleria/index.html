@@ -95,6 +95,14 @@
                 </small>
             </div>
 
+            <button
+                id="retail-manager-inventory-open"
+                type="button"
+                class="retail-manager-inventory-button"
+            >
+                Inventario
+            </button>
+
             <div
                 id="retail-session-status"
                 aria-live="polite"
@@ -342,25 +350,208 @@
     </dialog>
 
 <dialog
-            id="retail-manager-modal"
-        >
-            <form method="dialog">
-                <h2>
-                    Autorización de gerente
-                </h2>
-
-                <p>
-                    Esta operación requiere
-                    autorización.
-                </p>
+        id="retail-manager-modal"
+        class="retail-dialog retail-manager-inventory-dialog"
+    >
+        <div>
+            <div class="retail-dialog-header">
+                <div>
+                    <h2>Inventario</h2>
+                    <p>
+                        Existencias de la sucursal actual.
+                    </p>
+                </div>
 
                 <button
-                    type="submit"
+                    id="retail-manager-inventory-close"
+                    type="button"
+                    aria-label="Cerrar inventario"
                 >
-                    Cerrar
+                    ×
                 </button>
-            </form>
-        </dialog>
+            </div>
+
+            <div
+                class="retail-manager-inventory-toolbar"
+            >
+                <button
+                    id="retail-manager-inventory-refresh"
+                    type="button"
+                    class="retail-secondary-button"
+                >
+                    Actualizar
+                </button>
+
+                <span
+                    id="retail-manager-inventory-manager-status"
+                >
+                    Gerentes: —
+                </span>
+            </div>
+
+            <p
+                id="retail-manager-inventory-error"
+                class="retail-adjustment-error"
+                role="alert"
+            ></p>
+
+            <div
+                class="retail-manager-inventory-table-wrap"
+            >
+                <table
+                    class="retail-manager-inventory-table"
+                >
+                    <thead>
+                        <tr>
+                            <th>Artículo</th>
+                            <th>SKU</th>
+                            <th>Existencia</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+
+                    <tbody
+                        id="retail-manager-inventory-rows"
+                    >
+                        <tr>
+                            <td colspan="5">
+                                Cargando…
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </dialog>
+
+
+    <dialog
+        id="retail-manager-inventory-operation-modal"
+        class="retail-dialog"
+    >
+        <form
+            id="retail-manager-inventory-operation-form"
+            class="retail-adjustment-form"
+            onsubmit="return false;"
+        >
+            <input
+                id="retail-manager-inventory-item-id"
+                type="hidden"
+            >
+
+            <h2>Movimiento de inventario</h2>
+
+            <p
+                id="retail-manager-inventory-item-name"
+            ></p>
+
+            <label>
+                Operación
+
+                <select
+                    id="retail-manager-inventory-operation"
+                    required
+                >
+                    <option value="entry">
+                        Entrada
+                    </option>
+
+                    <option value="removal">
+                        Salida
+                    </option>
+
+                    <option value="adjust">
+                        Ajuste a conteo físico
+                    </option>
+                </select>
+            </label>
+
+            <label>
+                <span
+                    id="retail-manager-inventory-quantity-label"
+                >
+                    Cantidad
+                </span>
+
+                <input
+                    id="retail-manager-inventory-quantity"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    inputmode="decimal"
+                    required
+                >
+            </label>
+
+            <label>
+                Motivo
+
+                <textarea
+                    id="retail-manager-inventory-note"
+                    rows="3"
+                    maxlength="500"
+                    required
+                ></textarea>
+            </label>
+
+            <fieldset
+                class="retail-manager-authorization"
+            >
+                <legend>
+                    Autorización de gerente
+                </legend>
+
+                <label>
+                    Gerente
+
+                    <select
+                        id="retail-manager-inventory-manager-id"
+                        required
+                    >
+                        <option value="">
+                            Selecciona gerente
+                        </option>
+                    </select>
+                </label>
+
+                <label>
+                    PIN de gerente
+
+                    <input
+                        id="retail-manager-inventory-manager-pin"
+                        type="password"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        required
+                    >
+                </label>
+            </fieldset>
+
+            <p
+                id="retail-manager-inventory-operation-error"
+                class="retail-adjustment-error"
+                role="alert"
+            ></p>
+
+            <div class="retail-modal-actions">
+                <button
+                    id="retail-manager-inventory-operation-cancel"
+                    type="button"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    id="retail-manager-inventory-operation-confirm"
+                    type="button"
+                    class="retail-primary-button"
+                >
+                    Registrar movimiento
+                </button>
+            </div>
+        </form>
+    </dialog>
     </div>
 
 
@@ -393,6 +584,9 @@
     ></script>
 
     <script src="/pos/js/retail-cash-control.js?v=20261109r"></script>
+<script
+        src="/pos/js/retail-manager-inventory.js?v=20261114-a4b"
+    ></script>
 <script
         src="/pos/js/retail-session.js?v=20261109m"
     ></script>

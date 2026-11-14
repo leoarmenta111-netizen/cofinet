@@ -160,6 +160,62 @@ window.CofiRetailAPI = (() => {
     }
 
 
+    function listRetailManagers() {
+        return request(
+            "/retail/manager/staff"
+        );
+    }
+
+
+    function listManagerInventory() {
+        return request(
+            "/retail/manager/inventory"
+        );
+    }
+
+
+    function managerInventoryEntry(
+        itemId,
+        payload
+    ) {
+        return jsonRequest(
+            `/retail/manager/inventory/${
+                encodeURIComponent(itemId)
+            }/entry`,
+            "POST",
+            payload
+        );
+    }
+
+
+    function managerInventoryRemoval(
+        itemId,
+        payload
+    ) {
+        return jsonRequest(
+            `/retail/manager/inventory/${
+                encodeURIComponent(itemId)
+            }/removal`,
+            "POST",
+            payload
+        );
+    }
+
+
+    function managerInventoryAdjust(
+        itemId,
+        payload
+    ) {
+        return jsonRequest(
+            `/retail/manager/inventory/${
+                encodeURIComponent(itemId)
+            }/adjust`,
+            "POST",
+            payload
+        );
+    }
+
+
     return {
         moduleCode:
             MODULE_CODE,
@@ -175,5 +231,11 @@ window.CofiRetailAPI = (() => {
         receipt,
         returnItems,
         cancelSale,
+
+        listRetailManagers,
+        listManagerInventory,
+        managerInventoryEntry,
+        managerInventoryRemoval,
+        managerInventoryAdjust,
     };
 })();
