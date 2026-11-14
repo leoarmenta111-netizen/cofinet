@@ -4792,3 +4792,82 @@ label[for="retail-search"] {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* ==========================================================
+   PAPELERIA — SHIFT SALES CUT
+   ========================================================== */
+
+.retail-shift-sales-summary {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: #f8fbfa;
+}
+
+.retail-shift-sales-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.retail-shift-sales-title span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.retail-shift-sales-title strong {
+    color: var(--brand-strong);
+    font-size: 20px;
+    font-weight: 850;
+}
+
+.retail-shift-sales-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.retail-shift-sales-grid > div {
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.retail-shift-sales-grid span,
+.retail-shift-sales-grid strong,
+.retail-shift-sales-grid small {
+    display: block;
+}
+
+.retail-shift-sales-grid span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.retail-shift-sales-grid strong {
+    margin-top: 4px;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 820;
+}
+
+.retail-shift-sales-grid small {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+@media (max-width: 560px) {
+    .retail-shift-sales-grid {
+        grid-template-columns: 1fr;
+    }
+}
