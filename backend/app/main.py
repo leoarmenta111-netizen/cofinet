@@ -19,6 +19,7 @@ from app.api.admin_pos_staff import router as admin_pos_staff_router
 from app.api.admin_pos_receipts import router as admin_pos_receipts_router
 from app.api.admin_pos_customers import router as admin_pos_customers_router
 from app.api.admin_retail_inventory import router as admin_retail_inventory_router
+from app.api.admin_retail_catalog import router as admin_retail_catalog_router
 from app.api.pos_customers import router as pos_customers_router
 from app.api.pos_staff import router as pos_staff_router
 from app.api.pos_cash import router as pos_cash_router
@@ -63,6 +64,7 @@ app.include_router(admin_pos_staff_router)
 app.include_router(admin_pos_receipts_router)
 app.include_router(admin_pos_customers_router)
 app.include_router(admin_retail_inventory_router)
+app.include_router(admin_retail_catalog_router)
 app.include_router(pos_customers_router)
 app.include_router(pos_staff_router)
 app.include_router(pos_cash_router)

@@ -92,3 +92,76 @@ class AdminRetailServicePriceTierCreate(BaseModel):
         ge=0,
         decimal_places=2,
     )
+
+
+class AdminRetailCatalogItemUpdate(BaseModel):
+    sku: str | None = Field(
+        default=None,
+        max_length=80,
+    )
+    name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=180,
+    )
+    description: str | None = None
+    category: str | None = Field(
+        default=None,
+        max_length=120,
+    )
+    base_unit_code: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=32,
+    )
+    cost: Decimal | None = Field(
+        default=None,
+        ge=0,
+        decimal_places=2,
+    )
+    inventory_tracked: bool | None = None
+    low_stock_threshold: Decimal | None = Field(
+        default=None,
+        ge=0,
+        decimal_places=3,
+    )
+    max_stock: Decimal | None = Field(
+        default=None,
+        ge=0,
+        decimal_places=3,
+    )
+    is_active: bool | None = None
+
+
+class AdminRetailPresentationUpdate(BaseModel):
+    name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=120,
+    )
+    barcode: str | None = Field(
+        default=None,
+        max_length=120,
+    )
+    conversion_factor: Decimal | None = Field(
+        default=None,
+        gt=0,
+        decimal_places=3,
+    )
+    sale_price: Decimal | None = Field(
+        default=None,
+        ge=0,
+        decimal_places=2,
+    )
+    bulk_price: Decimal | None = Field(
+        default=None,
+        ge=0,
+        decimal_places=2,
+    )
+    bulk_min_quantity: Decimal | None = Field(
+        default=None,
+        gt=0,
+        decimal_places=3,
+    )
+    is_default: bool | None = None
+    is_active: bool | None = None
