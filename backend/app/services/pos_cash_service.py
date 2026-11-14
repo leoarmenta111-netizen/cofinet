@@ -11,6 +11,11 @@ from app.domain.operational_module import (
     operational_module_value,
 )
 from app.models.branch import Branch
+from app.models.pos_audit import PosAuditEvent
+from app.models.retail_sales import (
+    RetailPayment,
+    RetailSale,
+)
 from app.models.pos_cash import (
     ACTIVE_SHIFT_STATUSES,
     PosCashDenominationCount,
@@ -96,6 +101,167 @@ class PosCashService:
             )
             .order_by(PosCashShift.id.desc())
         ).scalar_one_or_none()
+
+    @staticmethod
+    def retail_shift_summary(
+        db: Session,
+        *,
+        shift: PosCashShift,
+    ) -> dict[str, Decimal]:
+        payment_rows = db.execute(
+            select(
+                RetailPayment.method,
+                func.coalesce(
+                    func.sum(RetailPayment.amount),
+                    0,
+                ),
+            )
+            .join(
+                RetailSale,
+                RetailSale.id
+                == RetailPayment.sale_id,
+            )
+            .where(
+                RetailSale.branch_id
+                == shift.branch_id,
+                RetailSale.terminal_id
+                == shift.terminal_id,
+                RetailSale.module_code
+                == shift.module_code,
+                RetailSale.paid_at.is_not(None),
+                RetailSale.paid_at
+                >= shift.opened_at,
+            )
+            .group_by(
+                RetailPayment.method
+            )
+        ).all()
+
+        payments = {
+            str(method).upper(): Decimal(
+                str(amount or 0)
+            ).quantize(
+                Decimal("0.01")
+            )
+            for method, amount
+            in payment_rows
+        }
+
+        cash_sales = payments.get(
+            "CASH",
+            Decimal("0.00"),
+        )
+
+        card_sales = payments.get(
+            "CARD",
+            Decimal("0.00"),
+        )
+
+        cash_refunds = Decimal("0.00")
+        card_refunds = Decimal("0.00")
+
+        refund_events = (
+            db.execute(
+                select(PosAuditEvent)
+                .where(
+                    PosAuditEvent.branch_id
+                    == shift.branch_id,
+                    PosAuditEvent.terminal_id
+                    == shift.terminal_id,
+                    PosAuditEvent.created_at
+                    >= shift.opened_at,
+                    PosAuditEvent.event_type.in_(
+                        (
+                            "RETAIL_RETURN_AUTHORIZED",
+                            "RETAIL_CANCELLATION_AUTHORIZED",
+                        )
+                    ),
+                )
+                .order_by(
+                    PosAuditEvent.id.asc()
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        for event in refund_events:
+            metadata = (
+                event.metadata_json
+                or {}
+            )
+
+            method = str(
+                metadata.get(
+                    "refund_method",
+                    "",
+                )
+            ).strip().upper()
+
+            try:
+                amount = Decimal(
+                    str(
+                        metadata.get(
+                            "refund_amount",
+                            "0",
+                        )
+                    )
+                ).quantize(
+                    Decimal("0.01")
+                )
+            except Exception:
+                continue
+
+            if amount <= Decimal("0.00"):
+                continue
+
+            if method == "CASH":
+                cash_refunds += amount
+            elif method == "CARD":
+                card_refunds += amount
+
+        cash_refunds = cash_refunds.quantize(
+            Decimal("0.01")
+        )
+        card_refunds = card_refunds.quantize(
+            Decimal("0.01")
+        )
+
+        cash_net = (
+            cash_sales - cash_refunds
+        ).quantize(
+            Decimal("0.01")
+        )
+
+        card_net = (
+            card_sales - card_refunds
+        ).quantize(
+            Decimal("0.01")
+        )
+
+        gross_sales = (
+            cash_sales + card_sales
+        ).quantize(
+            Decimal("0.01")
+        )
+
+        net_sales = (
+            cash_net + card_net
+        ).quantize(
+            Decimal("0.01")
+        )
+
+        return {
+            "cash_sales": cash_sales,
+            "card_sales": card_sales,
+            "gross_sales": gross_sales,
+            "cash_refunds": cash_refunds,
+            "card_refunds": card_refunds,
+            "cash_net": cash_net,
+            "card_net": card_net,
+            "net_sales": net_sales,
+        }
+
 
     @classmethod
     def open_shift(
@@ -687,12 +853,18 @@ class PosCashService:
 
         db.flush()
 
+        summary = cls.retail_shift_summary(
+            db,
+            shift=shift,
+        )
+
         return PosCashReconciliation(
             shift_uuid=shift.shift_uuid,
             status="CLOSING",
             counted_cash=counted_cash,
             expected_cash=expected_cash,
             difference=difference,
+            **summary,
         )
 
     @classmethod
