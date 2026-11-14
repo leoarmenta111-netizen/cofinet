@@ -168,6 +168,8 @@ class PosCashService:
                     == shift.branch_id,
                     PosAuditEvent.terminal_id
                     == shift.terminal_id,
+                    PosAuditEvent.module_code
+                    == shift.module_code,
                     PosAuditEvent.created_at
                     >= shift.opened_at,
                     PosAuditEvent.event_type.in_(
