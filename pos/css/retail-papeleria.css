@@ -4675,12 +4675,19 @@ label[for="retail-search"] {
 #retail-cash-closing-modal {
     width: min(92vw, 520px);
     max-width: 520px;
+    max-height: calc(100dvh - 24px);
+    padding: 0;
+    overflow: hidden;
 }
 
 #retail-cash-closing-modal > form {
     display: grid;
     gap: 18px;
+    max-height: calc(100dvh - 24px);
     padding: 28px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
 }
 
 .retail-cash-closing-head {
@@ -4784,7 +4791,13 @@ label[for="retail-search"] {
 }
 
 @media (max-width: 560px) {
+    #retail-cash-closing-modal {
+        width: calc(100vw - 12px);
+        max-height: calc(100dvh - 12px);
+    }
+
     #retail-cash-closing-modal > form {
+        max-height: calc(100dvh - 12px);
         padding: 22px 20px;
     }
 
