@@ -165,3 +165,21 @@ class AdminRetailPresentationUpdate(BaseModel):
     )
     is_default: bool | None = None
     is_active: bool | None = None
+
+
+class AdminRetailServicePriceTierUpdate(BaseModel):
+    min_quantity: Decimal | None = Field(
+        default=None,
+        gt=0,
+        decimal_places=3,
+    )
+    max_quantity: Decimal | None = Field(
+        default=None,
+        gt=0,
+        decimal_places=3,
+    )
+    unit_price: Decimal | None = Field(
+        default=None,
+        ge=0,
+        decimal_places=2,
+    )

@@ -15,10 +15,13 @@ from app.schemas.admin_retail_catalog import (
     AdminRetailCatalogItemUpdate,
     AdminRetailPresentationCreate,
     AdminRetailPresentationUpdate,
+    AdminRetailServicePriceTierCreate,
+    AdminRetailServicePriceTierUpdate,
 )
 from app.schemas.retail_catalog import (
     RetailCatalogItemResponse,
     RetailPresentationResponse,
+    RetailServicePriceTierResponse,
 )
 from app.services.admin_retail_catalog_service import (
     AdminRetailCatalogService,
@@ -232,3 +235,114 @@ def update_admin_retail_presentation(
     db.refresh(presentation)
 
     return presentation
+
+
+@router.post(
+    "/items/{item_id}/service-price-tiers",
+    response_model=(
+        RetailServicePriceTierResponse
+    ),
+)
+def create_admin_retail_service_price_tier(
+    item_id: int,
+    data: AdminRetailServicePriceTierCreate,
+    _admin: Admin = Depends(
+        require_super_admin
+    ),
+    db: Session = Depends(get_db),
+) -> RetailServicePriceTierResponse:
+    item = (
+        AdminRetailCatalogService
+        .get_item(
+            db,
+            item_id=item_id,
+        )
+    )
+
+    tier = (
+        AdminRetailCatalogService
+        .create_service_price_tier(
+            db,
+            item=item,
+            min_quantity=data.min_quantity,
+            max_quantity=data.max_quantity,
+            unit_price=data.unit_price,
+        )
+    )
+
+    db.commit()
+    db.refresh(tier)
+
+    return tier
+
+
+@router.patch(
+    "/service-price-tiers/{tier_id}",
+    response_model=(
+        RetailServicePriceTierResponse
+    ),
+)
+def update_admin_retail_service_price_tier(
+    tier_id: int,
+    data: AdminRetailServicePriceTierUpdate,
+    _admin: Admin = Depends(
+        require_super_admin
+    ),
+    db: Session = Depends(get_db),
+) -> RetailServicePriceTierResponse:
+    tier = (
+        AdminRetailCatalogService
+        .get_service_price_tier(
+            db,
+            tier_id=tier_id,
+        )
+    )
+
+    tier = (
+        AdminRetailCatalogService
+        .update_service_price_tier(
+            db,
+            tier=tier,
+            changes=data.model_dump(
+                exclude_unset=True
+            ),
+        )
+    )
+
+    db.commit()
+    db.refresh(tier)
+
+    return tier
+
+
+@router.delete(
+    "/service-price-tiers/{tier_id}",
+)
+def delete_admin_retail_service_price_tier(
+    tier_id: int,
+    _admin: Admin = Depends(
+        require_super_admin
+    ),
+    db: Session = Depends(get_db),
+) -> dict[str, bool]:
+    tier = (
+        AdminRetailCatalogService
+        .get_service_price_tier(
+            db,
+            tier_id=tier_id,
+        )
+    )
+
+    (
+        AdminRetailCatalogService
+        .delete_service_price_tier(
+            db,
+            tier=tier,
+        )
+    )
+
+    db.commit()
+
+    return {
+        "deleted": True,
+    }

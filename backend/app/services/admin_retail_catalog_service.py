@@ -10,6 +10,7 @@ from sqlalchemy.orm import (
 from app.models.retail_catalog import (
     RetailCatalogItem,
     RetailPresentation,
+    RetailServicePriceTier,
 )
 from app.models.retail_inventory import (
     RetailInventoryBalance,
@@ -949,3 +950,301 @@ class AdminRetailCatalogService:
         db.flush()
 
         return presentation
+
+    @classmethod
+    def _service_tier_values(
+        cls,
+        *,
+        min_quantity: Decimal,
+        max_quantity: Decimal | None,
+        unit_price: Decimal,
+    ) -> tuple[
+        Decimal,
+        Decimal | None,
+        Decimal,
+    ]:
+        minimum = Decimal(
+            str(min_quantity)
+        )
+
+        maximum = (
+            Decimal(str(max_quantity))
+            if max_quantity is not None
+            else None
+        )
+
+        price = Decimal(
+            str(unit_price)
+        )
+
+        if (
+            not minimum.is_finite()
+            or minimum <= Decimal("0")
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Minimum quantity "
+                    "must be positive"
+                ),
+            )
+
+        if (
+            maximum is not None
+            and (
+                not maximum.is_finite()
+                or maximum < minimum
+            )
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Invalid service tier range"
+                ),
+            )
+
+        if (
+            not price.is_finite()
+            or price < Decimal("0")
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Unit price cannot be negative"
+                ),
+            )
+
+        return (
+            minimum,
+            maximum,
+            price,
+        )
+
+    @staticmethod
+    def _assert_no_service_tier_overlap(
+        db: Session,
+        *,
+        item_id: int,
+        min_quantity: Decimal,
+        max_quantity: Decimal | None,
+        exclude_tier_id: int | None = None,
+    ) -> None:
+        statement = select(
+            RetailServicePriceTier
+        ).where(
+            RetailServicePriceTier.item_id
+            == item_id
+        )
+
+        if exclude_tier_id is not None:
+            statement = statement.where(
+                RetailServicePriceTier.id
+                != exclude_tier_id
+            )
+
+        tiers = db.execute(
+            statement
+        ).scalars().all()
+
+        for tier in tiers:
+            existing_min = Decimal(
+                str(tier.min_quantity)
+            )
+
+            existing_max = (
+                Decimal(
+                    str(tier.max_quantity)
+                )
+                if tier.max_quantity
+                is not None
+                else None
+            )
+
+            overlaps = (
+                (
+                    max_quantity is None
+                    or existing_min
+                    <= max_quantity
+                )
+                and (
+                    existing_max is None
+                    or min_quantity
+                    <= existing_max
+                )
+            )
+
+            if overlaps:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        "Service price tier "
+                        "overlaps an existing tier"
+                    ),
+                )
+
+    @staticmethod
+    def get_service_price_tier(
+        db: Session,
+        *,
+        tier_id: int,
+    ) -> RetailServicePriceTier:
+        tier = db.get(
+            RetailServicePriceTier,
+            tier_id,
+        )
+
+        if tier is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=(
+                    "Retail service price "
+                    "tier not found"
+                ),
+            )
+
+        return tier
+
+    @classmethod
+    def create_service_price_tier(
+        cls,
+        db: Session,
+        *,
+        item: RetailCatalogItem,
+        min_quantity: Decimal,
+        max_quantity: Decimal | None,
+        unit_price: Decimal,
+    ) -> RetailServicePriceTier:
+        (
+            minimum,
+            maximum,
+            price,
+        ) = cls._service_tier_values(
+            min_quantity=min_quantity,
+            max_quantity=max_quantity,
+            unit_price=unit_price,
+        )
+
+        if item.item_type != "SERVICE":
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Price tiers are allowed "
+                    "only for SERVICE items"
+                ),
+            )
+
+        cls._assert_no_service_tier_overlap(
+            db,
+            item_id=item.id,
+            min_quantity=minimum,
+            max_quantity=maximum,
+        )
+
+        return (
+            RetailCatalogService
+            .create_service_price_tier(
+                db,
+                item=item,
+                min_quantity=minimum,
+                max_quantity=maximum,
+                unit_price=price,
+            )
+        )
+
+    @classmethod
+    def update_service_price_tier(
+        cls,
+        db: Session,
+        *,
+        tier: RetailServicePriceTier,
+        changes: dict[str, object],
+    ) -> RetailServicePriceTier:
+        item = cls.get_item(
+            db,
+            item_id=tier.item_id,
+        )
+
+        if item.item_type != "SERVICE":
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Price tiers are allowed "
+                    "only for SERVICE items"
+                ),
+            )
+
+        minimum = (
+            changes["min_quantity"]
+            if "min_quantity" in changes
+            else tier.min_quantity
+        )
+
+        maximum = (
+            changes["max_quantity"]
+            if "max_quantity" in changes
+            else tier.max_quantity
+        )
+
+        price = (
+            changes["unit_price"]
+            if "unit_price" in changes
+            else tier.unit_price
+        )
+
+        if minimum is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Minimum quantity "
+                    "cannot be null"
+                ),
+            )
+
+        if price is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "Unit price cannot be null"
+                ),
+            )
+
+        (
+            normalized_minimum,
+            normalized_maximum,
+            normalized_price,
+        ) = cls._service_tier_values(
+            min_quantity=minimum,
+            max_quantity=maximum,
+            unit_price=price,
+        )
+
+        cls._assert_no_service_tier_overlap(
+            db,
+            item_id=tier.item_id,
+            min_quantity=normalized_minimum,
+            max_quantity=normalized_maximum,
+            exclude_tier_id=tier.id,
+        )
+
+        tier.min_quantity = (
+            normalized_minimum
+        )
+        tier.max_quantity = (
+            normalized_maximum
+        )
+        tier.unit_price = (
+            normalized_price
+        )
+
+        db.flush()
+
+        return tier
+
+    @staticmethod
+    def delete_service_price_tier(
+        db: Session,
+        *,
+        tier: RetailServicePriceTier,
+    ) -> None:
+        db.delete(tier)
+        db.flush()
