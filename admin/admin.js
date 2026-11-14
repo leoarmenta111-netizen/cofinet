@@ -121,6 +121,7 @@ function renderAdminChrome(admin) {
             ["customers", "customers.html", "Clientes"],
             ["staff", "staff.html", "Empleados POS"],
             ["catalog", "catalog.html", "Catálogo POS"],
+            ["retail", "retail.html", "Papelería"],
             ["plans", "plans.html", "Planes"],
             ["administrators", "administrators.html", "Administradores"]
         ]

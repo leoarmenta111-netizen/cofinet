@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <meta
+        name="color-scheme"
+        content="light"
+    >
+
+    <title>Papelería | CofiNet+</title>
+
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+</head>
+
+<body
+    class="auth-pending"
+    data-page="retail"
+>
+    <div class="app-shell protected-content">
+
+        <aside class="sidebar">
+            <div class="brand-lockup">
+                <span class="brand-mark">C</span>
+                <span>CofiNet+</span>
+            </div>
+
+            <nav
+                data-admin-nav
+                aria-label="Navegación principal"
+            ></nav>
+
+            <div class="sidebar-profile">
+                <div class="profile-row">
+                    <span
+                        class="avatar"
+                        data-admin-initials
+                    ></span>
+
+                    <div class="profile-copy">
+                        <strong data-admin-name></strong>
+                        <span data-admin-role></span>
+                    </div>
+                </div>
+
+                <button
+                    class="button button-ghost logout-button"
+                    type="button"
+                    onclick="CofiAdmin.logoutAdmin()"
+                >
+                    Cerrar sesión
+                </button>
+            </div>
+        </aside>
+
+        <div class="main-area">
+
+            <header class="topbar">
+                <button
+                    class="button button-ghost menu-toggle"
+                    data-menu-toggle
+                    aria-expanded="false"
+                >
+                    Menú
+                </button>
+
+                <span class="topbar-title">
+                    Papelería
+                </span>
+
+                <span
+                    class="muted"
+                    data-admin-name
+                ></span>
+            </header>
+
+            <main class="content">
+
+                <header class="page-header">
+                    <div>
+                        <p class="eyebrow">
+                            Administración Retail
+                        </p>
+
+                        <h1 class="page-title">
+                            Papelería
+                        </h1>
+
+                        <p class="page-description">
+                            Administra catálogo, servicios,
+                            precios e inventario por sucursal.
+                        </p>
+                    </div>
+
+                    <button
+                        id="retail-new-item"
+                        class="button button-primary"
+                        type="button"
+                    >
+                        Nuevo artículo
+                    </button>
+                </header>
+
+
+                <section class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Sucursal</h2>
+
+                            <small class="muted">
+                                El catálogo e inventario se
+                                muestran por sucursal.
+                            </small>
+                        </div>
+
+                        <span
+                            id="retail-branch-badge"
+                            class="badge badge-neutral"
+                        >
+                            —
+                        </span>
+                    </div>
+
+                    <div class="panel-body">
+                        <div class="field">
+                            <label for="retail-branch">
+                                Sucursal
+                            </label>
+
+                            <select
+                                id="retail-branch"
+                                required
+                            >
+                                <option value="">
+                                    Cargando…
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                </section>
+
+
+                <section class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Catálogo Papelería</h2>
+
+                            <small class="muted">
+                                Productos y servicios,
+                                incluyendo artículos inactivos.
+                            </small>
+                        </div>
+
+                        <span
+                            id="retail-item-count"
+                            class="badge badge-neutral"
+                        >
+                            0
+                        </span>
+                    </div>
+
+                    <div class="panel-body">
+
+                        <div class="field">
+                            <label for="retail-search">
+                                Buscar
+                            </label>
+
+                            <input
+                                id="retail-search"
+                                type="search"
+                                placeholder="Nombre, SKU o categoría"
+                                autocomplete="off"
+                            >
+                        </div>
+
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Artículo</th>
+                                    <th>Tipo</th>
+                                    <th>SKU</th>
+                                    <th>Categoría</th>
+                                    <th>Stock</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="retail-catalog-rows">
+                                <tr>
+                                    <td
+                                        colspan="7"
+                                        class="muted"
+                                    >
+                                        Selecciona una sucursal.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+
+    <dialog
+        id="retail-item-dialog"
+        class="dialog dialog-large"
+    >
+        <form id="retail-item-form">
+
+            <input
+                id="retail-item-id"
+                type="hidden"
+            >
+
+            <h2 id="retail-item-dialog-title">
+                Nuevo artículo
+            </h2>
+
+            <p>
+                Configura un producto o servicio
+                del módulo Papelería.
+            </p>
+
+            <div class="dialog-form">
+
+                <div class="field">
+                    <label for="retail-item-type">
+                        Tipo
+                    </label>
+
+                    <select
+                        id="retail-item-type"
+                        name="item_type"
+                        required
+                    >
+                        <option value="PRODUCT">
+                            Producto
+                        </option>
+
+                        <option value="SERVICE">
+                            Servicio
+                        </option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="retail-item-name">
+                        Nombre
+                    </label>
+
+                    <input
+                        id="retail-item-name"
+                        name="name"
+                        maxlength="180"
+                        required
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-item-sku">
+                        SKU
+                    </label>
+
+                    <input
+                        id="retail-item-sku"
+                        name="sku"
+                        maxlength="80"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-item-category">
+                        Categoría
+                    </label>
+
+                    <input
+                        id="retail-item-category"
+                        name="category"
+                        maxlength="120"
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-item-unit">
+                        Unidad base
+                    </label>
+
+                    <input
+                        id="retail-item-unit"
+                        name="base_unit_code"
+                        maxlength="32"
+                        value="PIECE"
+                        required
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-item-cost">
+                        Costo
+                    </label>
+
+                    <input
+                        id="retail-item-cost"
+                        name="cost"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value="0.00"
+                        required
+                    >
+                </div>
+
+                <div class="field">
+                    <label for="retail-item-description">
+                        Descripción
+                    </label>
+
+                    <textarea
+                        id="retail-item-description"
+                        name="description"
+                        rows="3"
+                    ></textarea>
+                </div>
+
+                <div
+                    id="retail-inventory-fields"
+                >
+                    <div class="field">
+                        <label>
+                            <input
+                                id="retail-item-tracked"
+                                name="inventory_tracked"
+                                type="checkbox"
+                            >
+                            Controlar inventario
+                        </label>
+                    </div>
+
+                    <div class="field">
+                        <label for="retail-item-low-stock">
+                            Stock bajo
+                        </label>
+
+                        <input
+                            id="retail-item-low-stock"
+                            name="low_stock_threshold"
+                            type="number"
+                            min="0"
+                            step="0.001"
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label for="retail-item-max-stock">
+                            Stock máximo
+                        </label>
+
+                        <input
+                            id="retail-item-max-stock"
+                            name="max_stock"
+                            type="number"
+                            min="0"
+                            step="0.001"
+                        >
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>
+                        <input
+                            id="retail-item-active"
+                            name="is_active"
+                            type="checkbox"
+                            checked
+                        >
+                        Activo
+                    </label>
+                </div>
+
+            </div>
+
+            <p
+                id="retail-item-error"
+                class="form-error"
+                role="alert"
+            ></p>
+
+            <div class="dialog-actions">
+                <button
+                    id="retail-item-cancel"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    id="retail-item-save"
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Guardar
+                </button>
+            </div>
+
+        </form>
+    </dialog>
+
+
+    <dialog
+        id="retail-inventory-dialog"
+        class="dialog"
+    >
+        <form id="retail-inventory-form">
+
+            <input
+                id="retail-inventory-item-id"
+                type="hidden"
+            >
+
+            <h2>Movimiento de inventario</h2>
+
+            <p id="retail-inventory-item-name"></p>
+
+            <div class="field">
+                <label for="retail-inventory-operation">
+                    Operación
+                </label>
+
+                <select
+                    id="retail-inventory-operation"
+                    required
+                >
+                    <option value="entry">
+                        Entrada
+                    </option>
+
+                    <option value="removal">
+                        Salida
+                    </option>
+
+                    <option value="adjust">
+                        Ajuste a conteo físico
+                    </option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label
+                    id="retail-inventory-quantity-label"
+                    for="retail-inventory-quantity"
+                >
+                    Cantidad
+                </label>
+
+                <input
+                    id="retail-inventory-quantity"
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    required
+                >
+            </div>
+
+            <div class="field">
+                <label for="retail-inventory-note">
+                    Motivo / nota
+                </label>
+
+                <textarea
+                    id="retail-inventory-note"
+                    maxlength="500"
+                    rows="3"
+                    required
+                ></textarea>
+            </div>
+
+            <p
+                id="retail-inventory-error"
+                class="form-error"
+                role="alert"
+            ></p>
+
+            <div class="dialog-actions">
+                <button
+                    id="retail-inventory-cancel"
+                    class="button button-secondary"
+                    type="button"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    id="retail-inventory-save"
+                    class="button button-primary"
+                    type="submit"
+                >
+                    Registrar
+                </button>
+            </div>
+
+        </form>
+    </dialog>
+
+
+    <script src="admin.js?v=20261114-retail"></script>
+    <script src="retail-admin.js?v=20261114-a4a1"></script>
+</body>
+</html>
