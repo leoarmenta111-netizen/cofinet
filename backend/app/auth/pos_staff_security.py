@@ -6,10 +6,16 @@ from app.auth.security import (
     get_current_token,
 )
 from app.database.deps import get_db
-from app.domain.operational_module import OperationalModule
+from app.domain.operational_module import (
+    OperationalModule,
+    operational_module_value,
+)
 from app.models.pos_staff import (
     PosStaff,
     PosStaffRole,
+)
+from app.services.pos_staff_module_service import (
+    PosStaffModuleService,
 )
 
 
@@ -18,6 +24,7 @@ def create_pos_staff_token(
     *,
     branch_code: str,
     terminal_id: str,
+    module_code: OperationalModule | str | None = None,
 ) -> str:
     role = (
         staff.role.value
@@ -33,7 +40,11 @@ def create_pos_staff_token(
             "branch_id": staff.branch_id,
             "branch_code": branch_code,
             "terminal_id": terminal_id,
-            "module_code": staff.module_code,
+            "module_code": operational_module_value(
+                module_code
+                if module_code is not None
+                else staff.module_code
+            ),
         }
     )
 
@@ -82,11 +93,11 @@ def get_current_pos_staff(
         OperationalModule.CAFE.value,
     )
 
-    if staff.module_code != token_module:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="POS staff module mismatch",
-        )
+    PosStaffModuleService.require_access(
+        db,
+        staff=staff,
+        module_code=token_module,
+    )
 
     return staff
 

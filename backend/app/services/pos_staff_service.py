@@ -13,6 +13,9 @@ from app.models.pos_staff import (
     PosStaffRole,
 )
 from app.services.branch_service import BranchService
+from app.services.pos_staff_module_service import (
+    PosStaffModuleService,
+)
 
 
 class PosStaffService:
@@ -47,6 +50,14 @@ class PosStaffService:
         )
 
         db.add(staff)
+        db.flush()
+
+        PosStaffModuleService.grant_access(
+            db,
+            staff=staff,
+            module_code=staff.module_code,
+        )
+
         db.commit()
         db.refresh(staff)
 
@@ -100,6 +111,12 @@ class PosStaffService:
         if module_code is not None:
             staff.module_code = operational_module_value(
                 module_code
+            )
+
+            PosStaffModuleService.grant_access(
+                db,
+                staff=staff,
+                module_code=staff.module_code,
             )
 
         if is_active is not None:
@@ -191,15 +208,11 @@ class PosStaffService:
                 detail="Inactive POS staff",
             )
 
-        expected_module = operational_module_value(
-            module_code
+        PosStaffModuleService.require_access(
+            db,
+            staff=staff,
+            module_code=module_code,
         )
-
-        if staff.module_code != expected_module:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="POS staff module mismatch",
-            )
 
         if not verify_password(
             pin,

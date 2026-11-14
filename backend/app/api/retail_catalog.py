@@ -66,8 +66,16 @@ def get_retail_catalog(
     db: Session = Depends(get_db),
 ) -> list[RetailCatalogItem]:
 
+    token_module = token_payload.get(
+        "module_code"
+    )
+
+    if token_module is None:
+        token_module = _module_code(staff)
+
     if (
-        _module_code(staff)
+        not isinstance(token_module, str)
+        or token_module.strip().upper()
         != "PAPELERIA"
     ):
         raise HTTPException(

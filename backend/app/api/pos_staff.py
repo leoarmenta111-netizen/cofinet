@@ -48,6 +48,7 @@ def unlock_pos_staff(
         staff,
         branch_code=branch.code,
         terminal_id=payload.terminal_id,
+        module_code=payload.module_code,
     )
 
     role = (
@@ -62,7 +63,7 @@ def unlock_pos_staff(
         role=role,
         branch_code=branch.code,
         terminal_id=payload.terminal_id,
-        module_code=staff.module_code,
+        module_code=payload.module_code,
         access_token=token,
     )
 
@@ -94,7 +95,8 @@ def get_pos_staff_session(
         or branch_code != branch.code
         or not isinstance(terminal_id, str)
         or not terminal_id.strip()
-        or module_code != current_staff.module_code
+        or not isinstance(module_code, str)
+        or not module_code.strip()
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -113,5 +115,5 @@ def get_pos_staff_session(
         role=role,
         branch_code=branch.code,
         terminal_id=terminal_id,
-        module_code=current_staff.module_code,
+        module_code=module_code,
     )

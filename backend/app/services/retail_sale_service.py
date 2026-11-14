@@ -41,6 +41,9 @@ from app.services.pos_audit_service import PosAuditService
 from app.services.pos_cash_service import (
     PosCashService,
 )
+from app.services.pos_staff_module_service import (
+    PosStaffModuleService,
+)
 from app.services.retail_receipt_service import RetailReceiptService
 from app.services.retail_inventory_service import (
     RetailInventoryService,
@@ -57,26 +60,25 @@ ONE_BASE_UNIT = Decimal("1.000")
 class RetailSaleService:
     @staticmethod
     def _require_papeleria_staff(
+        db: Session,
         staff: PosStaff,
     ) -> None:
-        module_code = getattr(
-            staff,
-            "module_code",
-            None,
-        )
+        if not staff.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Inactive POS staff",
+            )
 
-        if module_code != "PAPELERIA":
+        if not PosStaffModuleService.has_access(
+            db,
+            staff=staff,
+            module_code="PAPELERIA",
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=(
                     "Papeleria staff session required"
                 ),
-            )
-
-        if not staff.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Inactive POS staff",
             )
 
     @staticmethod
@@ -310,7 +312,8 @@ class RetailSaleService:
         terminal_id: str,
     ) -> RetailSale:
         cls._require_papeleria_staff(
-            staff
+            db,
+            staff,
         )
 
         normalized_terminal = (
@@ -362,7 +365,8 @@ class RetailSaleService:
         terminal_id: str,
     ) -> RetailSale:
         cls._require_papeleria_staff(
-            staff
+            db,
+            staff,
         )
 
         sale = db.execute(
@@ -438,7 +442,8 @@ class RetailSaleService:
         staff: PosStaff,
     ) -> RetailSale:
         cls._require_papeleria_staff(
-            staff
+            db,
+            staff,
         )
 
         sale = db.execute(
@@ -481,7 +486,8 @@ class RetailSaleService:
         staff: PosStaff,
     ) -> RetailSale:
         cls._require_papeleria_staff(
-            staff
+            db,
+            staff,
         )
 
         sale = db.execute(
@@ -526,7 +532,8 @@ class RetailSaleService:
         staff: PosStaff,
     ) -> list[RetailSale]:
         cls._require_papeleria_staff(
-            staff
+            db,
+            staff,
         )
 
         return list(
@@ -589,6 +596,7 @@ class RetailSaleService:
     @classmethod
     def _validate_checkout_manager(
         cls,
+        db: Session,
         *,
         staff: PosStaff,
         manager: PosStaff | None,
@@ -617,8 +625,11 @@ class RetailSaleService:
             not manager.is_active
             or manager.branch_id
             != staff.branch_id
-            or manager.module_code
-            != "PAPELERIA"
+            or not PosStaffModuleService.has_access(
+                db,
+                staff=manager,
+                module_code="PAPELERIA",
+            )
             or manager_role != "MANAGER"
         ):
             raise HTTPException(
@@ -871,11 +882,15 @@ class RetailSaleService:
     @classmethod
     def _require_return_manager(
         cls,
+        db: Session,
         *,
         staff: PosStaff,
         manager: PosStaff | None,
     ) -> None:
-        cls._require_papeleria_staff(staff)
+        cls._require_papeleria_staff(
+            db,
+            staff,
+        )
 
         if manager is None:
             raise HTTPException(
@@ -886,7 +901,10 @@ class RetailSaleService:
                 ),
             )
 
-        cls._require_papeleria_staff(manager)
+        cls._require_papeleria_staff(
+            db,
+            manager,
+        )
 
         if (
             manager.branch_id != staff.branch_id
@@ -1268,6 +1286,7 @@ class RetailSaleService:
         manager: PosStaff | None,
     ) -> RetailReturn:
         cls._require_return_manager(
+            db,
             staff=staff,
             manager=manager,
         )
@@ -1690,6 +1709,7 @@ class RetailSaleService:
         manager: PosStaff | None,
     ) -> RetailSale:
         cls._require_return_manager(
+            db,
             staff=staff,
             manager=manager,
         )
@@ -1957,7 +1977,8 @@ class RetailSaleService:
         manager: PosStaff | None,
     ) -> RetailSale:
         cls._require_papeleria_staff(
-            staff
+            db,
+            staff,
         )
 
         terminal = terminal_id.strip()
@@ -2127,6 +2148,7 @@ class RetailSaleService:
         )
 
         cls._validate_checkout_manager(
+            db,
             staff=staff,
             manager=manager,
             discount_required=(

@@ -68,10 +68,12 @@ from app.models.pos_staff import (
     PosStaff,
     PosStaffRole,
 )
+from app.models.pos_staff_module import PosStaffModule
 
 __all__ += [
     "PosStaff",
     "PosStaffRole",
+    "PosStaffModule",
 ]
 
 

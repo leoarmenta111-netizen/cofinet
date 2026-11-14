@@ -22,6 +22,9 @@ from app.models.pos_staff import (
     PosStaff,
     PosStaffRole,
 )
+from app.services.pos_staff_module_service import (
+    PosStaffModuleService,
+)
 from app.models.retail_catalog import (
     RetailCatalogItem,
 )
@@ -64,12 +67,6 @@ def _session_branch(
     token_payload: dict[str, object],
     db: Session,
 ) -> Branch:
-    if _value(staff.module_code) != "PAPELERIA":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="POS staff module mismatch",
-        )
-
     token_module = token_payload.get(
         "module_code"
     )
@@ -89,7 +86,14 @@ def _session_branch(
         )
         or token_module.strip().upper()
         != "PAPELERIA"
-        or not isinstance(
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="POS staff module mismatch",
+        )
+
+    if (
+        not isinstance(
             branch_code,
             str,
         )
@@ -270,13 +274,11 @@ def list_retail_managers(
         db=db,
     )
 
-    managers = db.execute(
+    candidates = db.execute(
         select(PosStaff)
         .where(
             PosStaff.branch_id
             == branch.id,
-            PosStaff.module_code
-            == "PAPELERIA",
             PosStaff.role
             == PosStaffRole.MANAGER,
             PosStaff.is_active
@@ -287,6 +289,16 @@ def list_retail_managers(
             PosStaff.id,
         )
     ).scalars().all()
+
+    managers = [
+        manager
+        for manager in candidates
+        if PosStaffModuleService.has_access(
+            db,
+            staff=manager,
+            module_code="PAPELERIA",
+        )
+    ]
 
     return [
         RetailManagerStaffResponse(

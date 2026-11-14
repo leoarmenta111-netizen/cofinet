@@ -27,6 +27,9 @@ from app.schemas.pos_cash import (
     PosCashReconciliation,
 )
 from app.services.branch_service import BranchService
+from app.services.pos_staff_module_service import (
+    PosStaffModuleService,
+)
 from app.services.pos_audit_service import PosAuditService
 
 
@@ -41,6 +44,7 @@ class PosCashService:
     @staticmethod
     def _validate_staff(
         *,
+        db: Session,
         staff: PosStaff,
         branch_id: int,
         module_code: OperationalModule | str,
@@ -57,15 +61,11 @@ class PosCashService:
                 detail="POS staff branch mismatch",
             )
 
-        expected_module = operational_module_value(
-            module_code
+        PosStaffModuleService.require_access(
+            db,
+            staff=staff,
+            module_code=module_code,
         )
-
-        if staff.module_code != expected_module:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="POS staff module mismatch",
-            )
 
     @staticmethod
     def current_shift(
@@ -120,12 +120,14 @@ class PosCashService:
         )
 
         cls._validate_staff(
+            db=db,
             staff=requesting_staff,
             branch_id=branch.id,
             module_code=module_value,
         )
 
         cls._validate_staff(
+            db=db,
             staff=authorizing_manager,
             branch_id=branch.id,
             module_code=module_value,
@@ -441,12 +443,14 @@ class PosCashService:
             )
 
         cls._validate_staff(
+            db=db,
             staff=requesting_staff,
             branch_id=shift.branch_id,
             module_code=shift.module_code,
         )
 
         cls._validate_staff(
+            db=db,
             staff=authorizing_manager,
             branch_id=shift.branch_id,
             module_code=shift.module_code,
@@ -592,6 +596,7 @@ class PosCashService:
             )
 
         cls._validate_staff(
+            db=db,
             staff=staff,
             branch_id=shift.branch_id,
             module_code=shift.module_code,
@@ -714,6 +719,7 @@ class PosCashService:
             )
 
         cls._validate_staff(
+            db=db,
             staff=manager,
             branch_id=shift.branch_id,
             module_code=shift.module_code,
