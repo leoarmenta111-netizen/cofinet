@@ -20,6 +20,7 @@ from app.services.retail_sale_service import (
 from test_retail_checkout import (
     _branch,
     _manager_with_real_pin,
+    _open_shift,
     _product,
     _staff,
 )
@@ -116,6 +117,12 @@ def test_card_checkout_freezes_receipt_snapshot(
         branch=branch,
         sku="RECEIPT-CARD",
         sale_price="12.50",
+    )
+
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-RECEIPT-CARD",
     )
 
     sale = RetailSaleService.checkout(
@@ -237,6 +244,12 @@ def test_receipt_reprint_uses_stored_snapshot_after_catalog_change(
         branch=branch,
         sku="IMMUTABLE-001",
         sale_price="18.00",
+    )
+
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-IMMUTABLE",
     )
 
     sale = RetailSaleService.checkout(
@@ -410,6 +423,12 @@ def test_discount_receipt_freezes_authorizer(
         sale_price="20.00",
     )
 
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-RECEIPT-DISCOUNT",
+    )
+
     sale = RetailSaleService.checkout(
         db_session,
         payload=_card_payload(
@@ -464,6 +483,12 @@ def test_checkout_retry_does_not_replace_receipt_snapshot(
         branch=branch,
         sku="RECEIPT-RETRY",
         sale_price="11.00",
+    )
+
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-RETRY",
     )
 
     payload = _card_payload(

@@ -203,6 +203,13 @@ def test_duplicate_sale_uuid_returns_same_paid_sale_without_double_stock(
         sku="IDEM-SALE",
     )
 
+    _open_shift(
+        db_session,
+        branch=branch,
+        cashier=cashier,
+        terminal_id="PAP-IDEM",
+    )
+
     payload = _request(
         sale_uuid="idem-sale-001",
         payment_uuid="idem-payment-001",
@@ -271,6 +278,13 @@ def test_duplicate_payment_uuid_does_not_duplicate_payment(
         db_session,
         branch=branch,
         sku="IDEM-PAYMENT",
+    )
+
+    _open_shift(
+        db_session,
+        branch=branch,
+        cashier=cashier,
+        terminal_id="PAP-PAY",
     )
 
     first_payload = _request(
