@@ -1,3 +1,18 @@
+# Authentication rate limiting.
+# Empty map keys are not accounted by limit_req, so other routes are unaffected.
+map $uri $admin_login_limit_key {
+    default "";
+    "/api/admin/login" $binary_remote_addr;
+}
+
+map $uri $staff_unlock_limit_key {
+    default "";
+    "/api/pos/staff/unlock" $binary_remote_addr;
+}
+
+limit_req_zone $admin_login_limit_key zone=admin_login:10m rate=5r/m;
+limit_req_zone $staff_unlock_limit_key zone=staff_unlock:10m rate=30r/m;
+
 server {
     listen 80;
     server_name ${PUBLIC_DOMAIN};
@@ -29,7 +44,11 @@ server {
     root /usr/share/nginx/html;
     index index.html;
     charset utf-8;
-    client_max_body_size 2m;
+    client_max_body_size 6m;
+
+    limit_req zone=admin_login burst=5 nodelay;
+    limit_req zone=staff_unlock burst=15 nodelay;
+    limit_req_status 429;
 
     location /api/ {
         proxy_pass http://backend:8000/;
