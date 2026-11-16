@@ -32,10 +32,15 @@
         staffSession: null,
         cashShift: null,
         activeCashShift: null,
+
+        // POS_OPEN_TABS_APP_BRIDGE_V1
+        activeOpenTab: null,
     };
 
     const $ = selector =>
         document.querySelector(selector);
+
+    let bootStage = "not-started";
 
     function money(value) {
         return new Intl.NumberFormat(
@@ -102,8 +107,35 @@
 
 
     async function configureTerminal() {
-        const requestedBranch =
+        bootStage =
+            "configure-terminal:resolve-branch";
+
+        let requestedBranch =
             resolveBranchCode();
+
+        /*
+         * La instalación standalone de iOS puede tener
+         * almacenamiento independiente del navegador.
+         * La página dedicada /pos/ixtapa.html identifica
+         * la sucursal sin depender de query/localStorage.
+         */
+        const normalizedPath =
+            window.location.pathname
+                .replace(/\/+$/, "")
+                .toLowerCase();
+
+        if (
+            !requestedBranch &&
+            (
+                normalizedPath === "/pos/ixtapa" ||
+                normalizedPath === "/pos/ixtapa.html"
+            )
+        ) {
+            requestedBranch = "ixtapa";
+        }
+
+        bootStage =
+            "configure-terminal:db-read-branch";
 
         const savedBranch =
             await window.CofiPosDB.get(
@@ -111,10 +143,16 @@
                 "branch_code"
             );
 
+        bootStage =
+            "configure-terminal:localstorage-read";
+
         const localBranch =
             window.localStorage.getItem(
                 "cofi_pos_branch"
             );
+
+        bootStage =
+            "configure-terminal:select-branch";
 
         state.branchCode =
             requestedBranch ||
@@ -123,9 +161,19 @@
 
         if (!state.branchCode) {
             throw new Error(
-                "Esta terminal no tiene sucursal configurada."
+                "Sin sucursal | URL: " +
+                window.location.href +
+                " | requested=" +
+                String(requestedBranch) +
+                " | saved=" +
+                String(savedBranch) +
+                " | local=" +
+                String(localBranch)
             );
         }
+
+        bootStage =
+            "configure-terminal:db-save-branch";
 
         await window.CofiPosDB.put(
             "meta",
@@ -133,10 +181,16 @@
             "branch_code"
         );
 
+        bootStage =
+            "configure-terminal:localstorage-save";
+
         window.localStorage.setItem(
             "cofi_pos_branch",
             state.branchCode
         );
+
+        bootStage =
+            "configure-terminal:terminal-id";
 
         state.terminalId =
             await window.CofiPosDB
@@ -144,8 +198,14 @@
                     state.branchCode
                 );
 
+        bootStage =
+            "configure-terminal:render-terminal";
+
         $("#terminal-id").textContent =
             state.terminalId;
+
+        bootStage =
+            "configure-terminal:complete";
     }
 
     function updateConnectionState(forcedState = null) {
@@ -639,6 +699,14 @@
 
         const button =
             $("#staff-unlock-submit");
+
+        if (!state.staffSession) {
+            showStaffUnlockError(
+                "POS no inició correctamente. Etapa: " +
+                bootStage
+            );
+            return;
+        }
 
         button.disabled = true;
 
@@ -1467,6 +1535,271 @@ function updateOpeningTotal() {
         return Number(product.price);
     }
 
+    /* =====================================================
+       CONDITIONAL MODIFIERS
+       ===================================================== */
+
+    function normalizeConditionText(value) {
+        return String(value ?? "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ");
+    }
+
+
+    function conditionKey(value) {
+        return normalizeConditionText(value)
+            .replace(/[^a-z0-9]+/g, " ")
+            .trim();
+    }
+
+
+    function hasSelectedModifier(
+        groupName,
+        optionName
+    ) {
+        const wantedGroup =
+            conditionKey(groupName);
+
+        const wantedOption =
+            conditionKey(optionName);
+
+        return [
+            ...$("#modifier-groups")
+                .querySelectorAll(
+                    "input:checked"
+                )
+        ].some(input =>
+            conditionKey(
+                input.dataset.groupName
+            ) === wantedGroup &&
+            conditionKey(
+                input.dataset.optionName
+            ) === wantedOption
+        );
+    }
+
+
+    function hasSelectedOption(optionName) {
+        const wanted =
+            conditionKey(optionName);
+
+        const modifierSelected = [
+            ...$("#modifier-groups")
+                .querySelectorAll(
+                    "input:checked"
+                )
+        ].some(input =>
+            conditionKey(
+                input.dataset.optionName
+            ) === wanted
+        );
+
+        const variantSelected =
+            conditionKey(
+                state.modifierVariant?.name
+            ) === wanted;
+
+        return (
+            modifierSelected ||
+            variantSelected
+        );
+    }
+
+
+    function conditionalGroupEnabled(
+        groupName
+    ) {
+        const group =
+            conditionKey(groupName);
+
+        /*
+         * REGLA 2
+         * Combo Bebidas = Agua Fresca
+         * -> habilita Sabores.
+         */
+        if (group === "sabores") {
+            return hasSelectedModifier(
+                "Combo Bebidas",
+                "Agua Fresca"
+            );
+        }
+
+        /*
+         * REGLA 3
+         * Bases Smoothies = Base Leche
+         * -> habilita Leches.
+         */
+        if (group === "leches") {
+            return hasSelectedModifier(
+                "Bases Smoothies",
+                "Base Leche"
+            );
+        }
+
+        return true;
+    }
+
+
+    function syncConditionalModifierRules() {
+        const modifierContainer =
+            $("#modifier-groups");
+
+        if (!modifierContainer) {
+            return;
+        }
+
+        /*
+         * Grupos condicionales.
+         */
+        modifierContainer
+            .querySelectorAll(
+                ".modifier-group"
+            )
+            .forEach(section => {
+                const enabled =
+                    conditionalGroupEnabled(
+                        section.dataset.groupName
+                    );
+
+                section.hidden =
+                    !enabled;
+
+                section
+                    .querySelectorAll("input")
+                    .forEach(input => {
+                        input.disabled =
+                            !enabled;
+
+                        if (!enabled) {
+                            input.checked =
+                                false;
+                        }
+
+                        const label =
+                            input.closest(
+                                ".modifier-option"
+                            );
+
+                        if (label) {
+                            label.classList.toggle(
+                                "is-selected",
+                                input.checked
+                            );
+                        }
+                    });
+            });
+
+
+        /*
+         * REGLA 1
+         * Selección "Frío"
+         * -> deshabilita "Chico (12 oz)".
+         *
+         * Se revisan tanto variantes como
+         * modificadores para no depender
+         * de cómo esté configurado en Admin.
+         */
+        const frioSelected =
+            hasSelectedOption("Frío");
+
+        const possibleSizeInputs = [
+            ...$("#variant-options")
+                .querySelectorAll("input"),
+            ...modifierContainer
+                .querySelectorAll("input")
+        ];
+
+        possibleSizeInputs.forEach(input => {
+            const optionName =
+                input.dataset.variantName ??
+                input.dataset.optionName ??
+                "";
+
+            if (
+                conditionKey(optionName) !==
+                "chico 12 oz"
+            ) {
+                return;
+            }
+
+            const groupSection =
+                input.closest(
+                    ".modifier-group"
+                );
+
+            const groupDisabled =
+                groupSection?.hidden === true;
+
+            input.disabled =
+                frioSelected ||
+                groupDisabled;
+
+            if (
+                frioSelected &&
+                input.checked
+            ) {
+                input.checked = false;
+
+                if (
+                    input.dataset
+                        .productVariantId
+                ) {
+                    state.modifierVariant =
+                        null;
+                }
+            }
+
+            const label =
+                input.closest(
+                    ".modifier-option"
+                );
+
+            if (label) {
+                label.classList.toggle(
+                    "is-selected",
+                    input.checked
+                );
+
+                label.style.opacity =
+                    input.disabled
+                        ? "0.45"
+                        : "";
+
+                label.style.pointerEvents =
+                    input.disabled
+                        ? "none"
+                        : "";
+            }
+        });
+
+
+        /*
+         * Si una variante quedó invalidada
+         * por una regla, regresamos al precio
+         * inicial hasta que se seleccione otra.
+         */
+        if (
+            productHasVariants(
+                state.modifierProduct
+            ) &&
+            !$("#variant-options input:checked")
+        ) {
+            state.modifierVariant =
+                null;
+
+            $("#modifier-base-price")
+                .textContent =
+                    `Desde ${money(
+                        state.modifierProduct
+                            .display_price
+                    )}`;
+        }
+    }
+
+
     function renderVariantOptions(product) {
         const section =
             $("#variant-section");
@@ -1559,6 +1892,7 @@ function updateOpeningTotal() {
                     $("#modifier-error")
                         .hidden = true;
 
+                    syncConditionalModifierRules();
                     updateModifierTotal();
                 }
             );
@@ -1622,6 +1956,111 @@ function updateOpeningTotal() {
     }
 
 
+    /* =====================================================
+       CONDITIONAL MODIFIERS - COMBO BEBIDA
+       ===================================================== */
+
+    function normalizeModifierCondition(value) {
+        return String(value ?? "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, " ");
+    }
+
+
+    function comboWaterSelected() {
+        return [
+            ...$("#modifier-groups")
+                .querySelectorAll(
+                    "input:checked"
+                )
+        ].some(input =>
+            normalizeModifierCondition(
+                input.dataset.groupName
+            ) ===
+                normalizeModifierCondition(
+                    "Elige tu Bebida en Combo"
+                ) &&
+            normalizeModifierCondition(
+                input.dataset.optionName
+            ) ===
+                normalizeModifierCondition(
+                    "Agua de sabor (500 ml)"
+                )
+        );
+    }
+
+
+    function conditionalModifierGroupEnabled(
+        groupName
+    ) {
+        const normalizedGroup =
+            normalizeModifierCondition(
+                groupName
+            );
+
+        if (
+            normalizedGroup ===
+            normalizeModifierCondition(
+                "Sabor de Agua fresca"
+            )
+        ) {
+            return comboWaterSelected();
+        }
+
+        return true;
+    }
+
+
+    function syncConditionalModifierGroups() {
+        const container =
+            $("#modifier-groups");
+
+        if (!container) {
+            return;
+        }
+
+        container
+            .querySelectorAll(
+                ".modifier-group"
+            )
+            .forEach(section => {
+                const enabled =
+                    conditionalModifierGroupEnabled(
+                        section.dataset.groupName
+                    );
+
+                section.hidden = !enabled;
+
+                section
+                    .querySelectorAll("input")
+                    .forEach(input => {
+                        input.disabled =
+                            !enabled;
+
+                        if (!enabled) {
+                            input.checked =
+                                false;
+                        }
+
+                        const label =
+                            input.closest(
+                                ".modifier-option"
+                            );
+
+                        if (label) {
+                            label.classList.toggle(
+                                "is-selected",
+                                input.checked
+                            );
+                        }
+                    });
+            });
+    }
+
+
     function renderModifierGroups(product) {
         const container =
             $("#modifier-groups");
@@ -1635,39 +2074,58 @@ function updateOpeningTotal() {
             section.className =
                 "modifier-group";
 
+            section.dataset.groupName =
+                group.name;
+
             const header =
                 document.createElement("div");
 
             header.className =
                 "modifier-group-title";
 
-            const titleBox = document.createElement("div");
+            const titleBox =
+                document.createElement("div");
 
-            const title = document.createElement("strong");
-            title.textContent = group.name;
+            const title =
+                document.createElement("strong");
 
-            const selection = document.createElement("small");
+            title.textContent =
+                group.name;
+
+            const selection =
+                document.createElement("small");
+
             selection.textContent =
                 group.max_select === 1
                     ? "Selecciona una opción"
                     : `Selecciona de ${group.min_select} a ${group.max_select}`;
 
-            titleBox.append(title, selection);
+            titleBox.append(
+                title,
+                selection
+            );
 
             const rule =
                 document.createElement("span");
 
-            rule.className = "modifier-rule";
+            rule.className =
+                "modifier-rule";
+
             rule.classList.toggle(
                 "is-required",
                 group.min_select > 0
             );
+
             rule.textContent =
                 group.min_select > 0
                     ? "Obligatorio"
                     : "Opcional";
 
-            header.append(titleBox, rule);
+            header.append(
+                titleBox,
+                rule
+            );
+
             section.append(header);
 
             group.options.forEach(option => {
@@ -1714,19 +2172,46 @@ function updateOpeningTotal() {
                     input.checked = true;
                 }
 
-                input.addEventListener("change", event => {
-                    enforceModifierLimit(event);
-                    section
-                        .querySelectorAll(".modifier-option")
-                        .forEach(optionLabel =>
-                            optionLabel.classList.toggle(
-                                "is-selected",
-                                optionLabel.querySelector("input").checked
-                            )
+                input.addEventListener(
+                    "change",
+                    event => {
+                        enforceModifierLimit(
+                            event
                         );
-                    $("#modifier-error").hidden = true;
-                    updateModifierTotal();
-                });
+
+                        section
+                            .querySelectorAll(
+                                ".modifier-option"
+                            )
+                            .forEach(
+                                optionLabel => {
+                                    optionLabel
+                                        .classList
+                                        .toggle(
+                                            "is-selected",
+                                            optionLabel
+                                                .querySelector(
+                                                    "input"
+                                                )
+                                                .checked
+                                        );
+                                }
+                            );
+
+                        $("#modifier-error")
+                            .hidden = true;
+
+                        /*
+                         * Importante:
+                         * primero actualizamos las
+                         * condicionantes y después
+                         * recalculamos el total.
+                         */
+                        syncConditionalModifierGroups();
+
+                        updateModifierTotal();
+                    }
+                );
 
                 const name =
                     document.createElement("span");
@@ -1744,7 +2229,9 @@ function updateOpeningTotal() {
                     "modifier-option-price";
 
                 const delta =
-                    Number(option.price_delta);
+                    Number(
+                        option.price_delta
+                    );
 
                 price.textContent =
                     delta
@@ -1762,11 +2249,305 @@ function updateOpeningTotal() {
 
             container.append(section);
         });
+
+        /*
+         * Al abrir el producto:
+         * Sabor de Agua fresca debe
+         * comenzar oculto.
+         */
+        syncConditionalModifierGroups();
     }
+
+
+
+    // POS_SMOOTHIE_MILK_CONDITIONAL_V1
+    function posSmoothieNormalize(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+
+    function applyPosSmoothieMilkConditional() {
+        const product =
+            state.modifierProduct;
+
+        const root =
+            $("#modifier-groups");
+
+        if (!product || !root) {
+            return;
+        }
+
+
+        /*
+         * Exclusivamente Smoothies.
+         */
+        if (
+            !posSmoothieNormalize(
+                product.name
+            ).includes("smoothie")
+        ) {
+            return;
+        }
+
+
+        /*
+         * Encontrar el grupo real "Leche"
+         * desde los datos del catálogo.
+         */
+        const milkDataGroup =
+            (product.modifiers || [])
+                .find(group => {
+                    const name =
+                        posSmoothieNormalize(
+                            group.name
+                        );
+
+                    return (
+                        name === "leche" ||
+                        name === "leches"
+                    );
+                });
+
+
+        if (!milkDataGroup) {
+            return;
+        }
+
+
+        /*
+         * Encontrar su sección correspondiente
+         * en el modal usando group_id.
+         */
+        const anyMilkInput =
+            root.querySelector(
+                `input[data-group-id="${milkDataGroup.id}"]`
+            );
+
+        const milkSection =
+            anyMilkInput?.closest(
+                ".modifier-group"
+            );
+
+
+        if (!milkSection) {
+            return;
+        }
+
+
+        /*
+         * Detectar BASE LECHE.
+         *
+         * Funciona si Base Leche viene como:
+         * - Product Variant
+         * - Modifier option
+         */
+        const variantName =
+            posSmoothieNormalize(
+                state.modifierVariant?.name
+            );
+
+
+        let isMilkBase =
+            variantName === "leche" ||
+            variantName === "base leche" ||
+            variantName.includes(
+                "base leche"
+            );
+
+
+        if (!isMilkBase) {
+            isMilkBase = [
+                ...root.querySelectorAll(
+                    "input:checked"
+                ),
+            ].some(input => {
+                const optionName =
+                    posSmoothieNormalize(
+                        input.dataset.optionName
+                    );
+
+                return (
+                    optionName ===
+                        "base leche" ||
+                    optionName.includes(
+                        "base leche"
+                    )
+                );
+            });
+        }
+
+
+        const inputs = [
+            ...milkSection.querySelectorAll(
+                "input"
+            ),
+        ];
+
+
+        const noMilkInput =
+            inputs.find(input =>
+                posSmoothieNormalize(
+                    input.dataset.optionName
+                ).includes(
+                    "sin leche"
+                )
+            ) || null;
+
+
+        /*
+         * Guardar estado disabled original.
+         */
+        for (const input of inputs) {
+            if (
+                input.dataset
+                    .posSmoothieOriginalDisabled
+                === undefined
+            ) {
+                input.dataset
+                    .posSmoothieOriginalDisabled =
+                        input.disabled
+                            ? "1"
+                            : "0";
+            }
+        }
+
+
+        if (isMilkBase) {
+
+            /*
+             * BASE LECHE:
+             * quitar "Sin Leche".
+             */
+            if (noMilkInput) {
+                noMilkInput.checked =
+                    false;
+            }
+
+
+            for (const input of inputs) {
+                const optionName =
+                    posSmoothieNormalize(
+                        input.dataset.optionName
+                    );
+
+                const label =
+                    input.closest(
+                        ".modifier-option"
+                    ) ||
+                    input.closest("label");
+
+
+                const isNoMilk =
+                    optionName.includes(
+                        "sin leche"
+                    );
+
+
+                if (isNoMilk) {
+                    input.disabled = true;
+
+                    if (label) {
+                        label.hidden = true;
+                        label.style.display =
+                            "none";
+                    }
+
+                    continue;
+                }
+
+
+                input.disabled =
+                    input.dataset
+                        .posSmoothieOriginalDisabled
+                    === "1";
+
+
+                if (label) {
+                    label.hidden = false;
+                    label.style.display = "";
+                }
+            }
+
+
+        } else {
+
+            /*
+             * OTRA BASE:
+             * borrar cualquier leche elegida.
+             */
+            for (const input of inputs) {
+                input.checked = false;
+                input.disabled = true;
+            }
+
+
+            /*
+             * El backend tiene Leche como grupo
+             * obligatorio. Enviar internamente
+             * "Sin Leche" mantiene el contrato
+             * sin mostrarlo al usuario.
+             */
+            if (noMilkInput) {
+                noMilkInput.checked = true;
+                noMilkInput.disabled = false;
+            }
+        }
+
+
+        /*
+         * Mostrar Leches exclusivamente
+         * cuando Base Leche está seleccionada.
+         */
+        milkSection.hidden =
+            !isMilkBase;
+
+        milkSection.style.display =
+            isMilkBase
+                ? ""
+                : "none";
+
+        milkSection.setAttribute(
+            "aria-hidden",
+            isMilkBase
+                ? "false"
+                : "true"
+        );
+
+
+        /*
+         * Mantener el estado visual de las
+         * opciones sincronizado.
+         */
+        milkSection
+            .querySelectorAll(
+                ".modifier-option"
+            )
+            .forEach(label => {
+                const input =
+                    label.querySelector(
+                        "input"
+                    );
+
+                label.classList.toggle(
+                    "is-selected",
+                    Boolean(
+                        input?.checked
+                    )
+                );
+            });
+    }
+
 
     function updateModifierTotal() {
         const product = state.modifierProduct;
         if (!product) return;
+
+        applyPosSmoothieMilkConditional();
 
         const optionsTotal = selectedModifiers().reduce(
             (sum, option) => sum + option.price_delta,
@@ -1841,24 +2622,50 @@ function updateOpeningTotal() {
             const group
             of product.modifiers || []
         ) {
+            /*
+             * Si el grupo está condicionado
+             * y actualmente está oculto,
+             * no debe ser obligatorio.
+             */
+            if (
+                !conditionalModifierGroupEnabled(
+                    group.name
+                )
+            ) {
+                continue;
+            }
+
             const count =
                 selected.filter(
                     item =>
-                        item.group_id === group.id
+                        item.group_id ===
+                        group.id
                 ).length;
 
-            if (count < group.min_select) {
-                $("#modifier-error").textContent =
-                    `Selecciona ${group.name} para continuar.`;
-                $("#modifier-error").hidden = false;
+            if (
+                count <
+                group.min_select
+            ) {
+                $("#modifier-error")
+                    .textContent =
+                        `Selecciona ${group.name} para continuar.`;
+
+                $("#modifier-error")
+                    .hidden = false;
 
                 return false;
             }
 
-            if (count > group.max_select) {
-                $("#modifier-error").textContent =
-                    `Sólo puedes seleccionar ${group.max_select} en ${group.name}.`;
-                $("#modifier-error").hidden = false;
+            if (
+                count >
+                group.max_select
+            ) {
+                $("#modifier-error")
+                    .textContent =
+                        `Sólo puedes seleccionar ${group.max_select} en ${group.name}.`;
+
+                $("#modifier-error")
+                    .hidden = false;
 
                 return false;
             }
@@ -2150,6 +2957,7 @@ function updateOpeningTotal() {
             !hasItems;
 
         syncPaymentShortcuts();
+        syncOpenTabModeUI();
 
         state.cart.forEach(item => {
             const row =
@@ -2413,12 +3221,132 @@ function updateOpeningTotal() {
     }
 
 
+    // POS_OPEN_TABS_APP_BRIDGE_V1
+
+    function syncOpenTabModeUI() {
+        const tab =
+            state.activeOpenTab;
+
+        const active =
+            Boolean(tab);
+
+        // POS_OPEN_TABS_COMPACT_UI_V1
+        document.body.classList.toggle(
+            "pos-open-tab-active",
+            active
+        );
+
+        const orderPanel =
+            $("#current-order-panel");
+
+        if (orderPanel) {
+            orderPanel.classList.toggle(
+                "has-active-open-tab",
+                active
+            );
+        }
+
+        const checkout =
+            $("#checkout-button");
+
+        const checkoutLabel =
+            checkout?.querySelector(
+                "span"
+            );
+
+        if (checkoutLabel) {
+            checkoutLabel.textContent =
+                active
+                    ? "Enviar pedido"
+                    : "Cobrar";
+        }
+
+        const mobileCheckout =
+            $("#mobile-order-checkout");
+
+        if (mobileCheckout) {
+            mobileCheckout.textContent =
+                active
+                    ? "Enviar pedido"
+                    : "Cobrar";
+        }
+
+        const openButton =
+            $("#open-tab-button");
+
+        if (openButton) {
+            openButton.disabled =
+                active ||
+                state.cart.length === 0;
+        }
+
+        const banner =
+            $("#active-open-tab");
+
+        if (banner) {
+            banner.hidden =
+                !active;
+        }
+
+        if (!active) {
+            return;
+        }
+
+        const identity = [
+            tab.table_number,
+            tab.order_name,
+        ]
+            .filter(Boolean)
+            .join(" · ") ||
+            "Cuenta abierta";
+
+        const name =
+            $("#active-open-tab-name");
+
+        if (name) {
+            name.textContent =
+                identity;
+        }
+
+        const total =
+            $("#active-open-tab-total");
+
+        if (total) {
+            total.textContent =
+                money(
+                    tab.total || 0
+                );
+        }
+    }
+
+
+    function setActiveOpenTab(tab) {
+        state.activeOpenTab =
+            tab || null;
+
+        syncOpenTabModeUI();
+        syncPaymentShortcuts();
+    }
+
+
+    function clearActiveOpenTab() {
+        setActiveOpenTab(null);
+    }
+
+
     /* =====================================================
        PAYMENT
        ===================================================== */
 
     function openPayment() {
         if (!state.cart.length) return;
+
+        if (state.activeOpenTab) {
+            window.CofiPosOpenTabs
+                ?.sendCurrentRound?.();
+
+            return;
+        }
 
         state.paymentMethod =
             "CASH";
@@ -2497,7 +3425,10 @@ function updateOpeningTotal() {
 
     function syncPaymentShortcuts() {
         const disabled =
-            !state.cart.length;
+            !state.cart.length ||
+            Boolean(
+                state.activeOpenTab
+            );
 
         document
             .querySelectorAll(
@@ -4074,11 +5005,19 @@ function updateOpeningTotal() {
     }
 
     async function boot() {
+        bootStage = "connection-state";
         updateConnectionState();
 
+        bootStage = "indexeddb-open";
         await window.CofiPosDB.open();
+
+        bootStage = "configure-terminal";
         await configureTerminal();
+
+        bootStage = "setup-operational-session";
         await setupOperationalSession();
+
+        bootStage = "session-ready";
 
         await loadReceiptSettingsForBranch(
             state.branchCode
@@ -4573,6 +5512,95 @@ function updateOpeningTotal() {
 
 
     renderSelectedCustomer();
+
+
+    // POS_OPEN_TABS_APP_BRIDGE_V1
+
+    window.CofiPosAppBridge = {
+        getSaleContext() {
+            return {
+                branchCode:
+                    state.branchCode,
+
+                terminalId:
+                    state.terminalId,
+
+                selectedCustomer:
+                    state.selectedCustomer,
+
+                activeOpenTab:
+                    state.activeOpenTab,
+
+                cart:
+                    state.cart.map(
+                        item => ({
+                            ...item,
+
+                            modifiers:
+                                (
+                                    item.modifiers ||
+                                    []
+                                ).map(
+                                    modifier => ({
+                                        ...modifier,
+                                    })
+                                ),
+                        })
+                    ),
+            };
+        },
+
+        setActiveOpenTab,
+
+        clearActiveOpenTab,
+
+        clearCart,
+
+        setSelectedCustomer(
+            customer
+        ) {
+            state.selectedCustomer =
+                customer || null;
+
+            renderSelectedCustomer();
+        },
+
+        showClosedTabSuccess({
+            folio,
+            receipt,
+        }) {
+            clearActiveOpenTab();
+
+            showSaleSuccess({
+                offline: false,
+                folio,
+                receipt,
+            });
+
+            const title =
+                $("#success-title");
+
+            const message =
+                $("#success-message");
+
+            if (title) {
+                title.textContent =
+                    "Cuenta cobrada";
+            }
+
+            if (message) {
+                message.textContent =
+                    "La cuenta se cerró correctamente.";
+            }
+        },
+
+        isCloudOnline() {
+            return (
+                navigator.onLine &&
+                state.cloudOnline !== false
+            );
+        },
+    };
 
 
     window.addEventListener(

@@ -2,7 +2,7 @@
   "name": "Cofi POS · Ixtapa",
   "short_name": "Cofi POS",
   "description": "Punto de venta de CofiCenter",
-  "start_url": "./?branch=ixtapa&pwa=1",
+  "start_url": "./ixtapa.html",
   "scope": "./",
   "display": "fullscreen",
   "background_color": "#F4F5F2",

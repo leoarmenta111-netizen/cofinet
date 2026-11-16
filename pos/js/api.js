@@ -424,6 +424,147 @@ window.CofiPosAPI = (() => {
     }
 
 
+// POS_OPEN_TABS_API_V1
+
+    function createTab(payload) {
+        return request(
+            "/pos/tabs",
+            {
+                method: "POST",
+                body: JSON.stringify(payload),
+                timeout: 12000,
+            }
+        );
+    }
+
+
+    function listOpenTabs(branchCode) {
+        return request(
+            `/pos/tabs?branch_code=${
+                encodeURIComponent(
+                    branchCode
+                )
+            }`
+        );
+    }
+
+
+    function getTab(
+        tabUuid,
+        branchCode
+    ) {
+        return request(
+            `/pos/tabs/${
+                encodeURIComponent(
+                    tabUuid
+                )
+            }?branch_code=${
+                encodeURIComponent(
+                    branchCode
+                )
+            }`
+        );
+    }
+
+
+    function addTabRound(
+        tabUuid,
+        branchCode,
+        payload
+    ) {
+        return request(
+            `/pos/tabs/${
+                encodeURIComponent(
+                    tabUuid
+                )
+            }/rounds?branch_code=${
+                encodeURIComponent(
+                    branchCode
+                )
+            }`,
+            {
+                method: "POST",
+                body: JSON.stringify(payload),
+                timeout: 12000,
+            }
+        );
+    }
+
+
+    // POS_OPEN_TABS_CLOSE_API_V1
+
+    function getTabPrecheck(
+        tabUuid,
+        branchCode
+    ) {
+        return request(
+            `/pos/tabs/${
+                encodeURIComponent(
+                    tabUuid
+                )
+            }/precheck?branch_code=${
+                encodeURIComponent(
+                    branchCode
+                )
+            }`
+        );
+    }
+
+
+    // POS_OPEN_TAB_MANAGER_CANCEL_V1
+
+    function cancelTab(
+        tabUuid,
+        branchCode,
+        payload
+    ) {
+        return request(
+            `/pos/tabs/${
+                encodeURIComponent(
+                    tabUuid
+                )
+            }/cancel?branch_code=${
+                encodeURIComponent(
+                    branchCode
+                )
+            }`,
+            {
+                method: "POST",
+                body: JSON.stringify(
+                    payload
+                ),
+                timeout: 12000,
+            }
+        );
+    }
+
+
+    function closeTab(
+        tabUuid,
+        branchCode,
+        payload
+    ) {
+        return request(
+            `/pos/tabs/${
+                encodeURIComponent(
+                    tabUuid
+                )
+            }/close?branch_code=${
+                encodeURIComponent(
+                    branchCode
+                )
+            }`,
+            {
+                method: "POST",
+                body: JSON.stringify(
+                    payload
+                ),
+                timeout: 12000,
+            }
+        );
+    }
+
+
     function checkHealth() {
         return request(
             "/health",
@@ -453,6 +594,13 @@ window.CofiPosAPI = (() => {
         recordCashMovement,
         submitCashClosingCount,
         finalizeCashShift,
+        createTab,
+        listOpenTabs,
+        getTab,
+        addTabRound,
+        getTabPrecheck,
+        closeTab,
+        cancelTab,
         checkHealth,
     };
 })();

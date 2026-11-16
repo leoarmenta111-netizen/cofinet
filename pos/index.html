@@ -25,7 +25,7 @@
                     "./manifest-bucerias.webmanifest?v=14",
 
                 "ixtapa":
-                    "./manifest-ixtapa.webmanifest?v=14",
+                    "./manifest-ixtapa.webmanifest?v=31",
             };
 
             const link = document.getElementById(
@@ -39,8 +39,38 @@
             link.rel = "manifest";
         })();
     </script>
-    <link rel="stylesheet" href="./css/pos.css?v=29">
+    <link rel="stylesheet" href="./css/pos.css?v=31">
     <link rel="stylesheet" href="./css/receipt.css?v=1">
+
+<script>
+(() => {
+    if (
+        !("serviceWorker" in navigator) ||
+        !window.isSecureContext
+    ) {
+        return;
+    }
+
+    navigator.serviceWorker
+        .register(
+            "./sw.js",
+            {
+                scope: "./",
+                updateViaCache: "none"
+            }
+        )
+        .then(registration => {
+            registration.update();
+        })
+        .catch(error => {
+            console.warn(
+                "Early Service Worker registration failed:",
+                error
+            );
+        });
+})();
+</script>
+
 </head>
 <body>
 <svg class="svg-sprite" aria-hidden="true">
@@ -127,7 +157,8 @@
                     </label>
 
                     <div class="catalog-actions">
-                        <button
+
+                    <button
                             class="scan-action"
                             type="button"
                             title="Escanear producto"
@@ -500,7 +531,7 @@
                 <button id="nav-sale" class="bottom-nav-item is-active" type="button"><svg><use href="#i-sale"></use></svg><span>Venta</span></button>
                 <button id="nav-orders" class="bottom-nav-item" type="button"><svg><use href="#i-orders"></use></svg><span>Órdenes</span></button>
                 <button id="nav-customers" class="bottom-nav-item" type="button"><svg><use href="#i-users"></use></svg><span>Clientes</span></button>
-                <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-tag"></use></svg><span>Promos</span><small>Próximamente</small></button>
+                <button id="nav-open-tabs" class="bottom-nav-item" type="button"><svg><use href="#i-tag"></use></svg><span>Cuentas</span></button>
                 <button class="bottom-nav-item" type="button" disabled title="Próximamente"><svg><use href="#i-more"></use></svg><span>Más</span><small>Próximamente</small></button>
             </nav>
         </section>
@@ -521,6 +552,54 @@
                     </button>
                 </div>
             </div>
+
+<section
+                id="active-open-tab"
+                class="active-open-tab"
+                hidden
+            >
+                <div>
+                    <span>CUENTA ABIERTA</span>
+                    <strong id="active-open-tab-name">
+                        Cuenta
+                    </strong>
+                    <small id="active-open-tab-total">
+                        $0.00
+                    </small>
+                </div>
+
+                <div class="active-open-tab-actions">
+                    <button
+                        id="active-open-tab-precheck"
+                        type="button"
+                    >
+                        Precuenta
+                    </button>
+
+                    <button
+                        id="active-open-tab-close-account"
+                        type="button"
+                    >
+                        Cobrar
+                    </button>
+
+                    
+                    <button
+                        id="active-open-tab-delete"
+                        class="open-tab-danger-button"
+                        type="button"
+                    >
+                        Eliminar cuenta
+                    </button>
+
+<button
+                        id="active-open-tab-exit"
+                        type="button"
+                    >
+                        Salir
+                    </button>
+                </div>
+            </section>
 
             <section
                 id="order-context"
@@ -697,6 +776,15 @@
                 <div class="order-total"><span>Total</span><strong id="cart-total">$0.00</strong></div>
                 <button id="checkout-button" class="checkout-button" type="button" disabled><svg><use href="#i-cart"></use></svg><span>Cobrar</span><strong id="checkout-total">$0.00</strong></button>
 
+<button
+                    id="open-tab-button"
+                    class="open-tab-button"
+                    type="button"
+                    disabled
+                >
+                    Abrir cuenta
+                </button>
+
                     <div
                         class="payment-shortcuts"
                         aria-label="Métodos de pago rápidos"
@@ -848,6 +936,418 @@
 
 
 <!-- COFICENTER OPERATIONAL STAFF / CASH V1 -->
+
+
+<div
+    id="open-tab-create-modal"
+    class="modal-backdrop"
+    hidden
+>
+    <section
+        class="modal-card open-tab-create-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="open-tab-create-heading"
+    >
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">
+                    CUENTA ABIERTA
+                </p>
+
+                <h2 id="open-tab-create-heading">
+                    Abrir cuenta
+                </h2>
+
+                <span class="modal-subtitle">
+                    El pedido actual se enviará
+                    inmediatamente a Cocina / Bar.
+                </span>
+            </div>
+
+            <button
+                id="open-tab-create-close"
+                class="modal-close"
+                type="button"
+                aria-label="Cerrar"
+            >
+                ×
+            </button>
+        </div>
+
+        <label class="field">
+            <span>Mesa</span>
+            <input
+                id="open-tab-table"
+                type="text"
+                maxlength="80"
+                placeholder="Ej. Mesa 4"
+            >
+        </label>
+
+        <label class="field">
+            <span>Nombre de la cuenta</span>
+            <input
+                id="open-tab-name"
+                type="text"
+                maxlength="120"
+                placeholder="Ej. Leonardo"
+            >
+        </label>
+
+        <div
+            id="open-tab-create-error"
+            class="form-error"
+            hidden
+        ></div>
+
+        <button
+            id="open-tab-create-submit"
+            class="checkout-button modal-action"
+            type="button"
+        >
+            Abrir cuenta y enviar pedido
+        </button>
+    </section>
+</div>
+
+<div
+    id="open-tabs-modal"
+    class="modal-backdrop"
+    hidden
+>
+    <section
+        class="modal-card open-tabs-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="open-tabs-heading"
+    >
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">
+                    RESTAURANTE
+                </p>
+
+                <h2 id="open-tabs-heading">
+                    Cuentas abiertas
+                </h2>
+
+                <span
+                    id="open-tabs-summary"
+                    class="modal-subtitle"
+                >
+                    Consultando…
+                </span>
+            </div>
+
+            <button
+                id="open-tabs-close"
+                class="modal-close"
+                type="button"
+                aria-label="Cerrar"
+            >
+                ×
+            </button>
+        </div>
+
+        <div
+            id="open-tabs-error"
+            class="form-error"
+            hidden
+        ></div>
+
+        <div
+            id="open-tabs-list"
+            class="open-tabs-list"
+        ></div>
+
+        <button
+            id="open-tabs-refresh"
+            class="open-tab-secondary-button"
+            type="button"
+        >
+            Actualizar cuentas
+        </button>
+    </section>
+</div>
+
+<div
+    id="open-tab-precheck-modal"
+    class="modal-backdrop"
+    hidden
+>
+    <section
+        class="modal-card open-tab-precheck-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="open-tab-precheck-heading"
+    >
+        <div class="receipt-modal-controls">
+            <h2 id="open-tab-precheck-heading">
+                Precuenta
+            </h2>
+
+            <div class="receipt-modal-actions">
+                <button
+                    id="open-tab-precheck-print"
+                    class="receipt-modal-button primary"
+                    type="button"
+                >
+                    Imprimir precuenta
+                </button>
+
+                <button
+                    id="open-tab-precheck-close"
+                    class="receipt-modal-button"
+                    type="button"
+                >
+                    Cerrar
+                </button>
+            </div>
+        </div>
+
+        <div class="receipt-preview-scroll">
+            <div
+                id="open-tab-precheck-document"
+                class="open-tab-precheck-document"
+            ></div>
+        </div>
+    </section>
+</div>
+
+
+<div
+    id="open-tab-cancel-modal"
+    class="modal-backdrop"
+    hidden
+>
+    <section
+        class="modal-card open-tab-cancel-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="open-tab-cancel-heading"
+    >
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">
+                    APROBACIÓN REQUERIDA
+                </p>
+
+                <h2 id="open-tab-cancel-heading">
+                    Eliminar cuenta
+                </h2>
+
+                <span
+                    id="open-tab-cancel-identity"
+                    class="modal-subtitle"
+                >
+                    Cuenta
+                </span>
+            </div>
+
+            <button
+                id="open-tab-cancel-dismiss"
+                class="modal-close"
+                type="button"
+                aria-label="Cerrar"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="open-tab-cancel-warning">
+            <strong>
+                Esta acción requiere autorización de manager.
+            </strong>
+
+            <span>
+                La cuenta será cancelada y no generará una venta.
+            </span>
+        </div>
+
+
+        <label class="field">
+            <span>Código / PIN de manager</span>
+
+            <input
+                id="open-tab-cancel-pin"
+                type="password"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="32"
+            >
+        </label>
+
+        <p
+            id="open-tab-cancel-error"
+            class="form-error"
+            hidden
+        ></p>
+
+        <div class="open-tab-cancel-actions">
+            <button
+                id="open-tab-cancel-dismiss-secondary"
+                class="open-tab-secondary-button"
+                type="button"
+            >
+                Cancelar
+            </button>
+
+            <button
+                id="open-tab-cancel-confirm"
+                class="open-tab-danger-button"
+                type="button"
+            >
+                Autorizar y eliminar
+            </button>
+        </div>
+    </section>
+</div>
+
+
+<div
+    id="open-tab-close-modal"
+    class="modal-backdrop"
+    hidden
+>
+    <section
+        class="modal-card payment-card payment-card-professional"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="open-tab-close-heading"
+    >
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">
+                    CERRAR CUENTA
+                </p>
+
+                <h2 id="open-tab-close-heading">
+                    Cobrar cuenta
+                </h2>
+
+                <span
+                    id="open-tab-close-identity"
+                    class="modal-subtitle"
+                ></span>
+            </div>
+
+            <button
+                id="open-tab-close-dismiss"
+                class="modal-close"
+                type="button"
+                aria-label="Cerrar"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="payment-total-professional">
+            <span>Total a cobrar</span>
+
+            <strong
+                id="open-tab-close-total"
+            >
+                $0.00
+            </strong>
+        </div>
+
+        <span class="payment-section-label">
+            Método de pago
+        </span>
+
+        <div
+            class="payment-methods"
+            role="group"
+            aria-label="Método de pago"
+        >
+            <button
+                class="payment-method is-active"
+                data-tab-close-method="CASH"
+                type="button"
+            >
+                <span class="payment-method-icon">
+                    $
+                </span>
+
+                <span>
+                    <strong>Efectivo</strong>
+                    <small>Pago en caja</small>
+                </span>
+            </button>
+
+            <button
+                class="payment-method"
+                data-tab-close-method="CARD_EXTERNAL"
+                type="button"
+            >
+                <span class="payment-method-icon">
+                    ▣
+                </span>
+
+                <span>
+                    <strong>Tarjeta</strong>
+                    <small>Terminal externa</small>
+                </span>
+            </button>
+        </div>
+
+        <div id="open-tab-close-cash-fields">
+            <label class="field">
+                <span>Efectivo recibido</span>
+
+                <input
+                    id="open-tab-close-cash-received"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="0.01"
+                >
+            </label>
+
+            <div class="open-tab-change">
+                <span>Cambio</span>
+
+                <strong
+                    id="open-tab-close-change"
+                >
+                    $0.00
+                </strong>
+            </div>
+        </div>
+
+        <div
+            id="open-tab-close-card-fields"
+            hidden
+        >
+            <label class="field">
+                <span>Referencia de tarjeta</span>
+
+                <input
+                    id="open-tab-close-card-reference"
+                    type="text"
+                    maxlength="120"
+                    placeholder="Opcional"
+                >
+            </label>
+        </div>
+
+        <div
+            id="open-tab-close-error"
+            class="form-error"
+            hidden
+        ></div>
+
+        <button
+            id="open-tab-close-confirm"
+            class="checkout-button modal-action"
+            type="button"
+        >
+            <span>Confirmar cobro</span>
+        </button>
+    </section>
+</div>
+
 <div id="staff-lock-screen" class="staff-lock-screen">
     <section class="staff-lock-card" aria-labelledby="staff-lock-heading">
         <img
@@ -1125,7 +1625,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script src="./js/uuid.js?v=8"></script>
 <script src="./js/db.js?v=8"></script>
-<script src="./js/api.js?v=10"></script>
+<script src="./js/api.js?v=11"></script>
 <script src="./js/staff-session.js?v=1"></script>
 <script src="./js/cash-shift.js?v=4"></script>
 <script src="./js/catalog.js?v=8"></script>
@@ -1134,10 +1634,11 @@ document.addEventListener("DOMContentLoaded", () => {
 <script src="./js/receipt-core.js?v=2"></script>
 <script src="./js/receipt-fiscal-config.js?v=1"></script>
 <script src="./js/receipt-renderer.js?v=5"></script>
-<script src="./js/app.js?v=26"></script>
+<script src="./js/app.js?v=35"></script>
+<script src="./js/open-tabs.js?v=4"></script>
 <script src="./js/orders-local.js?v=1"></script>
 <script src="./js/sound-alerts.js?v=1"></script>
-<script src="./js/orders.js?v=18"></script>
+<script src="./js/orders.js?v=19"></script>
 
 </body>
 </html>

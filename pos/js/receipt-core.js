@@ -341,9 +341,6 @@
         const branch =
             input.branch || {};
 
-        const fiscal =
-            input.fiscal || null;
-
         const terminal =
             input.terminal || {};
 
@@ -425,41 +422,6 @@
                         ""
                     ),
             },
-
-            fiscal:
-                fiscal
-                    ? {
-                        rfc:
-                            String(
-                                fiscal.rfc || ""
-                            ).trim(),
-
-                        fiscal_address:
-                            String(
-                                fiscal.fiscal_address || ""
-                            ).trim(),
-
-                        billing_label:
-                            String(
-                                fiscal.billing_label || ""
-                            ).trim(),
-
-                        billing_message:
-                            String(
-                                fiscal.billing_message || ""
-                            ).trim(),
-
-                        billing_url:
-                            String(
-                                fiscal.billing_url || ""
-                            ).trim(),
-
-                        billing_qr_ref:
-                            String(
-                                fiscal.billing_qr_ref || ""
-                            ).trim(),
-                    }
-                    : null,
 
             order_type:
                 String(
@@ -586,53 +548,6 @@
             "customer.name"
         );
     }
-
-    function validateFiscal(fiscal) {
-        if (fiscal === null) {
-            return;
-        }
-
-        if (
-            !fiscal ||
-            typeof fiscal !== "object" ||
-            Array.isArray(fiscal)
-        ) {
-            throw new Error(
-                "fiscal must be null or an object"
-            );
-        }
-
-        requireText(
-            fiscal.rfc,
-            "fiscal.rfc"
-        );
-
-        requireText(
-            fiscal.fiscal_address,
-            "fiscal.fiscal_address"
-        );
-
-        requireText(
-            fiscal.billing_label,
-            "fiscal.billing_label"
-        );
-
-        requireText(
-            fiscal.billing_message,
-            "fiscal.billing_message"
-        );
-
-        requireText(
-            fiscal.billing_url,
-            "fiscal.billing_url"
-        );
-
-        requireText(
-            fiscal.billing_qr_ref,
-            "fiscal.billing_qr_ref"
-        );
-    }
-
 
     function validateItem(
         item,
@@ -906,10 +821,6 @@
                 "table_number"
             );
         }
-
-        validateFiscal(
-            snapshot.fiscal
-        );
 
         validateCustomer(
             snapshot.customer

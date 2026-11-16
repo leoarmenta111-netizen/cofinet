@@ -1,13 +1,14 @@
-const SHELL_CACHE = "cofi-pos-shell-v30";
+const SHELL_CACHE = "cofi-pos-shell-v40";
 const IMAGE_CACHE = "cofi-pos-images-v1";
 
 const APP_SHELL = [
     "./index.html",
-    "./css/pos.css?v=28",
+    "./ixtapa.html",
+    "./css/pos.css?v=31",
     "./css/receipt.css",
     "./js/uuid.js",
     "./js/db.js",
-    "./js/api.js",
+    "./js/api.js?v=11",
     "./js/staff-session.js",
     "./js/cash-shift.js?v=2",
     "./js/catalog.js",
@@ -18,7 +19,8 @@ const APP_SHELL = [
     "./js/receipt-fiscal-config.js?v=1",
     "./assets/coficenter-ticket-logo.png",
     "./assets/facturacion-qr.png",
-    "./js/app.js?v=26",
+    "./js/app.js?v=35",
+    "./js/open-tabs.js?v=3",
     "./js/orders-local.js",
     "./js/sound-alerts.js",
     "./js/orders.js?v=18",
@@ -111,7 +113,9 @@ async function navigationResponse(request) {
                 request,
                 {
                     signal:
-                        controller.signal
+                        controller.signal,
+                    cache:
+                        "no-store"
                 }
             );
 
@@ -187,16 +191,14 @@ async function navigationResponse(request) {
    ========================================================= */
 
 async function staticAssetResponse(request) {
-    const exact =
-        await caches.match(request);
-
-    if (exact) {
-        return exact;
-    }
-
     try {
         const response =
-            await fetch(request);
+            await fetch(
+                request,
+                {
+                    cache: "no-store"
+                }
+            );
 
         if (
             response &&
@@ -217,6 +219,8 @@ async function staticAssetResponse(request) {
 
     } catch (error) {
         return (
+            await caches.match(request)
+        ) || (
             await caches.match(
                 request,
                 {

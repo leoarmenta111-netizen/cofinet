@@ -98,6 +98,45 @@
         );
     }
 
+    // POS_ORDER_CONTEXT_DISPLAY_V1
+    function orderContextLabel(order) {
+        const type =
+            String(order?.order_type || "")
+                .trim()
+                .toUpperCase();
+
+        const table =
+            String(order?.table_number || "")
+                .trim();
+
+        if (
+            type === "TAKEOUT" ||
+            type === "TO_GO" ||
+            type === "TAKE_AWAY" ||
+            type === "PICKUP"
+        ) {
+            return "Para llevar";
+        }
+
+        if (
+            type === "DELIVERY" ||
+            type === "HOME_DELIVERY"
+        ) {
+            return "A domicilio";
+        }
+
+        if (type === "DINE_IN") {
+            return table
+                ? `Mesa ${table}`
+                : "Comer aquí";
+        }
+
+        return table
+            ? `Mesa ${table}`
+            : "Venta en mostrador";
+    }
+
+
     function formatTime(value) {
         if (!value) return "—";
 
@@ -757,6 +796,7 @@
             );
 
             const customerName =
+                order.order_name ||
                 order.customer_name ||
                 order.customer?.name ||
                 order.customer?.full_name ||

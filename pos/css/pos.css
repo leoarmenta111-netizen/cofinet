@@ -6419,3 +6419,590 @@ and (max-width: 1366px) {
 .variant-option {
     cursor: pointer;
 }
+
+
+/* POS_OPEN_TABS_UI_V1 */
+
+.open-tab-button,
+.open-tab-secondary-button,
+.open-tab-continue {
+    width: 100%;
+    min-height: 46px;
+    border: 1px solid var(--green);
+    border-radius: 11px;
+    background: var(--surface);
+    color: var(--green-dark);
+    font: inherit;
+    font-weight: 750;
+}
+
+.open-tab-button {
+    margin-top: 9px;
+}
+
+.open-tab-button:hover:not(:disabled),
+.open-tab-secondary-button:hover:not(:disabled),
+.open-tab-continue:hover:not(:disabled) {
+    background: var(--green-soft);
+}
+
+.open-tab-button:disabled {
+    opacity: .42;
+}
+
+.active-open-tab {
+    margin: 0 14px 12px;
+    padding: 12px 14px;
+    border: 1px solid
+        rgba(49, 90, 41, .25);
+    border-radius: 12px;
+    background: var(--green-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.active-open-tab[hidden] {
+    display: none;
+}
+
+.active-open-tab > div {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.active-open-tab span {
+    color: var(--green-dark);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .08em;
+}
+
+.active-open-tab strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+.active-open-tab small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.active-open-tab button {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid
+        rgba(49, 90, 41, .25);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--green-dark);
+    font-weight: 700;
+}
+
+.open-tab-create-card,
+.open-tabs-card {
+    width: min(560px, 100%);
+}
+
+.open-tab-create-card .field {
+    margin-bottom: 13px;
+}
+
+.open-tabs-list {
+    display: grid;
+    gap: 10px;
+    margin: 4px 0 16px;
+}
+
+.open-tab-card {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+    gap: 10px 14px;
+    align-items: center;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: var(--surface-soft);
+}
+
+.open-tab-card-main {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.open-tab-card-main strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.open-tab-card-main span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.open-tab-card-total {
+    white-space: nowrap;
+    font-size: 15px;
+}
+
+.open-tab-continue {
+    grid-column: 1 / -1;
+    min-height: 40px;
+}
+
+.open-tabs-empty {
+    padding: 26px 14px;
+    border: 1px dashed var(--border);
+    border-radius: 13px;
+    color: var(--muted);
+    text-align: center;
+}
+
+
+@media (max-width: 760px) {
+    .open-tab-card {
+        grid-template-columns:
+            minmax(0, 1fr)
+            auto;
+    }
+
+    .active-open-tab {
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+}
+
+
+/* POS_OPEN_TABS_CLOSE_UI_V1 */
+
+.active-open-tab-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.open-tab-card-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, .7fr)
+        minmax(0, .7fr);
+    gap: 7px;
+}
+
+.open-tab-card-actions button {
+    min-height: 40px;
+    margin: 0;
+}
+
+.open-tab-card-action {
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 700;
+}
+
+.open-tab-card-action.is-primary {
+    border-color: var(--green);
+    background: var(--green);
+    color: #fff;
+}
+
+.open-tab-precheck-card {
+    width: min(520px, 100%);
+}
+
+.open-tab-precheck-document {
+    width: min(80mm, 100%);
+    margin: 0 auto;
+    background: #fff;
+    color: #111;
+}
+
+.open-tab-precheck-ticket {
+    width: 100%;
+    padding: 8mm 5mm;
+    font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Consolas,
+        monospace;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.open-tab-precheck-ticket header {
+    text-align: center;
+}
+
+.open-tab-precheck-ticket header h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+}
+
+.open-tab-precheck-title {
+    display: grid;
+    gap: 2px;
+    text-align: center;
+}
+
+.open-tab-precheck-title strong {
+    font-size: 16px;
+    letter-spacing: .08em;
+}
+
+.open-tab-precheck-title span {
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.open-tab-precheck-divider {
+    margin: 10px 0;
+    border-top: 1px dashed #555;
+}
+
+.open-tab-precheck-meta {
+    display: grid;
+    gap: 3px;
+}
+
+.open-tab-precheck-item {
+    padding: 5px 0;
+}
+
+.open-tab-precheck-line,
+.open-tab-precheck-modifier,
+.open-tab-precheck-totals > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.open-tab-precheck-item small {
+    display: block;
+    margin-left: 12px;
+}
+
+.open-tab-precheck-modifier {
+    margin-left: 12px;
+    color: #444;
+    font-size: 10px;
+}
+
+.open-tab-precheck-totals {
+    display: grid;
+    gap: 5px;
+}
+
+.open-tab-precheck-totals .is-total {
+    padding-top: 5px;
+    border-top: 1px solid #111;
+    font-size: 15px;
+}
+
+.open-tab-precheck-ticket footer {
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.open-tab-change {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--surface-soft);
+}
+
+.open-tab-change strong {
+    font-size: 18px;
+}
+
+
+@media (max-width: 760px) {
+    .active-open-tab {
+        align-items: flex-start;
+    }
+
+    .active-open-tab-actions {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+        width: 100%;
+    }
+
+    .active-open-tab {
+        flex-wrap: wrap;
+    }
+
+    .open-tab-card-actions {
+        grid-template-columns:
+            1fr;
+    }
+}
+
+
+@media print {
+    body.open-tab-precheck-printing
+    > *:not(#open-tab-precheck-modal) {
+        display: none !important;
+    }
+
+    body.open-tab-precheck-printing
+    #open-tab-precheck-modal {
+        position: static !important;
+        display: block !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    body.open-tab-precheck-printing
+    #open-tab-precheck-modal
+    .open-tab-precheck-card {
+        width: 80mm !important;
+        max-width: 80mm !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+
+    body.open-tab-precheck-printing
+    #open-tab-precheck-modal
+    .receipt-modal-controls {
+        display: none !important;
+    }
+
+    body.open-tab-precheck-printing
+    #open-tab-precheck-modal
+    .receipt-preview-scroll {
+        overflow: visible !important;
+    }
+
+    @page {
+        size: 80mm auto;
+        margin: 0;
+    }
+}
+
+/* =========================================================
+   POS_OPEN_TABS_COMPACT_UI_V1
+   Compact active restaurant account
+   ========================================================= */
+
+.order-panel.has-active-open-tab
+.order-context {
+    display: none;
+}
+
+
+.order-panel.has-active-open-tab
+.active-open-tab {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+    align-items: center;
+    gap: 12px;
+
+    margin:
+        10px
+        14px
+        8px;
+
+    padding:
+        10px
+        12px;
+
+    border-radius: 12px;
+}
+
+
+.order-panel.has-active-open-tab
+.active-open-tab
+> div:not(.active-open-tab-actions) {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+
+.order-panel.has-active-open-tab
+.active-open-tab
+> .active-open-tab-actions {
+    min-width: 0;
+    width: auto;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    flex-wrap: nowrap;
+
+    gap: 6px;
+}
+
+
+.order-panel.has-active-open-tab
+.active-open-tab
+> .active-open-tab-actions
+button {
+    width: auto;
+    min-width: 82px;
+    min-height: 36px;
+
+    padding:
+        0
+        11px;
+
+    white-space: nowrap;
+
+    font-size: 12px;
+}
+
+
+.order-panel.has-active-open-tab
+.active-open-tab
+span {
+    font-size: 9px;
+}
+
+
+.order-panel.has-active-open-tab
+.active-open-tab
+strong {
+    font-size: 14px;
+}
+
+
+.order-panel.has-active-open-tab
+.active-open-tab
+small {
+    font-size: 11px;
+}
+
+
+/*
+ * Narrow POS panels:
+ * keep the identity above and the three actions
+ * in one equal-width row.
+ */
+@media (max-width: 700px) {
+
+    .order-panel.has-active-open-tab
+    .active-open-tab {
+        grid-template-columns:
+            minmax(0, 1fr);
+    }
+
+
+    .order-panel.has-active-open-tab
+    .active-open-tab
+    > .active-open-tab-actions {
+        width: 100%;
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .order-panel.has-active-open-tab
+    .active-open-tab
+    > .active-open-tab-actions
+    button {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+
+/* POS_OPEN_TAB_MANAGER_CANCEL_UI_V1 */
+
+.open-tab-card-actions {
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+}
+
+.open-tab-card-action.is-danger,
+.open-tab-danger-button {
+    border: 1px solid #b42318;
+    border-radius: 10px;
+    background: #fff;
+    color: #b42318;
+    font-weight: 800;
+}
+
+.open-tab-card-action.is-danger:hover,
+.open-tab-danger-button:hover {
+    background: #fff3f1;
+}
+
+.open-tab-cancel-card {
+    width: min(460px, 100%);
+}
+
+.open-tab-cancel-warning {
+    display: grid;
+    gap: 5px;
+    margin: 4px 0 18px;
+    padding: 13px 14px;
+    border: 1px solid #f0b4ad;
+    border-radius: 12px;
+    background: #fff7f6;
+    color: #8f1d13;
+}
+
+.open-tab-cancel-warning span {
+    font-size: 12px;
+}
+
+.open-tab-cancel-actions {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1.25fr);
+    gap: 9px;
+    margin-top: 18px;
+}
+
+.open-tab-cancel-actions button {
+    min-height: 46px;
+}
+
+@media (max-width: 600px) {
+    .open-tab-card-actions {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .open-tab-card-action.is-danger {
+        grid-column: 1 / -1;
+    }
+}
