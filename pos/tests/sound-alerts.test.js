@@ -123,22 +123,22 @@ test(
 
         assert.match(
             kitchen,
-            /station\.js\?v=3/
+            /station\.js\?v=4/
         );
 
         assert.match(
             bar,
-            /station\.js\?v=3/
+            /station\.js\?v=4/
         );
 
         assert.match(
             kitchenSw,
-            /cofi-kds-kitchen-shell-v3/
+            /cofi-kds-kitchen-shell-v4/
         );
 
         assert.match(
             barSw,
-            /cofi-kds-bar-shell-v3/
+            /cofi-kds-bar-shell-v4/
         );
 
         assert.match(
@@ -153,12 +153,12 @@ test(
 
         assert.match(
             kitchenSw,
-            /station\.js\?v=3/
+            /station\.js\?v=4/
         );
 
         assert.match(
             barSw,
-            /station\.js\?v=3/
+            /station\.js\?v=4/
         );
     }
 );
@@ -180,7 +180,7 @@ test(
 
         assert.match(
             index,
-            /orders\.js\?v=17/,
+            /orders\.js\?v=19/,
             "orders.js debe refrescarse"
         );
 
@@ -224,7 +224,7 @@ test(
 
         assert.match(
             sw,
-            /cofi-pos-shell-v25/
+            /cofi-pos-shell-v41/
         );
 
         assert.match(

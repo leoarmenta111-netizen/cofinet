@@ -23,5 +23,5 @@ test("origen kiosk se muestra en lista y detalle de orden", () => {
 });
 
 test("cache bust de orders carga la version con origen de kiosk", () => {
-    assert.match(html, /\.\/js\/orders\.js\?v=17/);
+    assert.match(html, /\.\/js\/orders\.js\?v=19/);
 });

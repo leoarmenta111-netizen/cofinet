@@ -21,14 +21,14 @@ const stations = [
         name: "Cofi KDS Cocina",
         id: "/pos/kitchen/",
         visibleName: "Cocina",
-        cache: "cofi-kds-kitchen-shell-v3",
+        cache: "cofi-kds-kitchen-shell-v4",
     },
     {
         dir: "bar",
         name: "Cofi KDS Barra",
         id: "/pos/bar/",
         visibleName: "Barra",
-        cache: "cofi-kds-bar-shell-v3",
+        cache: "cofi-kds-bar-shell-v4",
     },
 ];
 
@@ -160,7 +160,7 @@ test(
 
             assert.ok(
                 html.includes(
-                    "station.css?v=2"
+                    "station.css?v=3"
                 ),
                 `Falta station.css?v=2 en ${station.dir}`
             );

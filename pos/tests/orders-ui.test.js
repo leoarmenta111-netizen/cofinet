@@ -20,7 +20,7 @@ test(
             'id="order-detail-modal"',
             'id="order-status-action"',
             './js/orders-local.js?v=1',
-            './js/orders.js?v=17',
+            './js/orders.js?v=19',
         ].forEach(value => {
             assert.ok(
                 html.includes(value),
@@ -68,7 +68,7 @@ test(
 
         assert.ok(
             sw.includes(
-                '"./js/orders.js"'
+                '"./js/orders.js?v=19"'
             )
         );
     }

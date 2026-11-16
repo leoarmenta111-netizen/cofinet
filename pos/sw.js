@@ -1,4 +1,4 @@
-const SHELL_CACHE = "cofi-pos-shell-v40";
+const SHELL_CACHE = "cofi-pos-shell-v41";
 const IMAGE_CACHE = "cofi-pos-images-v1";
 
 const APP_SHELL = [
@@ -10,7 +10,7 @@ const APP_SHELL = [
     "./js/db.js",
     "./js/api.js?v=11",
     "./js/staff-session.js",
-    "./js/cash-shift.js?v=2",
+    "./js/cash-shift.js?v=4",
     "./js/catalog.js",
     "./js/sync.js",
     "./js/folio.js",
@@ -20,10 +20,10 @@ const APP_SHELL = [
     "./assets/coficenter-ticket-logo.png",
     "./assets/facturacion-qr.png",
     "./js/app.js?v=35",
-    "./js/open-tabs.js?v=3",
+    "./js/open-tabs.js?v=4",
     "./js/orders-local.js",
     "./js/sound-alerts.js",
-    "./js/orders.js?v=18",
+    "./js/orders.js?v=19",
     "./assets/coficenter-logo.png",
     "./assets/pwa/icon-192.png",
     "./assets/pwa/icon-512.png",

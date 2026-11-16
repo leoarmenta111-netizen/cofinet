@@ -18,7 +18,7 @@ test(
 
         assert.ok(
             html.includes(
-                './js/orders.js?v=17'
+                './js/orders.js?v=19'
             ),
             "orders.js debe usar la version v17"
         );
@@ -34,7 +34,7 @@ test(
 
         assert.ok(
             sw.includes(
-                '"./js/orders.js"'
+                '"./js/orders.js?v=19"'
             )
         );
 

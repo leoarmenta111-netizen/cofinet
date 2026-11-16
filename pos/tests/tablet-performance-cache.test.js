@@ -8,16 +8,16 @@ const sw = fs.readFileSync("pos/sw.js", "utf8");
 test("tablet performance release forces fresh CSS cache", () => {
     assert.match(
         index,
-        /css\/pos\.css\?v=28/
+        /css\/pos\.css\?v=31/
     );
 
     assert.match(
         sw,
-        /const SHELL_CACHE = "cofi-pos-shell-v25";/
+        /const SHELL_CACHE = "cofi-pos-shell-v41";/
     );
 
     assert.match(
         sw,
-        /"\.\/css\/pos\.css\?v=28"/
+        /"\.\/css\/pos\.css\?v=31"/
     );
 });
