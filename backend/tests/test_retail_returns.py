@@ -265,6 +265,7 @@ def test_partial_product_return_restores_stock_and_audits(
     event = events[0]
 
     assert event.branch_id == branch.id
+    assert event.module_code == "PAPELERIA"
     assert (
         event.actor_staff_id
         == cashier.id

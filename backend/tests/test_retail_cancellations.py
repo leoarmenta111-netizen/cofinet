@@ -192,6 +192,7 @@ def test_cancellation_keeps_original_sale_and_reverses_remaining_stock(
     event = events[0]
 
     assert event.branch_id == branch.id
+    assert event.module_code == "PAPELERIA"
     assert (
         event.actor_staff_id
         == cashier.id

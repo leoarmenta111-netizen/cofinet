@@ -1279,6 +1279,7 @@ def test_http_discount_authorizes_papeleria_manager_pin(
 
     assert event.branch_id == branch.id
     assert event.terminal_id == "PAP-DISCOUNT"
+    assert event.module_code == "PAPELERIA"
     assert event.actor_staff_id == cashier.id
     assert event.authorizer_staff_id == manager.id
     assert event.target_type == "retail_sale"
