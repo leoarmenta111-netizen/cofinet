@@ -87,6 +87,19 @@ def _paid_card_product(
         sale_price=sale_price,
     )
 
+    PosCashService.open_shift(
+        db_session,
+        branch_code=branch.code,
+        terminal_id=f"PAP-{suffix}",
+        opening_counts=None,
+        opening_amount=Decimal("0.00"),
+        requesting_staff=cashier,
+        authorizing_manager=manager,
+        module_code="PAPELERIA",
+    )
+
+    db_session.commit()
+
     sale = RetailSaleService.checkout(
         db_session,
         payload=RetailCheckoutRequest(
@@ -437,6 +450,19 @@ def test_service_return_has_no_inventory_effect(
         sku="COPY-RETURN",
     )
 
+    PosCashService.open_shift(
+        db_session,
+        branch_code=branch.code,
+        terminal_id="PAP-SERVICE-RETURN",
+        opening_counts=None,
+        opening_amount=Decimal("0.00"),
+        requesting_staff=cashier,
+        authorizing_manager=manager,
+        module_code="PAPELERIA",
+    )
+
+    db_session.commit()
+
     sale = RetailSaleService.checkout(
         db_session,
         payload=RetailCheckoutRequest(
@@ -634,6 +660,109 @@ def test_cash_return_writes_one_negative_cash_ledger_entry(
         Decimal(entries[0].amount)
         == Decimal("-10.00")
     )
+
+
+def test_cash_return_rejects_closing_shift_without_new_ledger(
+    db_session,
+):
+    branch = _branch(
+        db_session,
+        "return-closing",
+    )
+
+    cashier = _staff(
+        db_session,
+        branch=branch,
+        name="Return Closing Cashier",
+    )
+
+    manager = _manager_with_real_pin(
+        db_session,
+        branch=branch,
+        name="Return Closing Manager",
+        pin="2468",
+    )
+
+    item, presentation, _ = _product(
+        db_session,
+        branch=branch,
+        sku="RETURN-CLOSING",
+        sale_price="10.00",
+    )
+
+    shift = PosCashService.open_shift(
+        db_session,
+        branch_code=branch.code,
+        terminal_id="PAP-RETURN-CLOSING",
+        opening_counts=None,
+        opening_amount=Decimal("0.00"),
+        requesting_staff=cashier,
+        authorizing_manager=manager,
+        module_code="PAPELERIA",
+    )
+
+    db_session.commit()
+
+    sale = RetailSaleService.checkout(
+        db_session,
+        payload=RetailCheckoutRequest(
+            sale_uuid="return-closing-sale",
+            held_sale_uuid=None,
+            lines=[
+                RetailCheckoutLineInput(
+                    item_id=item.id,
+                    presentation_id=presentation.id,
+                    quantity=Decimal("2.000"),
+                    discount_amount=Decimal("0.00"),
+                )
+            ],
+            sale_discount_amount=Decimal("0.00"),
+            payment_uuid="return-closing-payment",
+            payment_method="CASH",
+            amount_tendered=Decimal("20.00"),
+            external_reference=None,
+        ),
+        staff=cashier,
+        terminal_id="PAP-RETURN-CLOSING",
+        manager=None,
+    )
+
+    db_session.commit()
+
+    ledger_before = (
+        db_session.query(PosCashLedgerEntry)
+        .filter(PosCashLedgerEntry.shift_id == shift.id)
+        .count()
+    )
+
+    shift.status = "CLOSING"
+    db_session.commit()
+
+    with pytest.raises(HTTPException) as exc:
+        RetailSaleService.return_items(
+            db_session,
+            sale_uuid=sale.sale_uuid,
+            payload=_return_payload(
+                return_uuid="return-closing-refund",
+                sale_line_id=sale.lines[0].id,
+                quantity="1.000",
+                refund_method="CASH",
+            ),
+            staff=cashier,
+            manager=manager,
+        )
+
+    assert exc.value.status_code == 409
+
+    db_session.rollback()
+
+    ledger_after = (
+        db_session.query(PosCashLedgerEntry)
+        .filter(PosCashLedgerEntry.shift_id == shift.id)
+        .count()
+    )
+
+    assert ledger_after == ledger_before
 
 
 def test_return_retry_is_idempotent(

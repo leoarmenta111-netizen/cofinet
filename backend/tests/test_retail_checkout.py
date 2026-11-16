@@ -422,6 +422,12 @@ def test_card_checkout_records_reference_without_cash_ledger(
         sale_price="25.00",
     )
 
+    shift = _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-CARD",
+    )
+
     sale = RetailSaleService.checkout(
         db_session,
         payload=_request(
@@ -469,6 +475,116 @@ def test_card_checkout_records_reference_without_cash_ledger(
         == 0
     )
 
+    summary = PosCashService.retail_shift_summary(
+        db_session,
+        shift=shift,
+    )
+
+    assert summary["card_sales"] == Decimal(
+        "50.00"
+    )
+    assert summary["cash_sales"] == Decimal(
+        "0.00"
+    )
+
+
+def test_card_checkout_requires_open_papeleria_shift(
+    db_session,
+):
+    branch = _branch(
+        db_session,
+        "checkout-card-no-shift",
+    )
+
+    cashier = _staff(
+        db_session,
+        branch=branch,
+        name="Card No Shift",
+    )
+
+    item, presentation, _ = _product(
+        db_session,
+        branch=branch,
+        sku="CARD-NO-SHIFT",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        RetailSaleService.checkout(
+            db_session,
+            payload=_request(
+                sale_uuid="sale-card-no-shift",
+                payment_uuid="pay-card-no-shift",
+                item=item,
+                presentation=presentation,
+                quantity="1.000",
+                payment_method="CARD",
+                external_reference="CARD-NO-SHIFT",
+            ),
+            staff=cashier,
+            terminal_id="PAP-CARD-NO-SHIFT",
+            manager=None,
+        )
+
+    assert exc.value.status_code == 409
+
+    db_session.rollback()
+
+    assert db_session.query(RetailSale).count() == 0
+    assert db_session.query(RetailPayment).count() == 0
+
+
+def test_card_checkout_rejects_closing_papeleria_shift(
+    db_session,
+):
+    branch = _branch(
+        db_session,
+        "checkout-card-closing",
+    )
+
+    cashier = _staff(
+        db_session,
+        branch=branch,
+        name="Card Closing",
+    )
+
+    item, presentation, _ = _product(
+        db_session,
+        branch=branch,
+        sku="CARD-CLOSING",
+    )
+
+    shift = _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-CARD-CLOSING",
+    )
+
+    shift.status = "CLOSING"
+    db_session.commit()
+
+    with pytest.raises(HTTPException) as exc:
+        RetailSaleService.checkout(
+            db_session,
+            payload=_request(
+                sale_uuid="sale-card-closing",
+                payment_uuid="pay-card-closing",
+                item=item,
+                presentation=presentation,
+                quantity="1.000",
+                payment_method="CARD",
+                external_reference="CARD-CLOSING",
+            ),
+            staff=cashier,
+            terminal_id="PAP-CARD-CLOSING",
+            manager=None,
+        )
+
+    assert exc.value.status_code == 409
+
+    db_session.rollback()
+
+    assert db_session.query(RetailSale).count() == 0
+
 
 def test_product_checkout_uses_presentation_conversion(
     db_session,
@@ -491,6 +607,12 @@ def test_product_checkout_uses_presentation_conversion(
         sale_price="35.00",
         conversion_factor="12.000",
         stock="100.000",
+    )
+
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-T3",
     )
 
     sale = RetailSaleService.checkout(
@@ -796,6 +918,12 @@ def test_sale_discount_with_manager_is_applied_server_side(
         sku="DISC-MGR",
     )
 
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-DISC",
+    )
+
     sale = RetailSaleService.checkout(
         db_session,
         payload=_request(
@@ -989,6 +1117,12 @@ def test_service_checkout_uses_tier_price_without_inventory(
         sku="COPY-BW",
     )
 
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-SERVICE",
+    )
+
     payload = RetailCheckoutRequest(
         sale_uuid="service-tier-sale",
         held_sale_uuid=None,
@@ -1091,6 +1225,12 @@ def test_held_sale_is_repriced_at_checkout(
     presentation.sale_price = Decimal("12.00")
     db_session.commit()
 
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-HELD",
+    )
+
     checkout_payload = RetailCheckoutRequest(
         sale_uuid=held.sale_uuid,
         held_sale_uuid=held.sale_uuid,
@@ -1159,6 +1299,12 @@ def test_http_checkout_card_without_discount(
         branch=branch,
         sku="HTTP-CARD",
         sale_price="15.00",
+    )
+
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-HTTP",
     )
 
     response = _checkout_api_request(
@@ -1230,7 +1376,13 @@ def test_http_discount_authorizes_papeleria_manager_pin(
         sale_price="20.00",
     )
 
-    response = _checkout_api_request(
+    _open_shift(
+        db_session,
+        branch=branch,
+        terminal_id="PAP-DISCOUNT",
+    )
+
+    response = _checkout_api_request
         client=client,
         staff=cashier,
         branch=branch,

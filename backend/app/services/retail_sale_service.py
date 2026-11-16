@@ -82,6 +82,36 @@ class RetailSaleService:
             )
 
     @staticmethod
+    def _require_open_papeleria_shift(
+        db: Session,
+        *,
+        branch: Branch,
+        terminal_id: str,
+    ):
+        shift = PosCashService.current_shift(
+            db,
+            branch_code=branch.code,
+            terminal_id=terminal_id,
+            module_code="PAPELERIA",
+        )
+
+        if (
+            shift is None
+            or shift.status != "OPEN"
+        ):
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_409_CONFLICT
+                ),
+                detail=(
+                    "Open Papeleria cash "
+                    "shift required"
+                ),
+            )
+
+        return shift
+
+    @staticmethod
     def _normalize_label(
         label: str | None,
     ) -> str | None:
@@ -1221,22 +1251,20 @@ class RetailSaleService:
                 ),
             )
 
-        if method == "CARD":
-            if (
+        if (
+            method == "CARD"
+            and (
                 external_reference is None
                 or not external_reference.strip()
-            ):
-                raise HTTPException(
-                    status_code=422,
-                    detail=(
-                        "Card refund reference "
-                        "is required"
-                    ),
-                )
-
-            # V1 intentionally does not call a
-            # payment processor.
-            return
+            )
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Card refund reference "
+                    "is required"
+                ),
+            )
 
         branch = db.get(
             Branch,
@@ -1249,21 +1277,16 @@ class RetailSaleService:
                 detail="Branch not found",
             )
 
-        shift = PosCashService.current_shift(
+        shift = cls._require_open_papeleria_shift(
             db,
-            branch_code=branch.code,
+            branch=branch,
             terminal_id=sale.terminal_id,
-            module_code="PAPELERIA",
         )
 
-        if shift is None:
-            raise HTTPException(
-                status_code=409,
-                detail=(
-                    "Open Papeleria cash "
-                    "shift required"
-                ),
-            )
+        if method == "CARD":
+            # V1 intentionally does not call a
+            # payment processor.
+            return
 
         PosCashService.append_ledger_entry(
             db,
@@ -2171,26 +2194,11 @@ class RetailSaleService:
                 detail="Branch not found",
             )
 
-        shift = None
-
-        if payload.payment_method == "CASH":
-            shift = PosCashService.current_shift(
-                db,
-                branch_code=branch.code,
-                terminal_id=terminal,
-                module_code="PAPELERIA",
-            )
-
-            if shift is None:
-                raise HTTPException(
-                    status_code=(
-                        status.HTTP_409_CONFLICT
-                    ),
-                    detail=(
-                        "Open Papeleria cash "
-                        "shift required"
-                    ),
-                )
+        shift = cls._require_open_papeleria_shift(
+            db,
+            branch=branch,
+            terminal_id=terminal,
+        )
 
         if held_sale is None:
             sale = RetailSale(
