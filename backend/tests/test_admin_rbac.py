@@ -1,4 +1,5 @@
 from app.models.admin import Admin, AdminRole
+from app.auth.security import create_access_token
 
 import pytest
 pytestmark = pytest.mark.usefixtures("default_branch")
@@ -117,3 +118,63 @@ def test_final_active_super_cannot_be_disabled_or_demoted(client, super_admin, s
     )
     assert disabled.status_code == 409
     assert demoted.status_code == 409
+
+
+def _headers_for_admin_claims(admin, **claims):
+    token = create_access_token(
+        {
+            "sub": str(admin.id),
+            **claims,
+        }
+    )
+    return {
+        "Authorization": f"Bearer {token}",
+    }
+
+
+def test_admin_token_requires_both_role_and_scope(
+    client,
+    super_admin,
+):
+    role_only = _headers_for_admin_claims(
+        super_admin,
+        role="admin",
+    )
+    scope_only = _headers_for_admin_claims(
+        super_admin,
+        scope="admin",
+    )
+
+    assert (
+        client.get(
+            "/admin/me",
+            headers=role_only,
+        ).status_code
+        == 403
+    )
+    assert (
+        client.get(
+            "/admin/me",
+            headers=scope_only,
+        ).status_code
+        == 403
+    )
+
+
+def test_admin_token_with_role_and_scope_is_accepted(
+    client,
+    super_admin,
+):
+    headers = _headers_for_admin_claims(
+        super_admin,
+        role="admin",
+        scope="admin",
+    )
+
+    response = client.get(
+        "/admin/me",
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["id"] == super_admin.id

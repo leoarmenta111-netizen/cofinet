@@ -11,7 +11,7 @@ def get_current_active_admin(
     db: Session = Depends(get_db),
 ) -> Admin:
     """Resolve an active administrator from an admin-scoped JWT."""
-    if token_payload.get("role") != "admin" and token_payload.get("scope") != "admin":
+    if token_payload.get("role") != "admin" or token_payload.get("scope") != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Administrator access required",
