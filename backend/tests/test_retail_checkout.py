@@ -1382,7 +1382,7 @@ def test_http_discount_authorizes_papeleria_manager_pin(
         terminal_id="PAP-DISCOUNT",
     )
 
-    response = _checkout_api_request
+    response = _checkout_api_request(
         client=client,
         staff=cashier,
         branch=branch,
